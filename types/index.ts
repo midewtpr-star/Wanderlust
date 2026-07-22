@@ -192,3 +192,63 @@ export type MemberStep = {
   completed: boolean;
   completed_at: string | null;
 };
+
+// --- Phase 8: local ideas + activities + media ---
+
+// A normalized local idea from the nearby-ideas edge function (source-agnostic).
+export type Idea = {
+  name: string;
+  category: string; // food | outdoors | nightlife | attractions | events
+  description: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  rating: number | null;
+  url: string | null;
+  image: string | null;
+  source: string;
+};
+
+export type NearbyIdeasResult = {
+  configured: boolean;
+  ideas: Idea[];
+  coords?: { lat: number; lng: number };
+  noDestination?: boolean;
+  note?: string | null;
+  error?: string;
+};
+
+// A row of `activities`.
+export type Activity = {
+  id: ID;
+  trip_id: ID;
+  created_by: ID | null;
+  title: string;
+  description: string | null;
+  scheduled_for: string | null; // ISO timestamptz
+  location: string | null;
+  url: string | null;
+  created_at: string;
+};
+
+export type ActivityInput = {
+  title: string;
+  description?: string | null;
+  scheduled_for?: string | null;
+  location?: string | null;
+  url?: string | null;
+};
+
+export type MediaType = "photo" | "video" | "other";
+
+// A row of `activity_media` (url is a PRIVATE trip-media storage path).
+export type ActivityMedia = {
+  id: ID;
+  activity_id: ID;
+  trip_id: ID;
+  uploaded_by: ID | null;
+  media_type: MediaType;
+  url: string | null;
+  caption: string | null;
+  created_at: string;
+};

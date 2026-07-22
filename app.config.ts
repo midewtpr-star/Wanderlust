@@ -79,6 +79,8 @@ const config: ExpoConfig = {
           "AppName uses your location to tally trip miles for your recap.",
       },
     ],
+    // Video playback for activity media (Phase 8).
+    "expo-video",
     // Push notifications (D10).
     "expo-notifications",
   ],

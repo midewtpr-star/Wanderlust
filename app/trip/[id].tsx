@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { View, ScrollView, ActivityIndicator } from "react-native";
 import { Image } from "expo-image";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -17,6 +17,8 @@ import { AirbnbSection } from "@/components/trip/airbnb-section";
 import { AdminManagement } from "@/components/trip/admin-management";
 import { ProgressPanel } from "@/components/trip/progress-panel";
 import { VerifiedCelebration } from "@/components/trip/verified-celebration";
+import { LocalIdeas } from "@/components/trip/local-ideas";
+import { ActivitiesSection } from "@/components/trip/activities-section";
 import { formatDateRange } from "@/lib/dates";
 import { useAuth } from "@/lib/auth-provider";
 import { useTrip } from "@/hooks/use-trip";
@@ -24,11 +26,11 @@ import { useTripMembers } from "@/hooks/use-trip-members";
 import { useRsvp } from "@/hooks/use-rsvp";
 import { useInvite } from "@/hooks/use-invite";
 import { useMemberVerification } from "@/hooks/use-member-verification";
-import type { RsvpStatus } from "@/types";
+import type { ActivityInput, RsvpStatus } from "@/types";
 
 // Remaining dashboard sections (filled in by later phases).
 const SECTIONS = [
-  { key: "activities", title: "Activities", blurb: "Plan things to do and document the trip." },
+  { key: "recap", title: "Post-trip recap", blurb: "Collages + stats after the trip (coming soon)." },
 ];
 
 export default function TripDetailScreen() {
@@ -45,6 +47,9 @@ export default function TripDetailScreen() {
   // verification + progress panel refetch.
   const [moneyVersion, setMoneyVersion] = useState(0);
   const bumpChecklist = () => setMoneyVersion((v) => v + 1);
+  // "Add to activities" from a local idea → prefill the activity form.
+  const [ideaPrefill, setIdeaPrefill] = useState<ActivityInput | null>(null);
+  const consumePrefill = useCallback(() => setIdeaPrefill(null), []);
 
   const hasCarPool = !!trip?.car_rental_ref;
   const verification = useMemberVerification(id, hasCarPool, moneyVersion);
@@ -215,6 +220,30 @@ export default function TripDetailScreen() {
                 userId={user.id}
                 hasCarPool={!!trip.car_rental_ref}
                 version={moneyVersion}
+              />
+            </View>
+          ) : null}
+
+          {user ? (
+            <View className="gap-3 px-6 pb-4">
+              <Text variant="heading">Explore nearby</Text>
+              <LocalIdeas
+                tripId={trip.id}
+                lat={trip.location_lat}
+                lng={trip.location_lng}
+                onUseIdea={setIdeaPrefill}
+              />
+            </View>
+          ) : null}
+
+          {user ? (
+            <View className="gap-3 px-6 pb-4">
+              <Text variant="heading">Activities</Text>
+              <ActivitiesSection
+                tripId={trip.id}
+                userId={user.id}
+                prefill={ideaPrefill}
+                onPrefillConsumed={consumePrefill}
               />
             </View>
           ) : null}

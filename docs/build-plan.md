@@ -5,7 +5,7 @@
 > **Revised for v2.** Codename `AppName`; logo `[LOGO SLOT]` — TBD.
 
 **Status key:** ⬜ not-started · 🟡 in progress · ✅ done · ⏳ external lead time.
-**Phases 0–7 are ✅ done; Phases 8–12 + the backlog are ⬜ not-started.** Update each phase's marker (+ a short note) as work completes.
+**Phases 0–8 are ✅ done; Phases 9–12 + the backlog are ⬜ not-started.** Update each phase's marker (+ a short note) as work completes.
 
 **How to read this:** MVP phases are in intended build order (per brief). The **keystone unlock** is Phases 1–2 (auth + schema + RLS + trip-create); after that, most feature phases are trip-scoped slices. **Keep MVP tight — the Phase 2 backlog below is a parking lot, not a queue; nothing there is built until explicitly promoted (foundation §4-7, §8).**
 
@@ -97,11 +97,17 @@
 **Depends on:** Phase 4 (travel proof), Phase 5 (money-in + checklist), Phase 6 (car pool presence).
 **Done when (verified):** ✅ `tsc` passes · ✅ web + iOS + Android bundles compile · ✅ headless client boots clean. Live: a member who's completed travel proof + both payments shows the **verified badge** with the **one-time celebration**; others show partial progress — verified by the operator against their Supabase project.
 
-## Phase 8 — Local ideas + Activity docs ⬜
+## Phase 8 — Local ideas + Activity docs ✅ (2026-07-22)
 **Goal:** inspiration + mixed-media documentation (foundation §6-8/9).
-**Deliverables:** once location is set/verified, pull **nearby events + things-to-do** from a places/events API (provider TBD, foundation §12-6) — fetched on demand, savable as `activities(source='local_idea')`; create `activities`; document with `activity_media` (**photo/text/video/other**) → `trip-media`.
+**Deliverables (built):**
+- **Migration** `20260722140001_trip_media.sql`: **private `trip-media` bucket** (photos + videos, 50 MB cap) + storage RLS — upload to your own `<trip_id>/<user_id>/` folder, **read for ANY trip member** (media is shared trip-wide, unlike itineraries), update/delete uploader-only. Adds **`activities.url`** (a link, e.g. from a local idea). The `activities`/`activity_media` tables + RLS already existed (Phase 1) — no policy changes.
+- **`nearby-ideas` edge function** (Deno): membership-checked; resolves trip coords (**geocodes the destination on demand** if missing, foundation §9); returns a **normalized** `{ name, category, description, address, lat, lng, rating, url, image, source }` list backed by **Google Places** (`GOOGLE_PLACES_API_KEY` in function secrets — never client). Photos resolved to **keyless** CDN URLs server-side (redirect follow) so the key never leaks. A `SOURCES` array is the seam for adding Ticketmaster/Eventbrite later behind the same shape. **Missing key → `{configured:false}`** and the UI degrades gracefully.
+- **Local ideas** on trip detail (gated on a resolved destination): cards grouped by category (food/outdoors/nightlife/attractions/events) with image, rating, **distance from the destination**, open/directions link, and **"Add to activities"** (prefills a new activity from the idea). Results **cached per trip** (module cache) so views don't re-hit the API. Tasteful "add a destination" / "not set up" / geocode-on-demand states.
+- **Activities** (replaces the placeholder): list (title/date/location); any member creates one (manual or from an idea); tapping opens the **activity detail** route (`app/activity/[id]`).
+- **Activity documentation (mixed media):** upload **photos + videos** (expo-image-picker library multi-select / camera; expo-video player) with **per-item captions** → private `trip-media` → `activity_media` rows (photo|video|other). **Size guardrail (50 MB) with a friendly per-item message**, per-item upload progress, **signed URLs** for viewing, delete-your-own. Any member views all media for the trip.
+- Hooks `useNearbyIdeas` / `useActivities` / `useActivityMedia`; loading/empty/error throughout. *(Reconciliations: `activities` has no `source` column — an idea-sourced activity just keeps the prefilled fields + `url`; `media_type` is photo|video|other, no `text` — captions are stored on each media row.)*
 **Depends on:** Phase 2 (location). Independent of 4–7.
-**Done when:** members see nearby ideas, create activities, and attach mixed media; all trip-scoped/RLS-gated.
+**Done when (verified):** ✅ `tsc` passes · ✅ web + iOS + Android bundles compile · ✅ headless browser boots the client bundle (incl. expo-video) without runtime errors. Live: on a trip with a real destination, members see nearby ideas, turn one into an activity, and upload a photo + a short video with captions that everyone on the trip can view — verified by the operator after `db push`, `functions deploy nearby-ideas`, and `secrets set GOOGLE_PLACES_API_KEY`.
 
 ## Phase 9 — Post-trip recap (collages + stats) ⬜
 **Goal:** the shareable payoff — **collages + stats only** (→ D9; montage is Phase 2).

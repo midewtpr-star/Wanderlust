@@ -268,6 +268,8 @@ Sub-events + mixed-media documentation. Local ideas (below) can seed activities.
 | `body` | text null | For `text`. |
 | `created_at` | timestamptz | |
 
+> **As built (Phase 8).** `activity_media` shipped with `media_type` enum **photo|video|other** (no `text`), a **`url`** column (the private `trip-media` storage path — not `file_path`), and **`caption`** (no `body`). `activities` gained a **`url`** column (Phase 8) and uses **`scheduled_for`** (single timestamptz) with **no `source`/`starts_at`/`ends_at`** — an activity created from a local idea just carries the prefilled title/location/url. **`trip-media`** is a **private** bucket: upload to your own `<trip_id>/<user_id>/` folder, **read by any trip member** (shared trip-wide), delete uploader-only; clients read via **signed URLs**. Local ideas are fetched on demand by the **`nearby-ideas`** edge function (Google Places, key server-only) and are **not persisted** unless saved as an activity (foundation §10).
+
 *Media size/type/count limits are open (foundation §12-9).*
 
 ## trip_recap  +  recap_stats  (MVP: collages + stats — D9)
