@@ -322,9 +322,9 @@ Nearby events + things-to-do are **fetched on demand from an external places/eve
 - **push_tokens:** self-only.
 
 **Storage buckets:**
-- `posters` — trip-scoped read (members), write by host/admins.
-- `flight-itineraries` — **private**; path namespaced `trip_id/user_id`; uploader + admins only. Never logged (D6).
-- `trip-media` — trip-scoped read for activity media + recap collages.
+- `trip-covers` — **public read**, authenticated write (uploaders manage their own objects); trip cover images. *(Built in Phase 2; was named `posters` in earlier drafts.)*
+- `flight-itineraries` — **private**; path namespaced `trip_id/user_id`; uploader + admins only. Never logged (D6). *(Phase 4.)*
+- `trip-media` — trip-scoped read for activity media + recap collages. *(Phase 8.)*
 
 ---
 

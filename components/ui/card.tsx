@@ -1,0 +1,12 @@
+import { View, type ViewProps } from "react-native";
+import { cn } from "@/lib/utils";
+
+// Simple card surface (NativeWind). D1.
+export function Card({ className, ...props }: ViewProps & { className?: string }) {
+  return (
+    <View
+      className={cn("rounded-xl border border-border bg-card p-4", className)}
+      {...props}
+    />
+  );
+}

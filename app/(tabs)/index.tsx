@@ -1,35 +1,70 @@
-import { View } from "react-native";
-import { useRouter } from "expo-router";
-import { Screen } from "@/components/screen";
-import { LogoSlot } from "@/components/logo-slot";
-import { Button } from "@/components/ui/button";
+import { useCallback } from "react";
+import { View, FlatList, RefreshControl } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter, useFocusEffect } from "expo-router";
 import { Text } from "@/components/ui/text";
-import { useAuth } from "@/lib/auth-provider";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { TripCard } from "@/components/trip/trip-card";
+import { useTrips } from "@/hooks/use-trips";
 
-// Trips list (placeholder — build-plan Phase 2).
 export default function TripsScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user } = useAuth();
-  const who = user?.email ?? user?.phone ?? null;
+  const { trips, loading, refreshing, error, reload, refresh } = useTrips();
+
+  // Reload on tab focus so a newly created trip appears.
+  useFocusEffect(
+    useCallback(() => {
+      reload();
+    }, [reload]),
+  );
+
   return (
-    <Screen
-      title="Trips"
-      subtitle="Your trips will show up here. Placeholder — build-plan Phase 2."
-    >
-      <LogoSlot className="mb-2" />
-      {who ? <Text variant="muted">Signed in as {who}</Text> : null}
-      <View className="w-full max-w-sm gap-3">
-        <Button
-          label="Open a sample trip"
-          onPress={() => router.push("/trip/demo")}
-        />
-        <Button
-          label="Create a trip"
-          variant="secondary"
-          onPress={() => router.push("/create")}
-        />
+    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+      <View className="px-6 pb-2 pt-4">
+        <Text variant="title">Trips</Text>
       </View>
-      <Text variant="muted">AppName · scaffold</Text>
-    </Screen>
+
+      {loading ? (
+        <View className="gap-4 p-6">
+          {[0, 1, 2].map((i) => (
+            <View key={i} className="overflow-hidden rounded-xl border border-border">
+              <Skeleton height={140} radius={0} />
+              <View className="gap-2 p-4">
+                <Skeleton height={18} width="60%" />
+                <Skeleton height={14} width="40%" />
+              </View>
+            </View>
+          ))}
+        </View>
+      ) : error ? (
+        <View className="flex-1 items-center justify-center gap-3 p-6">
+          <Text className="text-destructive">Couldn&apos;t load trips.</Text>
+          <Text variant="muted" className="text-center">
+            {error}
+          </Text>
+          <Button label="Try again" variant="outline" onPress={reload} />
+        </View>
+      ) : trips.length === 0 ? (
+        <View className="flex-1 items-center justify-center gap-3 p-6">
+          <Text variant="heading">No trips yet</Text>
+          <Text variant="muted" className="text-center">
+            Create your first trip and invite the group.
+          </Text>
+          <Button label="Create a trip" onPress={() => router.push("/create")} />
+        </View>
+      ) : (
+        <FlatList
+          data={trips}
+          keyExtractor={(t) => t.id}
+          renderItem={({ item }) => <TripCard trip={item} />}
+          contentContainerClassName="gap-4 p-6"
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={refresh} />
+          }
+        />
+      )}
+    </View>
   );
 }

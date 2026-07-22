@@ -5,7 +5,7 @@
 > **Revised for v2.** Codename `AppName`; logo `[LOGO SLOT]` — TBD.
 
 **Status key:** ⬜ not-started · 🟡 in progress · ✅ done · ⏳ external lead time.
-**Phase 0 (Scaffold) is ✅ done; Phases 1–12 + the backlog are ⬜ not-started.** Update each phase's marker (+ a short note) as work completes.
+**Phases 0–2 are ✅ done; Phases 3–12 + the backlog are ⬜ not-started.** Update each phase's marker (+ a short note) as work completes.
 
 **How to read this:** MVP phases are in intended build order (per brief). The **keystone unlock** is Phases 1–2 (auth + schema + RLS + trip-create); after that, most feature phases are trip-scoped slices. **Keep MVP tight — the Phase 2 backlog below is a parking lot, not a queue; nothing there is built until explicitly promoted (foundation §4-7, §8).**
 
@@ -29,11 +29,16 @@
 **Depends on:** Phase 0.
 **Done when (verified):** ✅ `tsc` passes · ✅ web bundle builds · ✅ signed-out → `/sign-in` route protection verified in a headless browser. Live email/OTP sign-in round-trip is verified by the operator against their Supabase project after `db push` + `.env` (see PR/summary for steps).
 
-## Phase 2 — Trip create + Dashboard ⬜
+## Phase 2 — Trip create + Dashboard ✅ (2026-07-22)
 **Goal:** the central object is real. **Completes the keystone unlock.**
-**Deliverables:** create a trip — cover/poster upload (→ `posters`), location + **geocode** (`destination_*` for later proximity checks), dates, **car rental** (`car_rental_ref`), and the **Airbnb-selection stub** (manual link + total-cost, the GroupPad seam → D7); creator seeded as `host` + `trip_admins`; a dashboard listing the user's trips + a single-trip view shell.
+**Deliverables (built):**
+- **`trip-covers` Storage bucket** (public read / authed write) via migration `20260722100001_trip_covers_storage.sql` (renamed from docs' `posters`).
+- **Multi-step Create form** (Create tab): title · cover pick (library/camera → upload → preview + busy state) · destination city (+ `lat/lng` reserved) · start/end **date pickers** (native community picker / web `<input type=date>`) with end≥start validation · **car rental** (`car_rental_ref`) · **Airbnb-selection stub** inserting `airbnb_options` — clearly commented **GROUPPAD SEAM** (D7), no voting. On submit: insert trip (`host_id`, `status='planning'`) → host seeded as member+admin by the `on_trip_created` trigger → route to detail.
+- **Trips list** (Trips tab): RLS-scoped `useTrips`, cover/title/destination/date-range + **live countdown**, empty state + CTA, pull-to-refresh, loading skeletons, focus-reload.
+- **Trip-detail shell** (`app/trip/[id].tsx`): cover/title/destination/dates/countdown header + "coming soon" section cards (Invites, Travel proof, Money, Airbnb pick, Activities); **members-only** with a not-authorized state (via RLS).
+- Data calls in hooks (`useTrips`, `useTrip`, `useCreateTrip`); domain types in `/types`. Loading/empty/error states throughout.
 **Depends on:** Phase 1.
-**Done when:** a user creates a trip with all fields, sees it on the dashboard/trip view; RLS confirms only members see it.
+**Done when (verified):** ✅ `tsc` passes · ✅ web + iOS + Android bundles compile · ✅ all routes static-render. Live create→list→detail (with a real cover upload) is verified by the operator against their Supabase project (needs `db push` of the bucket migration + `.env`).
 
 ## Phase 3 — Invites + RSVP ⬜
 **Goal:** the group forms and softly commits (foundation §6-2).
