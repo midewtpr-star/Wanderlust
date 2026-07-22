@@ -129,6 +129,8 @@ Both proof types in one table; flight-only columns are nullable.
 
 *Driving rows carry only `type='driving'`, `verified=true`. A verified proof is the `travel_proof` step (foundation §5). AI extraction + geocoding run behind a server/edge boundary (foundation §9).*
 
+> **As built (Phase 4 — source of truth is the migrations).** The shipped `travel_proofs` keeps a leaner column set than this sketch: `file_url` (not `file_path`), `arrival_city` + `travel_dates` (text), `verified_by` (admin override), and `note` (driving). The finer-grained sketch columns (`source`, `extraction_status`, `arrival_lat/lng`, `proximity_ok`, `name_match`, `overridden_by`, `extracted_dates`) were **not** materialized — proximity/name/date results are computed transiently in the **`verify-flight` edge function** and only the verdict is persisted (`verified` + extracted fields). A **unique `(trip_id, user_id)`** index makes one proof per member per trip upsertable. Two SECURITY DEFINER RPCs back this phase: **`get_travel_status(trip_id)`** exposes non-PII per-member status (`user_id, type, verified`) to any trip member for the status wall (D6 keeps the itinerary PII owner+admin only), and **`admin_override_travel_proof(trip_id, user_id)`** lets an admin manually verify (also marks `member_steps`, which is otherwise self-write-only). Airport lookup uses an **`airports`** reference table (iata PK → city/coords, seeded from OurAirports); the trip destination is geocoded on demand (Nominatim). The AI provider is **Anthropic** (a vision model via the Messages API), key held only in the edge function's secrets.*
+
 ## airbnb_options  +  votes  — **GroupPad seam (D7)**
 MVP: manual options + one group vote; an admin locks `trips.airbnb_pick`.
 

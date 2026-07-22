@@ -90,3 +90,48 @@ export type MemberWithRsvp = {
   avatar_url: string | null;
   status: RsvpStatus | null; // null = invited, not yet responded
 };
+
+// --- Phase 4: travel proof ---
+
+export type ProofType = "flight" | "driving";
+
+// A row of `travel_proofs` (itinerary PII — owner + admins only, D6).
+export type TravelProof = {
+  id: ID;
+  trip_id: ID;
+  user_id: ID;
+  type: ProofType;
+  passenger_name: string | null;
+  confirmation_number: string | null;
+  arrival_airport: string | null;
+  arrival_city: string | null;
+  travel_dates: string | null;
+  file_url: string | null; // private storage PATH (sign to view)
+  note: string | null;
+  verified: boolean;
+  verified_at: string | null;
+  verified_by: ID | null;
+  created_at: string;
+};
+
+// Non-PII per-member status (from the get_travel_status RPC) for the status wall.
+export type TravelStatusRow = { user_id: ID; type: ProofType; verified: boolean };
+
+// The verify-flight edge function's response.
+export type FlightVerdict = {
+  ok: boolean;
+  status: "verified" | "failed" | "error";
+  reason: string | null;
+  extracted: {
+    passenger_name: string | null;
+    confirmation_number: string | null;
+    arrival_airport_iata: string | null;
+    arrival_city: string | null;
+    travel_dates: string | null;
+  } | null;
+  distance_miles: number | null;
+  resolved_city: string | null;
+  name_match: boolean;
+  date_in_window: boolean | null;
+  warnings: string[];
+};

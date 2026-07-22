@@ -5,7 +5,7 @@
 > **Revised for v2.** Codename `AppName`; logo `[LOGO SLOT]` — TBD.
 
 **Status key:** ⬜ not-started · 🟡 in progress · ✅ done · ⏳ external lead time.
-**Phases 0–3 are ✅ done; Phases 4–12 + the backlog are ⬜ not-started.** Update each phase's marker (+ a short note) as work completes.
+**Phases 0–4 are ✅ done; Phases 5–12 + the backlog are ⬜ not-started.** Update each phase's marker (+ a short note) as work completes.
 
 **How to read this:** MVP phases are in intended build order (per brief). The **keystone unlock** is Phases 1–2 (auth + schema + RLS + trip-create); after that, most feature phases are trip-scoped slices. **Keep MVP tight — the Phase 2 backlog below is a parking lot, not a queue; nothing there is built until explicitly promoted (foundation §4-7, §8).**
 
@@ -52,13 +52,15 @@
 **Depends on:** Phase 2.
 **Done when (verified):** ✅ `tsc` passes · ✅ web + iOS + Android bundles compile · ✅ headless browser confirms `/join/[code]` is public (no redirect) while `/` still redirects to sign-in. Live A→invite→B-join→RSVP flow is verified by the operator against their Supabase project (after `db push`).
 
-## Phase 4 — Travel proof (driving first, then AI flight verify) ⬜
+## Phase 4 — Travel proof (driving first, then AI flight verify) ✅ (2026-07-22)
 **Goal:** the **hard confirm** (foundation §11, → D6). Build the simple path first.
-**Deliverables:**
-- **4a — Driving:** self-declared driving confirmation → `travel_proofs(type='driving', verified=true)`. First-class (foundation §2).
-- **4b — Flight AI verify:** upload/photograph itinerary (expo-camera/-image-picker) → **private** `flight-itineraries` → **AI/vision extraction** `{passenger_name, confirmation_number, arrival_airport, dates}` (server/edge boundary) → **geocode** arrival airport → **proximity check** vs `trips.destination_*` → **name match** vs `profiles.full_name` with **admin override** for mismatches → **"Flight itinerary verified" animation** on success; handled `failed`/`mismatch` states.
-**Depends on:** Phase 2 (geocoded destination), Phase 3 (members). ⏳ AI provider selection (foundation §12-1).
-**Done when:** a road-tripper verifies via driving; a flyer uploads an itinerary and gets verified through extraction→proximity→name-match (with the override path working); failures degrade gracefully. Itinerary files stay private (owner + admins).
+**Deliverables (built):**
+- **Migration** `20260722120001_travel_proof.sql`: **private `flight-itineraries` bucket** (never publicly readable) + storage RLS restricting reads to **uploader + trip admins** (path `<trip_id>/<user_id>/…`, D6); **`airports`** reference table (iata PK → city/coords) + RLS; `travel_proofs.note` + a **unique (trip_id, user_id)** index (one proof per member, upsertable); **`get_travel_status()`** SECURITY DEFINER (non-PII per-member status for the wall) and **`admin_override_travel_proof()`** SECURITY DEFINER (admin manual verify — needed because member_steps is self-only).
+- **4a — Driving (built first):** self-declared "I'm driving / carpooling" + optional note → upsert `travel_proofs(type='driving', verified=true)` + mark `member_steps('travel_proof')` — **instant**, client-side (foundation §2).
+- **4b — Flight AI verify:** upload (image/PDF via `expo-document-picker`) or photograph (`expo-image-picker` camera) → **private** `flight-itineraries` → **`verify-flight` edge function** (Deno): downloads with the service role, calls the **Anthropic Messages API (a vision model)** with **forced tool-use** for structured `{passenger_name, confirmation_number, arrival_airport_iata, arrival_city, travel_dates}` — **`ANTHROPIC_API_KEY` lives only in function secrets** → resolve IATA in `airports` (else geocode city) → **geocode the trip destination on demand** if missing (Nominatim; Google-key TODO noted) → **haversine proximity**, PASS within **`NEARBY_MILES = 100`** (tunable) → **fuzzy name-match** vs `profiles.full_name` (soft — warns, never hard-fails) → **dates** warn if outside window → upsert proof (verified on pass) + mark step. **"Flight itinerary verified" animation** (react-native-reanimated checkmark + confetti) on pass; specific reason (wrong city / unreadable / not an itinerary) + re-upload + **admin override** on fail.
+- **Status wall:** per-member ✈️ flight-verified / 🚗 driving-confirmed / ⏳ pending (via `get_travel_status`), admins get inline "Verify" override. Own itinerary viewable via **signed URL** (private bucket). Seed script `scripts/seed-airports.mjs` (OurAirports). Hooks `useTravelProof` / `useTravelStatus`; types in `/types`; loading/error throughout.
+**Depends on:** Phase 2 (destination), Phase 3 (members). AI provider = **Anthropic** (foundation §12-1).
+**Done when (verified):** ✅ `tsc` passes · ✅ web + iOS + Android bundles compile · ✅ headless browser boots the client bundle (reanimated/worklets init) without runtime errors. Live driving-instant-confirm + real-itinerary verify/animate + wrong-city fail + admin override are verified by the operator against their Supabase project after `db push`, `functions deploy verify-flight`, `secrets set ANTHROPIC_API_KEY`, and the airports seed (see PR/summary for exact steps).
 
 ## Phase 5 — Money ledger (pools + personal safe) ⬜
 **Goal:** the full money UX as a **ledger, no custody** (→ D3, D5).

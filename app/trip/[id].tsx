@@ -10,6 +10,7 @@ import { Countdown } from "@/components/trip/countdown";
 import { RsvpControl } from "@/components/trip/rsvp-control";
 import { RsvpWall } from "@/components/trip/rsvp-wall";
 import { InviteModal } from "@/components/trip/invite-modal";
+import { TravelProofCard } from "@/components/trip/travel-proof-card";
 import { formatDateRange } from "@/lib/dates";
 import { useAuth } from "@/lib/auth-provider";
 import { useTrip } from "@/hooks/use-trip";
@@ -20,7 +21,6 @@ import type { RsvpStatus } from "@/types";
 
 // Remaining dashboard sections (filled in by later phases).
 const SECTIONS = [
-  { key: "travel", title: "Travel proof", blurb: "Confirm who's really coming — flight or driving." },
   { key: "money", title: "Money", blurb: "Track the Airbnb + car pools and your safe." },
   { key: "airbnb", title: "Airbnb pick", blurb: "Add options, vote, and lock the winner." },
   { key: "activities", title: "Activities", blurb: "Plan things to do and document the trip." },
@@ -36,6 +36,11 @@ export default function TripDetailScreen() {
   const rsvp = useRsvp(id, user?.id);
   const invite = useInvite(id);
   const [inviteOpen, setInviteOpen] = useState(false);
+
+  // Admin = host or admin on the roster. The server (SECURITY DEFINER RPCs +
+  // RLS) is the real gate; this only decides what to show.
+  const me = members.members.find((m) => m.user_id === user?.id);
+  const isAdmin = me?.role === "host" || me?.role === "admin";
 
   async function onPickRsvp(next: RsvpStatus) {
     if (!user) return;
@@ -127,6 +132,18 @@ export default function TripDetailScreen() {
               <RsvpWall groups={members.groups} />
             )}
           </View>
+
+          {user ? (
+            <View className="gap-3 px-6 pb-4">
+              <Text variant="heading">Travel proof</Text>
+              <TravelProofCard
+                tripId={trip.id}
+                userId={user.id}
+                isAdmin={isAdmin}
+                members={members.members}
+              />
+            </View>
+          ) : null}
 
           <View className="gap-3 px-6">
             <Text variant="heading">More</Text>
