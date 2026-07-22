@@ -15,6 +15,14 @@ const config: ExpoConfig = {
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
+  // Deep-link scheme (D2). Invite links resolve to app/join/[code]:
+  //   native  → appname://join/<code>
+  //   web     → <web-origin>/join/<code>
+  // Expo Router derives the linking config from the file routes + this scheme.
+  // TODO (production universal/app links): add iOS `ios.associatedDomains`
+  //   (applinks:yourdomain.com) + Android `android.intentFilters` for
+  //   https://yourdomain.com/join/* and host an AASA + assetlinks.json, so the
+  //   web URL opens the installed app directly. Custom scheme + web URL is fine for now.
   scheme: "appname",
   userInterfaceStyle: "automatic",
   ios: {
@@ -81,6 +89,9 @@ const config: ExpoConfig = {
     // Read in lib/supabase.ts via expo-constants (falls back to process.env).
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
+    // Optional deployed web origin used to build shareable invite links on native
+    // (e.g. https://appname.vercel.app). On web we fall back to window.location.origin.
+    webUrl: process.env.EXPO_PUBLIC_WEB_URL,
   },
 };
 

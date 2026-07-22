@@ -77,19 +77,18 @@ Membership (all participants, incl. admins & host).
 | — | UNIQUE `(trip_id, user_id)` | One membership per user per trip. |
 
 ## invites
-Shareable invite link(s) (foundation §6-2). Opening a valid invite creates a `trip_members` row.
+Shareable invite link(s) (foundation §6-2). *(Built Phase 3; column names below match the shipped schema.)*
 
 | Column | Type | Notes |
 |---|---|---|
 | `id` | uuid PK | |
 | `trip_id` | uuid FK → trips(id) | |
-| `token` | text UNIQUE | Unguessable link token; deep-links into app/web. |
-| `created_by` | uuid FK → profiles(id) | |
-| `role_on_accept` | text | default `member`. |
-| `max_uses` | int null | null = unlimited (MVP: one per-trip token). |
-| `uses` | int | default 0. |
+| `code` | text UNIQUE | Unguessable code (DB default). Deep-links: `appname://join/<code>` / `<web>/join/<code>`. |
+| `invited_by` | uuid FK → profiles(id) | Any **member** may create an invite (Phase 3 loosened this from admin-only). |
 | `expires_at` | timestamptz null | null = no expiry. |
 | `created_at` | timestamptz | |
+
+*Read/join via SECURITY DEFINER RPCs: `trip_preview(code)` returns minimal info (cover, title, dates, going-count/list) to a signed-out invitee; `join_trip(code)` inserts the caller's `trip_members` row (role `member`), bypassing the admin-only insert policy.*
 
 ## rsvps
 The **soft** commitment (foundation §6-2).

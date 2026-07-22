@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { View, ScrollView, ActivityIndicator } from "react-native";
 import { Image } from "expo-image";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
@@ -6,12 +7,19 @@ import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Countdown } from "@/components/trip/countdown";
+import { RsvpControl } from "@/components/trip/rsvp-control";
+import { RsvpWall } from "@/components/trip/rsvp-wall";
+import { InviteModal } from "@/components/trip/invite-modal";
 import { formatDateRange } from "@/lib/dates";
+import { useAuth } from "@/lib/auth-provider";
 import { useTrip } from "@/hooks/use-trip";
+import { useTripMembers } from "@/hooks/use-trip-members";
+import { useRsvp } from "@/hooks/use-rsvp";
+import { useInvite } from "@/hooks/use-invite";
+import type { RsvpStatus } from "@/types";
 
-// The trip dashboard shell — sections filled in by later phases.
+// Remaining dashboard sections (filled in by later phases).
 const SECTIONS = [
-  { key: "invites", title: "Invites", blurb: "Share a link and gather RSVPs." },
   { key: "travel", title: "Travel proof", blurb: "Confirm who's really coming — flight or driving." },
   { key: "money", title: "Money", blurb: "Track the Airbnb + car pools and your safe." },
   { key: "airbnb", title: "Airbnb pick", blurb: "Add options, vote, and lock the winner." },
@@ -22,7 +30,25 @@ export default function TripDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { user } = useAuth();
   const { trip, loading, error, notAuthorized } = useTrip(id);
+  const members = useTripMembers(id);
+  const rsvp = useRsvp(id, user?.id);
+  const invite = useInvite(id);
+  const [inviteOpen, setInviteOpen] = useState(false);
+
+  async function onPickRsvp(next: RsvpStatus) {
+    if (!user) return;
+    members.setLocalRsvp(user.id, next); // optimistic wall update
+    await rsvp.setStatus(next); // optimistic control + persist
+    members.refresh(); // reconcile with the server
+  }
+
+  async function openInvite() {
+    if (!user) return;
+    setInviteOpen(true);
+    await invite.ensureInvite(user.id);
+  }
 
   return (
     <>
@@ -77,8 +103,33 @@ export default function TripDetailScreen() {
             </Card>
           </View>
 
+          <View className="gap-2 px-6 pb-4">
+            <Text variant="heading">Your RSVP</Text>
+            <RsvpControl value={rsvp.status} onChange={onPickRsvp} disabled={rsvp.saving} />
+          </View>
+
+          <View className="gap-3 px-6 pb-4">
+            <View className="flex-row items-center justify-between">
+              <Text variant="heading">Who&apos;s coming</Text>
+              <Button label="Invite people" size="sm" onPress={openInvite} />
+            </View>
+            {members.loading ? (
+              <Card>
+                <View className="items-center py-4">
+                  <ActivityIndicator />
+                </View>
+              </Card>
+            ) : members.error ? (
+              <Card>
+                <Text className="text-destructive">{members.error}</Text>
+              </Card>
+            ) : (
+              <RsvpWall groups={members.groups} />
+            )}
+          </View>
+
           <View className="gap-3 px-6">
-            <Text variant="heading">Trip dashboard</Text>
+            <Text variant="heading">More</Text>
             {SECTIONS.map((s) => (
               <Card key={s.key} className="flex-row items-center justify-between">
                 <View className="flex-1 pr-3">
@@ -97,6 +148,16 @@ export default function TripDetailScreen() {
           </View>
         </ScrollView>
       ) : null}
+
+      <InviteModal
+        visible={inviteOpen}
+        onClose={() => setInviteOpen(false)}
+        loading={invite.loading}
+        error={invite.error}
+        webUrl={invite.links?.webUrl ?? null}
+        nativeUrl={invite.links?.nativeUrl ?? null}
+        shareUrl={invite.links?.shareUrl ?? null}
+      />
     </>
   );
 }

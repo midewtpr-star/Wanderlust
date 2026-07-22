@@ -5,7 +5,7 @@
 > **Revised for v2.** Codename `AppName`; logo `[LOGO SLOT]` — TBD.
 
 **Status key:** ⬜ not-started · 🟡 in progress · ✅ done · ⏳ external lead time.
-**Phases 0–2 are ✅ done; Phases 3–12 + the backlog are ⬜ not-started.** Update each phase's marker (+ a short note) as work completes.
+**Phases 0–3 are ✅ done; Phases 4–12 + the backlog are ⬜ not-started.** Update each phase's marker (+ a short note) as work completes.
 
 **How to read this:** MVP phases are in intended build order (per brief). The **keystone unlock** is Phases 1–2 (auth + schema + RLS + trip-create); after that, most feature phases are trip-scoped slices. **Keep MVP tight — the Phase 2 backlog below is a parking lot, not a queue; nothing there is built until explicitly promoted (foundation §4-7, §8).**
 
@@ -40,11 +40,17 @@
 **Depends on:** Phase 1.
 **Done when (verified):** ✅ `tsc` passes · ✅ web + iOS + Android bundles compile · ✅ all routes static-render. Live create→list→detail (with a real cover upload) is verified by the operator against their Supabase project (needs `db push` of the bucket migration + `.env`).
 
-## Phase 3 — Invites + RSVP ⬜
+## Phase 3 — Invites + RSVP ✅ (2026-07-22)
 **Goal:** the group forms and softly commits (foundation §6-2).
-**Deliverables:** generate + share a Partiful-style invite link (deep-links into app/web); opening a valid invite joins as `member`; **RSVP** `going`/`maybe`/`not` (`rsvps`).
+**Deliverables (built):**
+- **Deep linking:** scheme `appname://` (already set) + Expo Router → `app/join/[code]`; public route (viewable signed-out). Links: `appname://join/<code>` (native) and `<web-origin>/join/<code>` (web). Migration `20260722110001_invites_rsvp.sql`: members may create invites; `trip_preview(code)` extended (cover + going list); `join_trip(code)` SECURITY DEFINER self-join. *(TODO in app.config.ts: production universal/app links.)*
+- **Generate + share** (trip detail, any member): "Invite people" → create/reuse an `invites` row → share sheet (RN `Share`) + copy (`expo-clipboard`), shows web + native links.
+- **Join flow** (`app/join/[code]`): Partiful-style preview (cover, title, dates, countdown, who's going) via the public RPC; invalid/expired error state; "Join this trip" → signed-out routes to `(auth)` preserving the code (`?redirect=`) and returns, signed-in calls `join_trip` then prompts RSVP.
+- **RSVP:** going/maybe/not upsert into `rsvps` (soft confirm — travel proof is later); change anytime; **optimistic** updates.
+- **RSVP wall** (replaces the Invites card): members grouped by status w/ counts + avatars, "Going" prominent, "invited · no reply" group.
+- Hooks `useInvite` / `useJoinTrip` / `useRsvp` / `useTripMembers` / `useTripPreview`; types in `/types`; loading/empty/error throughout.
 **Depends on:** Phase 2.
-**Done when:** an invited user joins via link and RSVPs; membership + RSVP are RLS-gated.
+**Done when (verified):** ✅ `tsc` passes · ✅ web + iOS + Android bundles compile · ✅ headless browser confirms `/join/[code]` is public (no redirect) while `/` still redirects to sign-in. Live A→invite→B-join→RSVP flow is verified by the operator against their Supabase project (after `db push`).
 
 ## Phase 4 — Travel proof (driving first, then AI flight verify) ⬜
 **Goal:** the **hard confirm** (foundation §11, → D6). Build the simple path first.

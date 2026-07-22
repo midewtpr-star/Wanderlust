@@ -1,23 +1,38 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { View, ActivityIndicator, Pressable } from "react-native";
-import { Stack } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { Screen } from "@/components/screen";
 import { LogoSlot } from "@/components/logo-slot";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Text } from "@/components/ui/text";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/lib/auth-provider";
 
 // Phone-first (decisions.md D4) with a working email fallback.
-// On success, onAuthStateChange in lib/auth-provider flips the session and
-// app/_layout redirects into (tabs). No manual navigation needed here.
+// On success, onAuthStateChange flips the session; the effect below routes to the
+// ?redirect= target (e.g. back to a /join/<code> invite) or home.
 type Mode = "phone" | "email";
 
 export default function SignInScreen() {
+  const router = useRouter();
+  const { session } = useAuth();
+  const params = useLocalSearchParams<{ redirect?: string }>();
+
   const [mode, setMode] = useState<Mode>("phone");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+
+  // Once signed in, leave the auth flow — honoring a deep-link redirect if present.
+  useEffect(() => {
+    if (!session) return;
+    const target =
+      typeof params.redirect === "string" && params.redirect
+        ? params.redirect
+        : "/";
+    router.replace(target);
+  }, [session, params.redirect, router]);
 
   // phone
   const [phone, setPhone] = useState("");

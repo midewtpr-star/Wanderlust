@@ -54,3 +54,39 @@ export type CreateTripInput = {
   car_rental_ref?: string | null;
   airbnb_options: AirbnbOptionInput[];
 };
+
+// --- Phase 3: invites + RSVP ---
+
+export type RsvpStatus = "going" | "maybe" | "not";
+
+// A row of `invites`.
+export type Invite = {
+  id: ID;
+  trip_id: ID;
+  code: string;
+  invited_by: ID | null;
+  expires_at: string | null;
+  created_at: string;
+};
+
+// Minimal invite preview (from the trip_preview RPC) — readable while signed out.
+export type GoingMember = { display_name: string | null; avatar_url: string | null };
+export type TripPreview = {
+  trip_id: ID;
+  title: string;
+  cover_url: string | null;
+  location_city: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  going_count: number;
+  going_members: GoingMember[];
+};
+
+// A trip member joined with their profile + current RSVP (for the RSVP wall).
+export type MemberWithRsvp = {
+  user_id: ID;
+  role: MemberRole;
+  display_name: string | null;
+  avatar_url: string | null;
+  status: RsvpStatus | null; // null = invited, not yet responded
+};
