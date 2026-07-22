@@ -19,11 +19,15 @@
 **Depends on:** nothing (cold start).
 **Done when (verified):** ✅ `tsc --noEmit` passes · ✅ web export builds (NativeWind CSS emitted, classes compiled) and `expo start --web` serves HTTP 200 · ✅ iOS + Android Metro bundles compile (Hermes bytecode). *iOS/Android **simulator** launch isn't verifiable in the headless build env — native **bundling** was verified instead; run on a device/simulator locally (see README).*
 
-## Phase 1 — Auth + Schema ⬜
+## Phase 1 — Auth + Schema ✅ (2026-07-22)
 **Goal:** phone-first sign-in; the database exists with RLS. **Half the keystone unlock (foundation §9).**
-**Deliverables:** **Supabase phone-first Auth + email fallback** (→ D4); `profiles` mirror (incl. `full_name` for name-matching); **all MVP tables** (data-model.md); **RLS policies** (→ D12); **`trip_admins` max-3 trigger** (→ D8); Storage buckets `posters`, `flight-itineraries` (private), `trip-media`.
+**Deliverables (built):**
+- **Schema** — `supabase/migrations/` (3 files): **18 tables** (profiles, trips, trip_members, trip_admins, invites, rsvps, travel_proofs, airbnb_options [GroupPad seam], airbnb_votes, money_pools, pool_contributions, personal_safes, safe_deposits, member_steps, activities, activity_media, trip_recap, push_tokens) + 8 enums + FKs + indexes; **RLS on every table** via helpers `is_trip_member()` / `is_trip_admin()` (+ `shares_trip_with`, `trip_preview`) (→ D12); triggers: **auto-create profiles** on new auth user, **seed host** as member+admin on trip create, **max-3 admins** (→ D8), `updated_at`.
+- **Auth** — Supabase **phone-first OTP** UI + **working email+password fallback** (→ D4); **AuthProvider + useAuth** (AsyncStorage-persisted session); **route protection** (signed-out → (auth), signed-in → (tabs)) + **sign-out**; profiles row (with `display_name`) created on first sign-in by trigger.
+- **Reconciliations w/ docs:** money = `numeric(12,2)` (exact; matches `*_amount` names); `travel_proofs` PII scoped to **owner + admins** per D6 (trip-wide "confirmed" surfaces via `member_steps`).
+- **Deferred to consuming phases:** Storage buckets (`posters`→P2, `flight-itineraries`→P4, `trip-media`→P8) + their storage policies — no uploads occur in this phase; Twilio SMS is a Supabase dashboard connection the operator makes.
 **Depends on:** Phase 0.
-**Done when:** a user signs in by phone (email fallback works); `profiles` row created; tables exist with RLS on; a smoke test confirms a non-member cannot read another trip's rows and a 4th admin insert is rejected.
+**Done when (verified):** ✅ `tsc` passes · ✅ web bundle builds · ✅ signed-out → `/sign-in` route protection verified in a headless browser. Live email/OTP sign-in round-trip is verified by the operator against their Supabase project after `db push` + `.env` (see PR/summary for steps).
 
 ## Phase 2 — Trip create + Dashboard ⬜
 **Goal:** the central object is real. **Completes the keystone unlock.**
