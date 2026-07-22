@@ -1,154 +1,205 @@
 # AppName — Decisions
 
-> **What this governs:** the *why* behind each locked decision — context, the alternative we rejected, consequences, and what would make us revisit. This is the authoritative **rationale record**.
-> **Authority:** the *set* of locked decisions and product scope is owned by `foundation.md §7` — this file never introduces a decision that isn't indexed there, and if the two ever disagree on whether/what a decision is, **`foundation.md` wins**. This file wins on nothing; it *explains*.
-> Keyed by the same **D-numbers** as `foundation.md §7`. Codename `AppName`, logo `[LOGO SLOT]` — both TBD.
+> **What this governs:** the *why* behind each locked decision — context, the alternative we rejected, consequences, and what would make us revisit. The authoritative **rationale record**.
+> **Authority:** the *set* of locked decisions and product scope is owned by `foundation.md §7`. This file never introduces a decision not indexed there; if the two disagree on whether/what a decision is, **`foundation.md` wins**. This file *explains*, it doesn't override.
+> Keyed by the same **D-numbers** as `foundation.md §7`. **Revised for v2** (the full commit-and-plan brief). Codename `AppName`, logo `[LOGO SLOT]` — TBD.
 
-**Status key:** ✅ locked · 🕗 TBD · ⬜ planned · 🟡 in progress · **[LOCKED]** settled.
+**Status key:** ✅ locked · 🕗 TBD · **[LOCKED]** settled.
 
 ---
 
-## D1 — Locked stack: Expo + React Native + TypeScript ✅ [LOCKED]
+## D1 — Locked stack: Expo + React Native + TypeScript (+ AI vision + native modules) ✅ [LOCKED]
 
-**Context.** The product must ship to web, iOS, and Android for a 10–25 person friend group that spans every device (foundation §2, §4-1). We need one toolchain that reaches all three, plus file storage, auth, and a database, without standing up bespoke backend infra.
+**Context.** Ship to web, iOS, and Android for a 10–25 person group, with file storage, phone auth, an AI itinerary reader, and device camera/location/push.
 
-**Decision.** Lock the stack:
-- **Expo (latest stable SDK) + React Native + TypeScript** — the app runtime.
-- **Expo Router** — file-based routing that targets iOS, Android, and web from one route tree.
-- **NativeWind** — Tailwind CSS for React Native (utility styling shared across platforms).
-- **React Native Reusables** — shadcn-style component primitives built on NativeWind.
-- **Supabase** — Auth, Postgres, Storage (flight tickets + cover images), Row-Level Security.
-- **Native modules:** expo-image-picker / expo-camera (flight tickets), expo-notifications (push).
-- **Deploy:** EAS Build for iOS + Android; Expo web export hosted on Vercel; Supabase for backend.
+**Decision.** Lock:
+- **Expo (latest stable SDK) + React Native + TypeScript**; **Expo Router** (file-based, all three platforms).
+- **NativeWind** (Tailwind for RN) + **React Native Reusables** (shadcn-style primitives).
+- **Supabase** — Auth (phone-first, D4), Postgres + RLS, Storage (posters, flight itineraries, trip media).
+- **AI extraction for flight itineraries** — a vision/LLM step that reads an uploaded itinerary and returns structured `{passenger_name, confirmation_number, arrival_airport, dates}`; **geocode** the arrival airport to validate proximity to the trip city.
+- **Native modules:** expo-image-picker / expo-camera (itineraries + media), **expo-location** (miles/places for recap), expo-notifications (push).
+- **Deploy:** EAS Build (iOS + Android); Expo web export on Vercel; Supabase backend.
 
-**Rationale.** Expo + Expo Router is the least-friction way to get one codebase onto all three platforms. NativeWind + React Native Reusables gives a Tailwind/shadcn-style DX in React Native, so styling knowledge transfers and components stay consistent cross-platform. Supabase collapses auth + DB + storage + row-level security into one managed backend, which suits a solo/small build (foundation §0). The stack is also chosen to make the **future GroupPad adaptation** land cleanly in the same runtime (see D4).
+**Rationale.** One Expo/Expo Router toolchain genuinely targets all three platforms; NativeWind + React Native Reusables keep a Tailwind/shadcn DX; Supabase collapses auth + DB + storage + RLS for a small build. The AI + native pieces are exactly what the core loop (travel proof, recap) requires.
 
-**Rejected alternatives.**
-- *React + Vite web-only* (the original framing) — cut when the platform target became web + iOS + Android; a web-only stack can't ship native apps or use the device camera/push.
-- *React Native without Expo (bare RN)* — more native config burden, no unified web target, no EAS/Expo web export story.
-- *Separate native apps (Swift/Kotlin) + a web app* — three codebases for a solo-scale build; fragments the group and the code (foundation §4-1).
+**Rejected alternatives.** React + Vite web-only (can't ship native or use camera/location); bare React Native (more native config, no unified web); separate native + web codebases (fragmentation).
 
-**Consequences.** Some code is platform-divergent (camera capture, push registration, web export quirks); isolate it behind small wrappers (foundation §9). Web is a first-class export target but not every native capability maps to web 1:1 — notably push (see D5).
+**Consequences.** Platform-divergent code (camera, location, push, web export) lives behind wrappers (foundation §9). The AI vision step is an external dependency with cost/latency/accuracy to manage (foundation §10, §12-1).
 
-**Revisit triggers.** A hard requirement Expo can't meet (a native module outside Expo's support) → consider a config plugin or bare workflow before abandoning the stack.
+**Revisit triggers.** A required native capability Expo can't support → config plugin/bare workflow before abandoning the stack.
 
 ---
 
 ## D2 — One codebase for all three platforms ✅ [LOCKED]
 
-**Context.** The group spans iOS, Android, and desktop/web. The host needs everyone reachable in the same product.
+**Context.** The group spans iOS, Android, and desktop/web.
 
-**Decision.** **A single Expo/React Native codebase produces the web, iOS, and Android apps.** Shared Expo Router route tree; platform-specific behavior is the justified exception, not the norm.
+**Decision.** A **single Expo/React Native codebase** produces web, iOS, and Android; platform-specific behavior is the justified exception.
 
-**Rationale.** One UI source of truth means a feature ships everywhere at once and the group is never split by device. It also concentrates limited build hours (foundation §0) on one codebase instead of three.
+**Rationale.** One UI source of truth ships features everywhere at once and concentrates limited build hours on one codebase.
 
-**Rejected alternatives.** Platform-forked codebases or a web app plus separate native apps — rejected for the same fragmentation/effort reasons as D1.
+**Rejected alternatives.** Forked codebases or web-app + separate native apps — fragmentation of code and group.
 
-**Consequences.** We accept platform-conditional code where the platforms genuinely differ (camera, push, deep links, web export). Those live behind wrappers so screens stay platform-agnostic.
+**Consequences.** Accept platform-conditional code (camera, location, push, deep links, web export) behind wrappers.
 
-**Revisit triggers.** A platform needing a fundamentally different UX (not just different native calls) that can't be expressed in the shared tree.
-
----
-
-## D3 — Savings = ledger only, never custody (Stripe Connect is Phase 2) ✅ [LOCKED]
-
-**Context.** Pooling money is one of the three core pains (foundation §1). But *holding* other people's money is a regulated activity with real trust and compliance weight.
-
-**Decision.** MVP savings is a **tracked ledger only**: members log contributions toward a trip goal, the app sums and displays the pooled total (shown *locked* until the trip start date, then *unlocked* — a derived UI state, foundation §5). **The app never holds, moves, or has custody of funds.** Real money movement via **Stripe Connect is a documented Phase 2** — noted, not built.
-
-**Rationale.** A ledger delivers the *visible-commitment* value (a growing total against a goal) with none of the custody burden. We refuse to take on money-transmission/compliance risk before the product is validated (foundation §11).
-
-**Rejected alternatives.**
-- *Real custody in MVP (hold the pool)* — regulatory + trust burden, wrong bet pre-validation.
-- *Integrate Stripe Connect now* — real payments infra is a project of its own; deferred to Phase 2.
-
-**Consequences.** The ledger is trusted/honor-system in MVP; "locked" is a UI state, not an escrow. Correction semantics (append-only vs editable) are an open question (foundation §12-3; MVP assumption: append-only). Nothing in the schema or UI should imply the app holds money.
-
-**Revisit triggers.** Validated demand for real pooling → begin Phase 2 (Stripe Connect) as a separate, explicitly-scoped effort.
+**Revisit triggers.** A platform needing a fundamentally different UX that can't live in the shared tree.
 
 ---
 
-## D4 — GroupPad is a later module, adapted from web React into React Native ✅ [LOCKED]
+## D3 — Money is ledger-first; real custody is a gated, config-flippable phase ✅ [LOCKED]
 
-**Context.** "Agreeing on plans" includes choosing a rental. There is already a **separate existing product, GroupPad** — a **web React app** — that does the full rental decision flow: browse rentals → like → shortlist → AI compare → vote → lock a winner. It is a whole product in its own right.
+**Context.** Pooling money (two pools + a personal safe) is core, but *holding* funds is a regulated activity (money transmission, KYC).
 
-**Decision.** **Do not build any rental-decision/voting engine now.** GroupPad will be **rebuilt/adapted from its web-React codebase into this React Native codebase as a module later, on explicit instruction.** For MVP: reserve a clearly-marked **seam** in the data model (a `grouppad_*` table namespace FK'd to `trips.id`) and in navigation (a reserved entry); rental links meanwhile live as free-form entries on the notes board (foundation §9, data-model.md → GroupPad seam).
+**Decision.** Build the **full money UX now as a ledger**: members log contributions to the Airbnb and car pools and to their personal safe; the app sums totals, computes the equal split (D5), and shows each pool + safe **locked until the trip start date, then unlocked** (a derived UI state). The app **never holds or moves funds** in MVP. **Real custody (Stripe Connect + KYC/compliance) is a documented gated phase, architected to flip on via config — not a rebuild:** the money layer is written against a ledger/provider interface with a custody switch.
 
-**Rationale.** Bolting a second product into the MVP would blow scope and timeline (foundation §4-4). Reserving a seam keeps future integration clean without spending effort now. Because GroupPad is currently **web React**, adapting it into React Native is real work (component and interaction rewrite onto NativeWind / React Native Reusables) — the fact that D1's stack matches makes this tractable, but it is explicitly a *later* effort.
+**Rationale.** Delivers the money experience (visible progress, split clarity) with zero money-transmission risk before validation, while guaranteeing the later custody upgrade isn't a teardown.
 
-**Rejected alternatives.**
-- *Build rental voting now* — out of scope; that's GroupPad's job.
-- *Embed GroupPad's web app in a WebView* — rejected as the target; the intent is a native-adapted module, not an embedded website. (A WebView could be a stopgap if ever needed, but is not the plan.)
-- *No seam, integrate later from scratch* — risks a messy retrofit; a reserved seam is cheap insurance.
+**Rejected alternatives.** Real custody in MVP (regulatory/trust burden, wrong pre-validation bet); a throwaway ledger not designed for custody (forces a rewrite later); no money UX until custody is ready (kills a core loop).
 
-**Consequences.** MVP notes may accumulate rental links that GroupPad will later supersede; the seam (trip-level FK + reserved nav) must stay untouched-but-present. Nobody builds GroupPad behavior until explicitly told to.
+**Consequences.** "Locked" is a UI state, not escrow; the ledger is honor-system in MVP. Contributions are append-only; corrections are new entries (foundation §12-3 rounding is open). Nothing in schema/UI may imply the app holds money. The provider seam must exist from day one.
 
-**Revisit triggers.** Explicit instruction to integrate GroupPad → begin the adaptation as its own phase (build-plan Phase 11).
+**Revisit triggers.** Validated demand → flip the custody config and integrate Stripe Connect as the gated phase.
 
 ---
 
-## D5 — Push notifications in MVP (expo-notifications) ✅ [LOCKED]
+## D4 — Auth is phone-first with email fallback ✅ [LOCKED]
 
-**Context.** Re-engagement is part of the commitment loop (foundation §11): people need nudges when RSVPs change, new activities appear, or savings reminders are due.
+**Context.** Invites are contact-based and Partiful-style; identity should match how people share.
 
-**Decision.** **Push notifications are in MVP scope**, delivered via **expo-notifications**, for at least: RSVP updates, new activities, and savings reminders. Device push tokens are stored per user (data-model.md → `push_tokens`) and used to fan out via the Expo Push API.
+**Decision.** **Supabase Auth, phone-first** (SMS/OTP) with **email as fallback**.
 
-**Rationale.** Notifications aren't a nice-to-have here — they're how a plan stays alive between sessions instead of dying like a group chat. Expo-notifications is the native fit for D1's stack.
+**Rationale.** Phone identity best fits contact-based invites and a friend-group product; email fallback covers users without reliable SMS.
 
-**Rejected alternatives.**
-- *Defer push to post-MVP* — rejected; it's load-bearing for the commitment loop.
-- *Roll our own APNs/FCM integration* — unnecessary; Expo Push abstracts it.
+**Rejected alternatives.** Email-only (weaker fit for contact invites); social OAuth-only (extra friction, not contact-native). *(This resolves the v1 open question on auth method.)*
 
-**Consequences.** **Web push is a known unevenness:** expo-notifications targets iOS/Android well, but web push under Expo is limited — treat web push as best-effort/TBD, not assumed parity (foundation §11, §12-4). A send mechanism (edge function + triggers vs external worker) is a build-time decision (foundation §12-6, build-plan Phase 7). iOS push requires an Apple developer account / APNs setup (⏳ external lead time) via EAS.
+**Consequences.** SMS/OTP delivery cost + deliverability to manage; phone is the primary contact key for invites. Profiles still carry a display name and a stored name for flight name-matching (D6, data-model → profiles).
 
-**Revisit triggers.** Web push turning out to be required and unsupported → decide a web fallback (email/in-app) or scope web push out explicitly.
+**Revisit triggers.** SMS cost/deliverability problems → weight email or add an OAuth option.
 
 ---
 
-## D6 — Flight-ticket upload is the "Confirmed" signal (device camera) ✅ [LOCKED]
+## D5 — Cost split is equal per-person in MVP; room/bed-based is Phase 2 ✅ [LOCKED]
 
-**Context.** The deepest risk is that people never truly commit (foundation §11). We need a commitment signal stronger than a tapped button.
+**Context.** Once a pool's total is known, members owe a share. Splitting can be equal or room/bed-weighted.
 
-**Decision.** A member moves from *RSVP'd* → **Confirmed** by **uploading or photographing their flight ticket**, captured via **expo-image-picker / expo-camera** (device camera or photo library) on mobile. Ticket files are stored privately in Supabase Storage (data-model.md → `flight_confirmations`, storage notes).
+**Decision.** **Equal per-person split** in MVP: `share = pool.total_cents / member_count`. **Room/bed-based split is Phase 2**, tied to a future claim-your-room feature.
 
-**Rationale.** Producing a real artifact (an actual ticket) is a materially harder, more honest commitment than clicking "I'm in" — which is exactly the behavior change the product needs.
+**Rationale.** Equal split is instantly understandable and unblocks the money loop and the "money in" badge criterion now; per-room split needs room inventory + claiming that doesn't exist yet.
 
-**Rejected alternatives.**
-- *A "Confirm" button with no artifact* — too cheap a signal; doesn't move the commitment needle.
-- *Payment as the confirm signal* — collides with the no-custody rule (D3).
+**Rejected alternatives.** Room/bed split in MVP (needs a whole claim-your-room subsystem); fully custom per-person amounts (opens disputes; out of scope).
 
-**Consequences.** Flight tickets are sensitive personal documents → strict privacy (private bucket, RLS to owner + host; never logged). Whether any upload confirms or the host verifies is an open question (foundation §12-1; MVP assumption: any upload confirms). Web capture uses a file picker (no camera guarantee) — a platform nuance under D2.
+**Consequences.** "Money in" for a pool = a member's contributions ≥ their equal share. Rounding remainder policy is open (foundation §12-3). Split recomputes as `member_count` changes.
 
-**Revisit triggers.** Abuse or fake tickets → add host verification or a lightweight OCR/format check.
+**Revisit triggers.** Demand for fairness by room → build claim-your-room + weighted split (Phase 2).
 
 ---
 
-## D7 — `AppName` placeholder + `[LOGO SLOT]`, branding deferred ✅ [LOCKED]
+## D6 — Travel proof: AI-verified flight OR self-declared driving ✅ [LOCKED]
 
-**Context.** The real product name and logo are TBD and will be chosen later.
+**Context.** The hard-confirm signal must work for both flyers and the flagship **~20-people-driving** cohort (foundation §2, §11).
 
-**Decision.** Use the literal token **`AppName`** everywhere the name appears (including code identifiers) and a clearly-marked **`[LOGO SLOT]`** everywhere the logo goes. Real name & branding land in the dedicated **branding phase** (build-plan Phase 9).
+**Decision.** A member moves to **verified travel** via **either**:
+- **Flight:** upload/photograph the itinerary → **AI/vision extraction** returns `{passenger_name, confirmation_number, arrival_airport, dates}` → **geocode the arrival airport** and verify **proximity to the trip city** → **match `passenger_name`** against the member's stored name, with **admin manual-override** for legal-name mismatches → on success, play a **"Flight itinerary verified"** animation.
+- **Driving/carpool:** a **self-declared driving confirmation** → verified immediately. First-class, equal standing to a flight.
 
-**Rationale.** A single consistent placeholder makes the eventual naming a painless global find-and-replace and prevents half-named drift. (Golden rule: codename anything unsettled.)
+**Rationale.** A real artifact (or an explicit driving declaration) is a far stronger commitment than a tapped button. Making driving first-class is non-negotiable for the flagship group. AI extraction makes the flight path a delightful, near-automatic "verified" moment.
 
-**Rejected alternatives.** Inventing a working name now — risks it sticking, or a messy rename across code and docs later.
+**Rejected alternatives.** Flight-only proof (locks out road-trippers — unacceptable); a plain "I'm confirmed" button (too cheap a signal); payment as the confirm signal (collides with no-custody, D3); fully manual admin verification of every flight (doesn't scale, loses the delight — kept only as the override/fallback).
 
-**Revisit triggers.** Real name chosen → find-and-replace `AppName`; drop the real logo into every `[LOGO SLOT]`.
+**Consequences.** Flight itineraries are **sensitive** → private storage, RLS to owner + admins, never logged. Extraction can **fail** — a handled state plus admin manual-verify (foundation §12-1). The airport "near" threshold and provider are open (§12-1,2). Name matching needs the member's stored/legal name (D4, data-model → profiles). Driving proof is trust-based in MVP.
+
+**Revisit triggers.** Fake/abused driving declarations → add a lightweight corroboration; poor AI accuracy → tune threshold or lean on admin path.
 
 ---
 
-## D8 — Tenancy via Supabase Row-Level Security, scoped by `trip_members` ✅ [LOCKED]
+## D7 — GroupPad is the Airbnb-selection module, adapted later ✅ [LOCKED]
 
-**Context.** A trip's data (members, tickets, savings, notes, activities) must be visible only to that trip's members. Trip is the isolation unit (foundation §5).
+**Context.** Choosing the Airbnb is a whole decision flow. **GroupPad** — an existing **web-React** product (browse rentals → like → shortlist → **AI compare** → vote → **lock a winner**) — already does it.
 
-**Decision.** **Isolation is enforced by Supabase RLS.** Every trip-scoped table carries a `trip_id` and is gated by a policy checking the caller's membership in `trip_members` for that trip; the `host` role carries elevated rights (edit trip, manage members, see tickets). Flight-ticket files are private to the uploader (+ host).
+**Decision.** **Do not build a rental engine now.** MVP ships the **Airbnb-selection step as a manual stub**: members add options as an **Airbnb link + total-cost entry**, the group votes, an admin locks the pick. **GroupPad will be adapted/rebuilt from its web-React app into this React Native codebase as that module later, on explicit instruction.** Reserve the **seam at `airbnb_options`** (+ votes + `trips.airbnb_pick`); build nothing for GroupPad now.
 
-**Rationale.** RLS makes an unscoped read a *policy failure at the database*, not a silent leak in app code — explicit-over-magic (foundation §4-5). It also means the client can talk to Supabase directly without a bespoke authorization layer.
+**Rationale.** Bolting a second product into MVP blows scope; the manual stub delivers the lock-an-Airbnb loop today, and the reserved seam keeps the later swap clean. GroupPad being web-React means the adaptation (onto NativeWind / React Native Reusables) is real work — explicitly later.
 
-**Rejected alternatives.**
-- *Authorization in app code only* — one missed check leaks another group's trip; unacceptable for a shared-group product.
-- *Separate schema/DB per trip* — massive overkill at this scale.
+**Rejected alternatives.** Build rental voting/AI-compare now (out of scope); embed GroupPad's web app in a WebView (not the intent — a native-adapted module is; WebView only a possible stopgap); no seam (messy retrofit).
 
-**Consequences.** Policies are verbose (one per table/operation) and must be written carefully — a table without a correct policy is either a leak or a lockout. RLS correctness is a first-class build task (build-plan Phase 1).
+**Consequences.** MVP `airbnb_options` are manual; GroupPad later supersedes/feeds them and ultimately sets `trips.airbnb_pick`. The seam (tables + nav entry) stays present-but-unbuilt.
 
-**Revisit triggers.** A cross-trip feature (e.g. a user's global activity feed) needing reads across trips → add carefully-scoped policies or views, never a blanket open policy.
+**Revisit triggers.** Explicit instruction → adapt GroupPad into the Airbnb-selection module (build-plan → backlog, gated).
+
+---
+
+## D8 — Admins capped at 3 per trip ✅ [LOCKED]
+
+**Context.** Admin powers (lock the Airbnb pick, override a flight name-mismatch, edit the trip) are sensitive in a large group.
+
+**Decision.** **At most 3 admins per trip**, host included, tracked in `trip_admins` and **enforced by a trigger** (reject insert when the trip already has 3).
+
+**Rationale.** Keeps authority tight and accountable; avoids "everyone's an admin" chaos in a 25-person trip.
+
+**Rejected alternatives.** Unlimited admins (dilutes accountability); host-only (too little redundancy if the host is unavailable).
+
+**Consequences.** Enforcement is a DB trigger, not just app logic (foundation §9, data-model → trip_admins). UI must handle "admin slots full."
+
+**Revisit triggers.** Trips needing more delegated authority → raise the cap or add scoped sub-roles.
+
+---
+
+## D9 — Post-trip recap = collages + stats in MVP; auto video montage is Phase 2 ✅ [LOCKED]
+
+**Context.** The recap is the shareable payoff. Full auto video montages need server-side rendering.
+
+**Decision.** **MVP recap = photo collages + a Strava-style stats recap** (places visited, miles covered, checklist items completed), generated client-side and shareable to social. **Auto video montages are Phase 2** (the "Trip Wrapped" backlog item), requiring server-side rendering.
+
+**Rationale.** Collages + stats deliver a shareable recap now without standing up a render pipeline; montages are a heavier, deferrable delight.
+
+**Rejected alternatives.** Auto montage in MVP (server-render infra, out of scope); no recap (loses the shareable payoff and a growth loop).
+
+**Consequences.** Recap draws on trip media (`activity_media`) + `expo-location` miles + checklist completion. Miles source/privacy is open (foundation §12-5).
+
+**Revisit triggers.** Recap proves a growth driver → build the server-side montage pipeline (Phase 2).
+
+---
+
+## D10 — Push notifications in MVP ✅ [LOCKED]
+
+**Context.** Keeping a plan alive between sessions needs nudges (RSVP changes, new activities, savings/step reminders).
+
+**Decision.** **Push in MVP** via **expo-notifications**; device tokens per user in `push_tokens`; fan out via the Expo Push API.
+
+**Rationale.** Re-engagement is part of the commitment loop, not a nice-to-have.
+
+**Rejected alternatives.** Defer push (loses re-engagement); hand-rolled APNs/FCM (unnecessary under Expo).
+
+**Consequences.** **Web push is best-effort/TBD** under Expo — no assumed parity (foundation §11, §12-10). iOS push needs Apple/APNs setup via EAS (⏳). Send mechanism (edge function + triggers vs worker) is a build-time decision (build-plan Phase, foundation §12).
+
+**Revisit triggers.** Web push required but unsupported → decide a web fallback or scope it out.
+
+---
+
+## D11 — `AppName` placeholder + `[LOGO SLOT]`, branding deferred ✅ [LOCKED]
+
+**Context.** Real name and logo are TBD.
+
+**Decision.** Use the literal token **`AppName`** everywhere (including code identifiers) and a marked **`[LOGO SLOT]`** for the logo; real name + branding land in the branding phase.
+
+**Rationale.** One consistent placeholder makes naming a painless global find-and-replace and prevents half-named drift.
+
+**Rejected alternatives.** Inventing a working name now (risks sticking / messy rename).
+
+**Revisit triggers.** Real name chosen → find-and-replace `AppName`; drop the logo into every `[LOGO SLOT]`.
+
+---
+
+## D12 — Tenancy via Supabase RLS, scoped by `trip_members` ✅ [LOCKED]
+
+**Context.** A trip's data (members, proofs, money, votes, media) must be visible only to that trip's people; some of it (personal safes, itineraries) is private even within the trip.
+
+**Decision.** **Isolation via Supabase RLS.** Every trip-scoped table carries `trip_id` and is gated by a membership check against `trip_members`; **admins** (`trip_admins`, max 3 — D8) get elevated rights. **Personal safes/deposits are self-only; flight itineraries are owner + admins only.**
+
+**Rationale.** RLS makes an unscoped read a *database policy failure*, not a silent cross-group leak (explicit-over-magic), and lets the client talk to Supabase directly.
+
+**Rejected alternatives.** App-code-only authorization (one missed check leaks another group's trip); schema/DB per trip (overkill at this scale).
+
+**Consequences.** Policies are per-table/per-operation and must be written carefully; the admin cap needs a trigger, not just a policy (D8). Private tables (safes, itineraries) get stricter self/admin policies.
+
+**Revisit triggers.** A cross-trip feature (e.g. a user's global feed) → carefully-scoped views, never a blanket-open policy.

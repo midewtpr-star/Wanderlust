@@ -1,84 +1,120 @@
 # AppName — Build Plan
 
-> **What this governs:** the **phased build order** for the MVP, each phase marked not-started. Read this to know what to build next and what "done" means for each phase.
+> **What this governs:** the **phased MVP build order** + the **Phase 2 backlog**, each marked not-started. Read this to know what to build next and what "done" means.
 > **Authority:** subordinate to `foundation.md` (scope) and `decisions.md` (rationale); cites both by §/D-number. If this doc disagrees with `foundation.md`, **`foundation.md` wins.**
-> Codename `AppName`; logo `[LOGO SLOT]` — TBD.
+> **Revised for v2.** Codename `AppName`; logo `[LOGO SLOT]` — TBD.
 
 **Status key:** ⬜ not-started · 🟡 in progress · ✅ done · ⏳ external lead time.
-**Every phase below is ⬜ not-started.** Update its marker (and add a progress note) as work happens.
+**Every phase and backlog item below is ⬜ not-started.** Update markers (+ a progress note) as work happens.
 
-**How to read this:** phases are listed in the intended build order (per brief). They're also roughly a dependency chain — the **keystone unlock** is Phases 1–2 (auth + schema + RLS + trip-create); once those exist, most feature phases (4–7) are independent "trip-scoped table + screens" slices and could reorder if needed. Branding (9) and Polish (10) ride on top of whatever's built. **GroupPad (11) is gated** — build nothing until explicitly instructed (→ D4).
+**How to read this:** MVP phases are in intended build order (per brief). The **keystone unlock** is Phases 1–2 (auth + schema + RLS + trip-create); after that, most feature phases are trip-scoped slices. **Keep MVP tight — the Phase 2 backlog below is a parking lot, not a queue; nothing there is built until explicitly promoted (foundation §4-7, §8).**
 
 ---
 
+# MVP
+
 ## Phase 0 — Scaffold ⬜
 **Goal:** a running Expo app on all three targets, empty but healthy.
-**Deliverables:** Expo (latest stable) + React Native + TypeScript project; Expo Router route tree; NativeWind + React Native Reusables wired; `AppName` token + `[LOGO SLOT]` placeholders in place (→ D7); Supabase client configured (env, no secrets committed); base app shell / navigation skeleton.
+**Deliverables:** Expo (latest stable) + RN + TS; Expo Router tree; NativeWind + React Native Reusables wired; `AppName` token + `[LOGO SLOT]` placeholders (→ D11); Supabase client configured (env, no secrets committed); app shell / nav skeleton.
 **Depends on:** nothing (cold start).
-**Done when:** the app boots on iOS simulator, Android emulator, and web export; a styled placeholder screen renders on all three; lint/typecheck pass.
+**Done when:** boots on iOS sim, Android emulator, and web export; a styled placeholder renders on all three; lint/typecheck pass.
 
 ## Phase 1 — Auth + Schema ⬜
-**Goal:** users can sign in; the database exists with RLS. **This is half the keystone unlock (foundation §9).**
-**Deliverables:** Supabase Auth wired into the app (method per foundation §12-2, 🕗); `profiles` mirror + signup population; all MVP tables from `data-model.md` created; **RLS policies** per the RLS sketch (→ D8); Storage buckets `cover-images` (trip-read) and `flight-tickets` (private).
+**Goal:** phone-first sign-in; the database exists with RLS. **Half the keystone unlock (foundation §9).**
+**Deliverables:** **Supabase phone-first Auth + email fallback** (→ D4); `profiles` mirror (incl. `full_name` for name-matching); **all MVP tables** (data-model.md); **RLS policies** (→ D12); **`trip_admins` max-3 trigger** (→ D8); Storage buckets `posters`, `flight-itineraries` (private), `trip-media`.
 **Depends on:** Phase 0.
-**Done when:** a user can sign up / sign in on all platforms; `profiles` row is created; tables exist with RLS on; a smoke test confirms a non-member cannot read another trip's rows.
+**Done when:** a user signs in by phone (email fallback works); `profiles` row created; tables exist with RLS on; a smoke test confirms a non-member cannot read another trip's rows and a 4th admin insert is rejected.
 
 ## Phase 2 — Trip create + Dashboard ⬜
-**Goal:** the central object is real. **Completes the keystone unlock** — after this, features are trip-scoped slices.
-**Deliverables:** create a trip (title, destination, dates, cover image upload → `cover-images`, description); creator becomes `host` in `trip_members`; a dashboard listing the user's trips and a single-trip view shell.
-**Depends on:** Phases 1.
-**Done when:** a user creates a trip, uploads a cover image, and sees it on their dashboard and trip view; RLS confirms only members see it.
+**Goal:** the central object is real. **Completes the keystone unlock.**
+**Deliverables:** create a trip — cover/poster upload (→ `posters`), location + **geocode** (`destination_*` for later proximity checks), dates, **car rental** (`car_rental_ref`), and the **Airbnb-selection stub** (manual link + total-cost, the GroupPad seam → D7); creator seeded as `host` + `trip_admins`; a dashboard listing the user's trips + a single-trip view shell.
+**Depends on:** Phase 1.
+**Done when:** a user creates a trip with all fields, sees it on the dashboard/trip view; RLS confirms only members see it.
 
-## Phase 3 — Invites / RSVP / Flight-confirm ⬜
-**Goal:** the group forms and commits — the commitment loop (foundation §11, → D6).
-**Deliverables:** generate + share an invite link (deep-links into app/web); opening a valid invite joins the user as `member`; RSVP `going`/`maybe`/`not`; flight-ticket upload via **expo-image-picker / expo-camera** → private `flight-tickets` bucket → `flight_confirmations` row → member shows **Confirmed** (MVP: any upload confirms, foundation §12-1).
-**Depends on:** Phase 2. (Camera/picker wrappers per foundation §9.)
-**Done when:** an invited user joins via link, RSVPs, uploads/photographs a ticket, and flips to Confirmed; ticket file is private (only uploader + host can read).
-
-## Phase 4 — Notes board ⬜
-**Goal:** shared ideas + rental links + light discussion (foundation §6-5).
-**Deliverables:** post notes (`body` and/or `link_url`), `kind` incl. `rental_link` (the GroupPad soft link, → seam); one level of replies (`parent_id`); trip-scoped list UI.
-**Depends on:** Phase 2 (independent of 3).
-**Done when:** members post ideas/links and reply; entries are visible to the whole trip and RLS-gated.
-
-## Phase 5 — Activities ⬜
-**Goal:** sub-events with their own RSVPs (foundation §6-6).
-**Deliverables:** any member creates an activity (title, description, location, start/end); per-member `activity_rsvps` (`going`/`maybe`/`not`); activity list within the trip.
-**Depends on:** Phase 2 (independent of 3–4).
-**Done when:** a member creates an activity, the group RSVPs individually, and counts display.
-
-## Phase 6 — Savings ledger ⬜
-**Goal:** visible pooled commitment — **ledger only, no custody** (→ D3).
-**Deliverables:** set `trips.savings_goal_cents`; log contributions (`savings_contributions`, append-only); pooled total = `SUM(amount_cents)`; **locked** until `trips.start_date`, then **unlocked** (derived UI state); progress-toward-goal display.
+## Phase 3 — Invites + RSVP ⬜
+**Goal:** the group forms and softly commits (foundation §6-2).
+**Deliverables:** generate + share a Partiful-style invite link (deep-links into app/web); opening a valid invite joins as `member`; **RSVP** `going`/`maybe`/`not` (`rsvps`).
 **Depends on:** Phase 2.
-**Done when:** members log contributions, the total updates, and the locked/unlocked state flips on the start date. **No real money moves anywhere.**
+**Done when:** an invited user joins via link and RSVPs; membership + RSVP are RLS-gated.
 
-## Phase 7 — Push notifications ⬜
-**Goal:** re-engagement nudges (→ D5) — RSVP updates, new activities, savings reminders.
-**Deliverables:** register devices via **expo-notifications** → `push_tokens`; a send mechanism (edge function + DB triggers vs external worker — decide here, foundation §12-6); notifications for the three MVP triggers via Expo Push API.
-**Depends on:** Phases 3, 5, 6 (the events being notified about). ⏳ iOS needs Apple/APNs setup via EAS.
-**Done when:** iOS + Android devices register tokens and receive the three notification types. **Web push = best-effort/TBD (foundation §12-4)** — decide fallback or scope out explicitly.
+## Phase 4 — Travel proof (driving first, then AI flight verify) ⬜
+**Goal:** the **hard confirm** (foundation §11, → D6). Build the simple path first.
+**Deliverables:**
+- **4a — Driving:** self-declared driving confirmation → `travel_proofs(type='driving', verified=true)`. First-class (foundation §2).
+- **4b — Flight AI verify:** upload/photograph itinerary (expo-camera/-image-picker) → **private** `flight-itineraries` → **AI/vision extraction** `{passenger_name, confirmation_number, arrival_airport, dates}` (server/edge boundary) → **geocode** arrival airport → **proximity check** vs `trips.destination_*` → **name match** vs `profiles.full_name` with **admin override** for mismatches → **"Flight itinerary verified" animation** on success; handled `failed`/`mismatch` states.
+**Depends on:** Phase 2 (geocoded destination), Phase 3 (members). ⏳ AI provider selection (foundation §12-1).
+**Done when:** a road-tripper verifies via driving; a flyer uploads an itinerary and gets verified through extraction→proximity→name-match (with the override path working); failures degrade gracefully. Itinerary files stay private (owner + admins).
 
-## Phase 8 — Branding ⬜
-**Goal:** replace placeholders with the real identity (→ D7).
-**Deliverables:** find-and-replace `AppName` → real name across code + docs; real logo into every `[LOGO SLOT]`; app icon, splash, theme colors; store metadata.
-**Depends on:** name + logo chosen (foundation §12-8, 🕗). Can run once assets exist.
-**Done when:** no `AppName` / `[LOGO SLOT]` placeholders remain; icons/splash render on all platforms.
+## Phase 5 — Money ledger (pools + personal safe) ⬜
+**Goal:** the full money UX as a **ledger, no custody** (→ D3, D5).
+**Deliverables:** `money_pools` for `airbnb` (always) and `car` (if `car_rental_ref`); set totals (Airbnb from the option's `total_cost_cents`); **equal per-person split** = `total / member_count`; log `contributions`; **personal_safes + safe_deposits** (private); **locked-until-`unlock_date`** UI on every pool + safe; progress-toward-share display. **Write the money layer against a ledger/provider interface with a custody switch** so Stripe flips on later (→ D3).
+**Depends on:** Phase 2 (car pool, Airbnb total), Phase 3 (member_count for split).
+**Done when:** members log contributions to each pool and to their private safe; totals + per-person shares display; locked/unlocked flips on the start date. **No real money moves.**
 
-## Phase 9 — Polish ⬜
-**Goal:** make the MVP feel finished.
-**Deliverables:** empty/loading/error states; cross-platform layout pass (web ↔ mobile); accessibility; performance; edge cases from the open questions resolved (foundation §12).
-**Depends on:** the feature phases (3–7).
-**Done when:** the core flows feel solid on all three platforms and the open-question decisions are closed or explicitly deferred.
+## Phase 6 — Airbnb voting + admin lock + countdown ⬜
+**Goal:** the group agrees on and locks the Airbnb (foundation §6-5). **GroupPad seam stays manual (→ D7).**
+**Deliverables:** add `airbnb_options` (manual link + total-cost); group **votes** (one per member, foundation §12-8); an **admin locks** `trips.airbnb_pick` (→ `status='locked'`); locked view shows the selection + overall progress + a **live date countdown**.
+**Depends on:** Phase 2 (options stub), Phase 3 (voters), Phase 1 (admins).
+**Done when:** members add options and vote; an admin locks the pick; the group sees the locked selection, progress, and a running countdown.
 
-## Phase 10 — Deploy ⬜
+## Phase 7 — Verified badge + step checklist ⬜
+**Goal:** the per-member readiness signal + progressive flow (foundation §5, §6-6/7).
+**Deliverables:** materialize `member_steps` (`travel_proof`, `airbnb_money`, `car_money` when a car pool exists); "money in" = contributions ≥ equal share; **verified badge** (`trip_members.is_verified`) when all required steps complete; **completion animations** + progressive reveal of remaining steps.
+**Depends on:** Phase 4 (travel proof), Phase 5 (money-in), Phase 6 (car pool presence).
+**Done when:** a member who finishes travel proof + Airbnb money (+ car money) shows the verified badge; completing a step animates and advances the checklist.
+
+## Phase 8 — Local ideas + Activity docs ⬜
+**Goal:** inspiration + mixed-media documentation (foundation §6-8/9).
+**Deliverables:** once location is set/verified, pull **nearby events + things-to-do** from a places/events API (provider TBD, foundation §12-6) — fetched on demand, savable as `activities(source='local_idea')`; create `activities`; document with `activity_media` (**photo/text/video/other**) → `trip-media`.
+**Depends on:** Phase 2 (location). Independent of 4–7.
+**Done when:** members see nearby ideas, create activities, and attach mixed media; all trip-scoped/RLS-gated.
+
+## Phase 9 — Post-trip recap (collages + stats) ⬜
+**Goal:** the shareable payoff — **collages + stats only** (→ D9; montage is Phase 2).
+**Deliverables:** upload trip photos/videos → generate **photo collages** (client-side) + **`recap_stats`** (places visited, **miles covered** via expo-location, checklist items completed) → `trip_recap` with a **shareable** link to social.
+**Depends on:** Phase 8 (media), Phase 7 (checklist stats), expo-location (miles; privacy open, foundation §12-5).
+**Done when:** a trip generates collages + a stats recap that shares out. **No auto video montage.**
+
+## Phase 10 — Branding ⬜
+**Goal:** replace placeholders with the real identity (→ D11).
+**Deliverables:** find-and-replace `AppName` → real name (code + docs); real logo into every `[LOGO SLOT]`; app icon, splash, theme; store metadata.
+**Depends on:** name + logo chosen (foundation §12-11, 🕗).
+**Done when:** no `AppName` / `[LOGO SLOT]` remain; icons/splash render on all platforms.
+
+## Phase 11 — Polish ⬜
+**Goal:** make the (large) MVP feel finished.
+**Deliverables:** empty/loading/error states (esp. AI-extraction failure, foundation §11); cross-platform layout pass; accessibility; performance; close or explicitly defer the open questions (foundation §12).
+**Depends on:** the feature phases (3–9).
+**Done when:** the core loop feels solid on all three platforms; open-question decisions are closed or explicitly deferred.
+
+## Phase 12 — Deploy ⬜
 **Goal:** shippable on all three platforms.
-**Deliverables:** **EAS Build** for iOS + Android; **Expo web export → Vercel**; Supabase project promoted to production (RLS verified, buckets, env); store submission prep. ⏳ App Store / Play review lead time.
-**Depends on:** Phases 8–9.
-**Done when:** web is live on Vercel; iOS/Android builds are produced via EAS and submitted; production Supabase is verified.
+**Deliverables:** **EAS Build** (iOS + Android); **Expo web export → Vercel**; production Supabase (RLS verified, buckets, phone-auth provider, env); store submission prep. ⏳ App Store / Play + SMS provider lead time.
+**Depends on:** Phases 10–11.
+**Done when:** web is live on Vercel; iOS/Android builds produced via EAS and submitted; production Supabase verified.
 
-## Phase 11 — GroupPad integration ⬜ (GATED — do not start unprompted)
-**Goal:** adapt GroupPad (browse → shortlist → AI compare → vote → lock) from its **web-React app into this React Native codebase** as a module (→ D4).
-**Deliverables (later, on explicit instruction only):** `grouppad_*` tables (FK → trips, RLS-gated); activate the reserved `trips.grouppad_locked_rental_id` pointer + FK; the nav entry; the RN-adapted UI; migrate/reference `notes.kind = 'rental_link'` entries.
-**Depends on:** explicit instruction (§ foundation §8 Deferred). Reuses the MVP trip/membership/RLS foundation.
-**Done when:** N/A — **not started, and not to be started until explicitly instructed.** The MVP reserves the seam (data-model.md → GroupPad seam) and builds nothing here.
+---
+
+# Phase 2 / Cool Backlog — ⬜ NOT built in MVP
+
+Recorded so nothing is lost; **do not build until explicitly promoted** (foundation §8). Each is ⬜ not-started.
+
+| Item | Notes |
+|---|---|
+| **Real payment custody (Stripe Connect + KYC)** | The **gated money phase** — flips on via the config seam built in Phase 5 (→ D3), not a rebuild. |
+| **Room/bed-based cost splitting** | Replaces equal split; tied to a claim-your-room feature (→ D5). |
+| **Auto video montage / "Trip Wrapped"** | Animated end-of-trip recap + superlatives; needs server-side rendering (→ D9). |
+| **GroupPad integration** | Adapt the web-React rental engine into the Airbnb-selection module (browse→shortlist→AI compare→vote→lock); the seam is reserved at `airbnb_options` (→ D7). **Gated — on explicit instruction only.** |
+| Group readiness meter | One live ring: confirmed count, saved vs goal, Airbnb/car locked. |
+| Trip Pass | Stylized boarding-pass identity card per verified member. |
+| Readiness leaderboard | First to fully verify. |
+| AI trip concierge | Recommend spots; auto-build a day-by-day itinerary. |
+| Trip chat + announcements | Replace the group chat. |
+| In-trip expense splitting | Splitwise-style, with end-of-trip settle-up. |
+| Collaborative itinerary + packing list | Day-by-day; shared + personal. |
+| Shared collaborative playlist | Spotify / Apple Music. |
+| Memory map | Pins every visited place + miles. |
+| Home-screen countdown widget | iOS / Android. |
+| Trip templates | Birthday / road-trip / beach-week; prefill activities + checklist. |
+
+**Guardrail:** if a task touches anything in this table, stop and confirm it's being explicitly promoted before building — MVP scope is the ten core-loop phases above (foundation §8).
