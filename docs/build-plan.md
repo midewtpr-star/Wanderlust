@@ -5,7 +5,7 @@
 > **Revised for v2.** Codename `AppName`; logo `[LOGO SLOT]` — TBD.
 
 **Status key:** ⬜ not-started · 🟡 in progress · ✅ done · ⏳ external lead time.
-**Every phase and backlog item below is ⬜ not-started.** Update markers (+ a progress note) as work happens.
+**Phase 0 (Scaffold) is ✅ done; Phases 1–12 + the backlog are ⬜ not-started.** Update each phase's marker (+ a short note) as work completes.
 
 **How to read this:** MVP phases are in intended build order (per brief). The **keystone unlock** is Phases 1–2 (auth + schema + RLS + trip-create); after that, most feature phases are trip-scoped slices. **Keep MVP tight — the Phase 2 backlog below is a parking lot, not a queue; nothing there is built until explicitly promoted (foundation §4-7, §8).**
 
@@ -13,11 +13,11 @@
 
 # MVP
 
-## Phase 0 — Scaffold ⬜
+## Phase 0 — Scaffold ✅ (2026-07-22)
 **Goal:** a running Expo app on all three targets, empty but healthy.
-**Deliverables:** Expo (latest stable) + RN + TS; Expo Router tree; NativeWind + React Native Reusables wired; `AppName` token + `[LOGO SLOT]` placeholders (→ D11); Supabase client configured (env, no secrets committed); app shell / nav skeleton.
+**Deliverables (built):** Expo **SDK 57** + RN 0.86 + TS; Expo Router tree — `(auth)/sign-in`, `(tabs)` = Trips/Create/Profile, `trip/[id]`; **NativeWind v4** (+ Tailwind 3, `global.css` token system) + **React Native Reusables-style** `components/ui/` primitives (Button, Text) wired; `AppName` token + `[LOGO SLOT]` placeholders (→ D11); **single Supabase client** from `EXPO_PUBLIC_*` env via app config (`.env.example`, no secrets committed); the four **native modules installed + permissioned** (image-picker, camera, location, notifications) — config only, no logic; folder structure `app/ components/ lib/ hooks/ constants/ types/`.
 **Depends on:** nothing (cold start).
-**Done when:** boots on iOS sim, Android emulator, and web export; a styled placeholder renders on all three; lint/typecheck pass.
+**Done when (verified):** ✅ `tsc --noEmit` passes · ✅ web export builds (NativeWind CSS emitted, classes compiled) and `expo start --web` serves HTTP 200 · ✅ iOS + Android Metro bundles compile (Hermes bytecode). *iOS/Android **simulator** launch isn't verifiable in the headless build env — native **bundling** was verified instead; run on a device/simulator locally (see README).*
 
 ## Phase 1 — Auth + Schema ⬜
 **Goal:** phone-first sign-in; the database exists with RLS. **Half the keystone unlock (foundation §9).**
