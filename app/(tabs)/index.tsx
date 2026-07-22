@@ -7,17 +7,20 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TripCard } from "@/components/trip/trip-card";
 import { useTrips } from "@/hooks/use-trips";
+import { useUnreadCounts } from "@/hooks/use-unread";
 
 export default function TripsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { trips, loading, refreshing, error, reload, refresh } = useTrips();
+  const { counts: unread, refresh: refreshUnread } = useUnreadCounts();
 
-  // Reload on tab focus so a newly created trip appears.
+  // Reload on tab focus so a newly created trip (and unread counts) appear.
   useFocusEffect(
     useCallback(() => {
       reload();
-    }, [reload]),
+      refreshUnread();
+    }, [reload, refreshUnread]),
   );
 
   return (
@@ -58,7 +61,9 @@ export default function TripsScreen() {
         <FlatList
           data={trips}
           keyExtractor={(t) => t.id}
-          renderItem={({ item }) => <TripCard trip={item} />}
+          renderItem={({ item }) => (
+            <TripCard trip={item} unread={unread[item.id] ?? 0} />
+          )}
           contentContainerClassName="gap-4 p-6"
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={refresh} />

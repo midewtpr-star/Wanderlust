@@ -285,3 +285,23 @@ export type DistanceSummary = {
   tracked_count: number;
   member_count: number;
 };
+
+// --- Group chat (promoted backlog item) ---
+
+// A row of `messages`. created_at is stored UTC; render in local time.
+// attachment_* are reserved for a later image phase (schema-ready only).
+export type ChatMessage = {
+  id: ID;
+  trip_id: ID;
+  sender_id: ID;
+  body: string;
+  attachment_url: string | null;
+  attachment_type: string | null; // 'image' | null (reserved)
+  created_at: string;
+  // Client-only optimistic flags (never persisted):
+  pending?: boolean; // sent, awaiting the server round-trip
+  failed?: boolean; // the insert failed — offer a retry
+};
+
+// One row of the trip_unread_counts() RPC.
+export type TripUnread = { trip_id: ID; unread: number };

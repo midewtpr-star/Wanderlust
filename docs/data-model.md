@@ -313,6 +313,23 @@ A user's devices for push. User-scoped, not trip-scoped.
 | `created_at` / `updated_at` / `last_seen_at` | timestamptz | |
 | — | UNIQUE `(user_id, expo_push_token)` | |
 
+## messages  — trip group chat (promoted backlog item)
+Real-time text chat scoped to a trip. **Promoted from the Phase 2 backlog** ("Trip chat + announcements") on explicit request; only real-time text is built.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid PK | |
+| `trip_id` | uuid FK → trips(id) | On delete cascade. |
+| `sender_id` | uuid FK → profiles(id) | Author (= `auth.uid()` on insert). |
+| `body` | text not null | Message text. |
+| `attachment_url` | text null | **Reserved** — image attachments (a later phase). |
+| `attachment_type` | text null | `'image'` \| null (reserved). |
+| `created_at` | timestamptz | Stored UTC, rendered local. Index `(trip_id, created_at desc)` for paginated newest-first reads. |
+
+*Unread tracking is deliberately minimal: a **`trip_members.last_read_at`** watermark per member, with SECURITY DEFINER RPCs **`mark_chat_read(trip_id)`** (set the caller's watermark to now) and **`trip_unread_counts()`** (per-trip unread = messages after the watermark, excluding the caller's own). The table is added to the **`supabase_realtime`** publication (with `replica identity full`) so INSERT/DELETE stream live; RLS is still enforced per-subscriber.*
+
+> **As built (Group chat).** RLS: member-read (`is_trip_member`), **own-insert** (`sender_id = auth.uid()`), **own-delete**; **no UPDATE** (messages are immutable). Live via Supabase Realtime `postgres_changes` (INSERT + DELETE, filtered by `trip_id`); the client sends **optimistically** and reconciles on the realtime echo by `id`, paginates older history on scroll-up, and marks read on open. Push fan-out is the **`notify-message`** edge function (Expo Push over the stored `push_tokens`, excluding the sender) — best-effort, fired-and-forgotten from the client so the chat never blocks on push. Image attachments are **schema-only** (columns reserved), not built.
+
 ---
 
 ## Local ideas — *not a table* (foundation §6-8)
@@ -331,6 +348,7 @@ Nearby events + things-to-do are **fetched on demand from an external places/eve
 - **travel_proofs:** verified *status* visible to the trip; the **itinerary file + extracted PII private to the uploader + admins** (never the whole group; never logged).
 - **personal_safes / safe_deposits:** **self-only** — private even from other trip members.
 - **push_tokens:** self-only.
+- **messages:** membership-gated read; **insert/delete own only**; immutable (no edits). Streamed via Realtime (RLS enforced per-subscriber).
 
 **Storage buckets:**
 - `trip-covers` — **public read**, authenticated write (uploaders manage their own objects); trip cover images. *(Built in Phase 2; was named `posters` in earlier drafts.)*

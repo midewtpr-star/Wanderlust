@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { View, ScrollView, ActivityIndicator } from "react-native";
 import { Image } from "expo-image";
-import { Stack, useLocalSearchParams, useRouter } from "expo-router";
+import { Stack, useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import { VerifiedCelebration } from "@/components/trip/verified-celebration";
 import { LocalIdeas } from "@/components/trip/local-ideas";
 import { ActivitiesSection } from "@/components/trip/activities-section";
 import { DistanceOptIn } from "@/components/trip/distance-opt-in";
+import { ChatEntry } from "@/components/chat/chat-entry";
 import { formatDateRange, toISODate } from "@/lib/dates";
 import { useAuth } from "@/lib/auth-provider";
 import { useTrip } from "@/hooks/use-trip";
@@ -27,6 +28,7 @@ import { useTripMembers } from "@/hooks/use-trip-members";
 import { useRsvp } from "@/hooks/use-rsvp";
 import { useInvite } from "@/hooks/use-invite";
 import { useMemberVerification } from "@/hooks/use-member-verification";
+import { useUnreadCounts } from "@/hooks/use-unread";
 import type { ActivityInput, RsvpStatus } from "@/types";
 
 export default function TripDetailScreen() {
@@ -38,6 +40,14 @@ export default function TripDetailScreen() {
   const members = useTripMembers(id);
   const rsvp = useRsvp(id, user?.id);
   const invite = useInvite(id);
+  const { counts: unreadCounts, refresh: refreshUnread } = useUnreadCounts();
+  // Refresh the chat unread badge whenever the screen refocuses (e.g. returning
+  // from the chat, which clears it).
+  useFocusEffect(
+    useCallback(() => {
+      refreshUnread();
+    }, [refreshUnread]),
+  );
   const [inviteOpen, setInviteOpen] = useState(false);
   // Bumped when travel proof or a money step completes, so the checklist +
   // verification + progress panel refetch.
@@ -133,6 +143,13 @@ export default function TripDetailScreen() {
                 version={moneyVersion}
               />
             </View>
+          </View>
+
+          <View className="px-6 pb-4">
+            <ChatEntry
+              unread={unreadCounts[trip.id] ?? 0}
+              onPress={() => router.push(`/chat/${trip.id}`)}
+            />
           </View>
 
           <View className="gap-2 px-6 pb-4">

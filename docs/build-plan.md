@@ -5,7 +5,7 @@
 > **Revised for v2.** Codename `Trippl`; logo `[LOGO SLOT]` — TBD.
 
 **Status key:** ⬜ not-started · 🟡 in progress · ✅ done · ⏳ external lead time.
-**Phases 0–10 are ✅ done; Phases 11–12 + the backlog are ⬜ not-started.** Update each phase's marker (+ a short note) as work completes.
+**Phases 0–10 are ✅ done; Phases 11–12 are ⬜ not-started.** One backlog item — **Trip group chat** — was **explicitly promoted and built (2026-07-22)**; see the backlog table below. Update each phase's marker (+ a short note) as work completes.
 
 **How to read this:** MVP phases are in intended build order (per brief). The **keystone unlock** is Phases 1–2 (auth + schema + RLS + trip-create); after that, most feature phases are trip-scoped slices. **Keep MVP tight — the Phase 2 backlog below is a parking lot, not a queue; nothing there is built until explicitly promoted (foundation §4-7, §8).**
 
@@ -161,7 +161,7 @@ Recorded so nothing is lost; **do not build until explicitly promoted** (foundat
 | Trip Pass | Stylized boarding-pass identity card per verified member. |
 | Readiness leaderboard | First to fully verify. |
 | AI trip concierge | Recommend spots; auto-build a day-by-day itinerary. |
-| Trip chat + announcements | Replace the group chat. |
+| **Trip group chat** ✅ **(built 2026-07-22)** | **Promoted on explicit request** — real-time text chat per trip. Built: `messages` table + RLS (member-read, own-insert/delete, immutable) + `(trip_id, created_at)` index; **Supabase Realtime** (live INSERT/DELETE, filtered by trip, reconnect catch-up); a full chat screen (`app/chat/[id]`) — grouped bubbles (mine = accent, others = surface + name/avatar), day dividers, **accent send button** (black-default + custom, contrast-checked, never invisible), multiline composer, **Enter-to-send on web**, `KeyboardAvoidingView`, **optimistic send**, **load-more pagination** on scroll-up, empty/loading/error states, long-press delete-own; hooks `useMessages` / `useSendMessage` / `useChatRealtime` / `useUnreadCounts`; **unread indicators** (`trip_members.last_read_at` + `mark_chat_read` / `trip_unread_counts`) on the trip-detail chat entry + Trips cards, cleared on open; **best-effort push fan-out** (`notify-message` edge fn over stored `push_tokens`, excludes sender; fired fire-and-forget). **Announcements + image attachments not built** (attachment columns reserved). |
 | In-trip expense splitting | Splitwise-style, with end-of-trip settle-up. |
 | Collaborative itinerary + packing list | Day-by-day; shared + personal. |
 | Shared collaborative playlist | Spotify / Apple Music. |

@@ -130,6 +130,8 @@ Trip creation (incl. manual Airbnb-selection stub) · Invites + RSVP · Travel p
 
 Group readiness meter (live ring) · Trip Pass (boarding-pass identity card) · Readiness leaderboard · AI trip concierge (auto day-by-day itinerary) · Trip chat + announcements · In-trip Splitwise-style expense splitting + settle-up · Collaborative itinerary + packing list · Shared collaborative playlist (Spotify/Apple Music) · "Trip Wrapped" animated recap + auto video montage · Memory map (pins + miles) · Home-screen countdown widget · Trip templates (birthday/road-trip/beach-week) · **Real payment custody (Stripe Connect)** — the gated money phase · **Room/bed-based cost splitting**. Full list mirrored in **build-plan.md → Phase 2 backlog**.
 
+> **Promoted (2026-07-22):** the **Trip chat** part of "Trip chat + announcements" was **explicitly promoted** from this backlog and built as **real-time group messaging** (per-trip `messages` table + RLS + Supabase Realtime; see build-plan and data-model → `messages`). **Announcements** and image attachments remain deferred (attachment columns are reserved, unbuilt). This was a deliberate, instructed promotion — the rest of the backlog stays parked (§4-7).
+
 ## §9 Architecture keystones
 
 - **Tenancy / isolation:** Supabase RLS; every trip-scoped table gated on membership in `trip_members`; admins (`trip_admins`, **max 3, enforced by trigger**) elevated. Personal safes + flight itineraries are **private** (owner/admins only). (→ D12)
