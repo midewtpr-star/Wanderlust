@@ -353,3 +353,39 @@ export type LinkPreview = {
   author: string | null;
   provider: string; // 'pinterest' | 'link'
 };
+
+// --- Shared bring list (group packing/supplies) ---
+
+export type BringPriority = "needed" | "optional";
+
+// A row of `bring_items`.
+export type BringItem = {
+  id: ID;
+  trip_id: ID;
+  created_by: ID;
+  name: string;
+  category: string | null; // gear | food | docs | misc (free text)
+  priority: BringPriority;
+  quantity: number | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+// A row of `bring_claims` (who's bringing an item; multiple claimers allowed).
+export type BringClaim = {
+  id: ID;
+  item_id: ID;
+  trip_id: ID;
+  user_id: ID;
+  quantity: number | null;
+  claimed_at: string;
+};
+
+export type BringItemInput = {
+  name: string;
+  category?: string | null;
+  priority?: BringPriority;
+  quantity?: number | null;
+  notes?: string | null;
+};

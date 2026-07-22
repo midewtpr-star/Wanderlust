@@ -133,6 +133,7 @@ Group readiness meter (live ring) · Trip Pass (boarding-pass identity card) · 
 > **Promoted (2026-07-22):** two items were **explicitly promoted** from the backlog and built, on instruction — the rest stays parked (§4-7):
 > - **Trip chat** (from "Trip chat + announcements") → **real-time group messaging** (per-trip `messages` table + RLS + Supabase Realtime; see build-plan and data-model → `messages`). **Announcements** + image attachments remain deferred (columns reserved, unbuilt).
 > - **Outfit planner** (Pinterest-powered) → per-member **outfit boards** (`outfits` / `outfit_items` / `outfit_reactions` + a `link-preview` edge function; link/pin + image-upload based). The real **Pinterest OAuth** integration is deferred behind a documented seam.
+> - **Shared bring list** → a **claimable group packing/supplies checklist** (`bring_items` / `bring_claims` + RLS: member-read, add items, edit/delete creator-or-admin, claim/unclaim self-only).
 
 ## §9 Architecture keystones
 

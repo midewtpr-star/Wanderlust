@@ -22,6 +22,7 @@ import { ActivitiesSection } from "@/components/trip/activities-section";
 import { DistanceOptIn } from "@/components/trip/distance-opt-in";
 import { ChatEntry } from "@/components/chat/chat-entry";
 import { OutfitEntry } from "@/components/outfits/outfit-entry";
+import { BringEntry } from "@/components/bring/bring-entry";
 import { formatDateRange, toISODate } from "@/lib/dates";
 import { useAuth } from "@/lib/auth-provider";
 import { useTrip } from "@/hooks/use-trip";
@@ -31,6 +32,7 @@ import { useInvite } from "@/hooks/use-invite";
 import { useMemberVerification } from "@/hooks/use-member-verification";
 import { useUnreadCounts } from "@/hooks/use-unread";
 import { useOutfitCount } from "@/hooks/use-outfits";
+import { useBringCount } from "@/hooks/use-bring-list";
 import type { ActivityInput, RsvpStatus } from "@/types";
 
 export default function TripDetailScreen() {
@@ -44,13 +46,15 @@ export default function TripDetailScreen() {
   const invite = useInvite(id);
   const { counts: unreadCounts, refresh: refreshUnread } = useUnreadCounts();
   const { count: outfitCount, refresh: refreshOutfitCount } = useOutfitCount(id);
-  // Refresh chat unread + outfit count whenever the screen refocuses (e.g.
-  // returning from the chat or the outfit board).
+  const { count: bringCount, refresh: refreshBringCount } = useBringCount(id);
+  // Refresh the entry badges whenever the screen refocuses (e.g. returning from
+  // the chat, the outfit board, or the bring list).
   useFocusEffect(
     useCallback(() => {
       refreshUnread();
       refreshOutfitCount();
-    }, [refreshUnread, refreshOutfitCount]),
+      refreshBringCount();
+    }, [refreshUnread, refreshOutfitCount, refreshBringCount]),
   );
   const [inviteOpen, setInviteOpen] = useState(false);
   // Bumped when travel proof or a money step completes, so the checklist +
@@ -157,6 +161,10 @@ export default function TripDetailScreen() {
             <OutfitEntry
               count={outfitCount}
               onPress={() => router.push(`/outfits/${trip.id}`)}
+            />
+            <BringEntry
+              count={bringCount}
+              onPress={() => router.push(`/bring/${trip.id}`)}
             />
           </View>
 

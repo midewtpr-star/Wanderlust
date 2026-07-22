@@ -382,6 +382,38 @@ Pinterest-powered outfit boards. **Promoted on explicit request**; MVP is link/p
 
 ---
 
+## bring_items  +  bring_claims  — shared bring list (packing/supplies)
+A claimable per-trip checklist of what the group needs. **Built on explicit request.**
+
+**bring_items**
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid PK | |
+| `trip_id` | uuid FK → trips(id) | On delete cascade. |
+| `created_by` | uuid FK → profiles(id) | Any member may add. |
+| `name` | text not null | e.g. "Bluetooth speaker". |
+| `category` | text null | gear \| food \| docs \| misc (free text). |
+| `priority` | `bring_priority` enum | `needed` \| `optional` (default optional) — essentials stand out. |
+| `quantity` | int null | Optional target count. |
+| `notes` | text null | |
+| `created_at` / `updated_at` | timestamptz | |
+
+**bring_claims** ("I'll bring it" — multiple claimers per item; `trip_id` denormalized for RLS)
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid PK | |
+| `item_id` | uuid FK → bring_items(id) | On delete cascade. |
+| `trip_id` / `user_id` | uuid | |
+| `quantity` | int null | Optional partial quantity ("I'll bring 1 of 2"). |
+| `claimed_at` | timestamptz | |
+| — | UNIQUE `(item_id, user_id)` | One claim per member per item (a re-claim upserts). |
+
+> **As built (Bring list).** RLS: any trip member **reads** all items/claims; a member **adds** items and **edits/deletes only their own OR as a trip admin**; a member **claims/unclaims only for themselves**. The UI groups by status (**unclaimed, needed-first, then claimed**), shows a progress summary, one-tap **optimistic** claim/unclaim (the `bring_claims.quantity` column is schema-ready for partial claims; MVP claim is one-tap), and a light **"fully packed"** celebration when the last `needed` item is claimed (reuses the reanimated checkmark). Hooks: `useBringList` / `useAddBringItem` / `useClaimItem`.
+
+---
+
 ## Local ideas — *not a table* (foundation §6-8)
 Nearby events + things-to-do are **fetched on demand from an external places/events API** (provider open, foundation §12-6) once the destination is set/verified — **not persisted**. A member can save an idea, which creates an `activities` row with `source='local_idea'`.
 
@@ -401,6 +433,8 @@ Nearby events + things-to-do are **fetched on demand from an external places/eve
 - **messages:** membership-gated read; **insert/delete own only**; immutable (no edits). Streamed via Realtime (RLS enforced per-subscriber).
 - **outfits / outfit_items / outfit_reactions:** membership-gated read; **create/edit/delete your OWN only** (items gated to your own outfit). Uploaded item images live in the private `trip-media` bucket (signed-URL reads).
 - **link_previews:** read-only to members; written only by the `link-preview` edge function (service role).
+- **bring_items:** membership-gated read; any member adds; **edit/delete creator-or-admin**.
+- **bring_claims:** membership-gated read; **claim/unclaim self-only** (one per member per item).
 
 **Storage buckets:**
 - `trip-covers` — **public read**, authenticated write (uploaders manage their own objects); trip cover images. *(Built in Phase 2; was named `posters` in earlier drafts.)*

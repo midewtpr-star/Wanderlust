@@ -54,6 +54,7 @@ function RootNavigator() {
       <Stack.Screen name="chat/[id]" options={{ headerShown: true, title: "Chat" }} />
       <Stack.Screen name="outfits/[id]" options={{ headerShown: true, title: "Outfits" }} />
       <Stack.Screen name="outfit/[id]" options={{ headerShown: true, title: "Outfit" }} />
+      <Stack.Screen name="bring/[id]" options={{ headerShown: true, title: "Bring list" }} />
       <Stack.Screen name="activity/[id]" options={{ headerShown: true, title: "Activity" }} />
       <Stack.Screen name="recap/[id]" options={{ headerShown: true, title: "Trip recap" }} />
       <Stack.Screen name="join/[code]" options={{ headerShown: true, title: "Trip invite" }} />
