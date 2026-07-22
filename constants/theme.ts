@@ -1,10 +1,10 @@
 import { Platform } from "react-native";
 
-// Calor — design tokens (Phase 10, decisions.md D11 resolved; see docs/design.md).
+// Trippl — design tokens (Phase 10, decisions.md D11 resolved; see docs/design.md).
 // Neutral tokens live as CSS variables in global.css; these mirrors exist for code
 // that can't read CSS vars (React Navigation, react-native-view-shot, etc.).
 
-export const APP_NAME = "Calor";
+export const APP_NAME = "Trippl";
 
 // --- Neutral palette (Apple-like; dark base is dark grey, NOT pure black) ---
 export const NEUTRALS = {
@@ -24,7 +24,10 @@ export const NEUTRALS = {
   },
 } as const;
 
-// --- Accent presets (light + dark variant each; default = Red) ---
+// --- Accent presets. Default = Black (mode-aware monochrome). ---
+// Black & White are mode-aware (their light/dark values flip) so the monochrome
+// accents auto-flip to stay visible. Chromatic accents keep their true vivid
+// value in both modes. `light` is the stored/lookup key (unique per preset).
 export type AccentPreset = {
   id: string;
   name: string;
@@ -33,18 +36,23 @@ export type AccentPreset = {
 };
 
 export const ACCENT_PRESETS: AccentPreset[] = [
+  { id: "black", name: "Black", light: "#000000", dark: "#FFFFFF" }, // default
+  { id: "white", name: "White", light: "#FFFFFF", dark: "#000000" }, // inverse
   { id: "red", name: "Red", light: "#FF3B30", dark: "#FF453A" },
-  { id: "blue", name: "Blue", light: "#007AFF", dark: "#0A84FF" },
-  { id: "green", name: "Green", light: "#34C759", dark: "#30D158" },
+  { id: "orange", name: "Orange", light: "#FF9500", dark: "#FF9F0A" },
   { id: "yellow", name: "Yellow", light: "#FFCC00", dark: "#FFD60A" },
+  { id: "green", name: "Green", light: "#34C759", dark: "#30D158" },
+  { id: "blue", name: "Blue", light: "#007AFF", dark: "#0A84FF" },
+  { id: "purple", name: "Purple", light: "#AF52DE", dark: "#BF5AF2" },
+  { id: "pink", name: "Pink", light: "#FF2D55", dark: "#FF375F" },
 ];
 
 export type ThemeMode = "light" | "dark" | "system";
 
-export const DEFAULT_ACCENT = ACCENT_PRESETS[0].light; // Red
+export const DEFAULT_ACCENT = "#000000"; // Black (monochrome out of the box)
 export const DEFAULT_MODE: ThemeMode = "system";
 
-// Resolve the accent's variant for a scheme: preset → its light/dark hex; a
+// Resolve the accent's raw variant for a scheme: preset → its light/dark hex; a
 // custom hex → used as-is for both.
 export function accentForScheme(
   accent: string,
@@ -57,15 +65,51 @@ export function accentForScheme(
   return accent;
 }
 
-// Readable foreground (black/white) for text/icons sitting ON the accent.
-export function contrastOn(hex: string): string {
+function rgb(hex: string): [number, number, number] {
   const c = hex.replace("#", "");
-  if (c.length < 6) return "#FFFFFF";
-  const r = parseInt(c.slice(0, 2), 16);
-  const g = parseInt(c.slice(2, 4), 16);
-  const b = parseInt(c.slice(4, 6), 16);
+  return [
+    parseInt(c.slice(0, 2), 16),
+    parseInt(c.slice(2, 4), 16),
+    parseInt(c.slice(4, 6), 16),
+  ];
+}
+
+// Readable foreground (black/white) for text/icons sitting ON the accent fill.
+export function contrastOn(hex: string): string {
+  if (hex.replace("#", "").length < 6) return "#FFFFFF";
+  const [r, g, b] = rgb(hex);
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
   return luminance > 0.6 ? "#000000" : "#FFFFFF";
+}
+
+// Is the accent essentially the current background (e.g. White accent in light,
+// or a near-bg custom hex)? Uses RGB distance so vivid-but-light colors (Yellow)
+// are NOT flagged — only colors that would vanish against the bg.
+function isNearBackground(hex: string, scheme: "light" | "dark"): boolean {
+  if (hex.replace("#", "").length < 6) return false;
+  const [r1, g1, b1] = rgb(hex);
+  const [r2, g2, b2] = rgb(NEUTRALS[scheme].bg);
+  const dist = Math.sqrt(
+    (r1 - r2) ** 2 + (g1 - g2) ** 2 + (b1 - b2) ** 2,
+  );
+  return dist < 60;
+}
+
+// The three accent values the UI needs, given the stored accent + scheme:
+//  - fill: solid button/badge background ("transparent" → outlined, for accents
+//          that would vanish against the bg, i.e. White / near-bg customs).
+//  - ink:  the accent as text / stroke / border — always visible.
+//  - fg:   label color sitting on the fill (contrast-checked).
+export function resolveAccentVars(
+  accent: string,
+  scheme: "light" | "dark",
+): { fill: string; ink: string; fg: string } {
+  const raw = accentForScheme(accent, scheme);
+  const text = NEUTRALS[scheme].text;
+  if (isNearBackground(raw, scheme)) {
+    return { fill: "transparent", ink: text, fg: text }; // outlined / inverse
+  }
+  return { fill: raw, ink: raw, fg: contrastOn(raw) }; // solid
 }
 
 export function isValidHex(s: string): boolean {

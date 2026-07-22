@@ -1,8 +1,8 @@
-# Calor — Decisions
+# Trippl — Decisions
 
 > **What this governs:** the *why* behind each locked decision — context, the alternative we rejected, consequences, and what would make us revisit. The authoritative **rationale record**.
 > **Authority:** the *set* of locked decisions and product scope is owned by `foundation.md §7`. This file never introduces a decision not indexed there; if the two disagree on whether/what a decision is, **`foundation.md` wins**. This file *explains*, it doesn't override.
-> Keyed by the same **D-numbers** as `foundation.md §7`. **Revised for v2** (the full commit-and-plan brief). Codename `Calor`, logo `[LOGO SLOT]` — TBD.
+> Keyed by the same **D-numbers** as `foundation.md §7`. **Revised for v2** (the full commit-and-plan brief). Codename `Trippl`, logo `[LOGO SLOT]` — TBD.
 
 **Status key:** ✅ locked · 🕗 TBD · **[LOCKED]** settled.
 
@@ -176,13 +176,13 @@
 
 ---
 
-## D11 — Brand = **Calor**; full identity + theming system ✅ [LOCKED] (resolved Phase 10)
+## D11 — Brand = **Trippl**; full identity + theming system ✅ [LOCKED] (resolved Phase 10)
 
 **Context.** The build shipped against an `AppName`/`[LOGO SLOT]` placeholder so naming could be a painless global swap once the real identity was chosen.
 
-**Decision (resolved).** The app is **Calor**. Phase 10 replaced every placeholder (`AppName`→`Calor`, `appname`→`calor`, `com.appname.app`→`com.calor.app`) and applied the full identity + a runtime theming system. **The design system is recorded in `docs/design.md`** (source-of-truth tokens live in `global.css`, `tailwind.config.js`, `constants/theme.ts`). Highlights:
+**Decision (resolved).** The app is **Trippl**. Phase 10 replaced every placeholder (`AppName`→`Trippl`, `appname`→`trippl`, `com.appname.app`→`com.trippl.app`) and applied the full identity + a runtime theming system. **The design system is recorded in `docs/design.md`** (source-of-truth tokens live in `global.css`, `tailwind.config.js`, `constants/theme.ts`). Highlights:
 - **Mark:** a minimal hand-drawn brushstroke (open circle + detached arc), with black/white variants swapped automatically by theme; used in auth, the Trips header, splash, and the generated icon set.
-- **Theming:** `ThemeProvider` with `mode` (light/dark/**system** default) + an `accent` color, persisted to the **profile** (`profiles.theme_mode`, `accent_color`) **and** AsyncStorage. The accent is a **runtime CSS variable** (`--accent` → `colors.primary/accent/ring`), so presets **and any custom hex** recolor the app live. Neutral tokens are Apple-like (dark base is dark grey `#1C1C1E`, not black). Accent presets: Red (default), Blue, Green, Yellow, + Custom. The accent drives interactive/primary elements only — bold but sparse.
+- **Theming:** `ThemeProvider` with `mode` (light/dark/**system** default) + an `accent` color, persisted to the **profile** (`profiles.theme_mode`, `accent_color`) **and** AsyncStorage. The accent resolves to **runtime CSS variables** — `--accent` (visible ink → `primary`/`accent`/`ring`), `--accent-fill` (solid fill, `transparent` when it would vanish → outlined control), `--accent-fg` (contrast-checked label) — so presets **and any custom hex** recolor the app live and no accent is ever invisible. Neutral tokens are Apple-like (dark base `#1C1C1E`, not black). Accent presets: **Black (default, mode-aware monochrome)**, White (mode-aware inverse/outlined), + vivid Red/Orange/Yellow/Green/Blue/Purple/Pink, + Custom. Monochrome accents auto-flip to stay visible; chromatics keep their vivid value in both modes. The accent drives interactive/primary elements only — bold but sparse.
 - **Typography:** system font primary (real SF on Apple), **Inter** bundled as the Android/web fallback (SF Pro never bundled — licensing); a two-role Apple-like type scale (Display / Text).
 - **Aesthetic:** editorial + slick-modern — whitespace, big headers, hairline borders, soft card elevation, rounded tactile controls, existing reanimated animations retained.
 

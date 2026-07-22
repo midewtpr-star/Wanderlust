@@ -1,9 +1,10 @@
 import { View } from "react-native";
 import { useTheme } from "@/lib/theme-provider";
-import { accentForScheme, NEUTRALS } from "@/constants/theme";
+import { NEUTRALS } from "@/constants/theme";
 
 // Simple horizontal progress bar. Inline styles (NativeWind className isn't wired
-// onto arbitrary style props here); the fill uses the accent by default.
+// onto arbitrary style props here); the fill uses the visible accent ink so mono
+// accents (Black/White) never vanish.
 export function ProgressBar({
   fraction,
   height = 10,
@@ -15,8 +16,8 @@ export function ProgressBar({
   filled?: string;
   track?: string;
 }) {
-  const { accent, scheme } = useTheme();
-  const fill = filled ?? accentForScheme(accent, scheme);
+  const { accentInk, scheme } = useTheme();
+  const fill = filled ?? accentInk;
   const trackColor = track ?? NEUTRALS[scheme].border;
   const pct = Math.round(Math.max(0, Math.min(1, fraction)) * 100);
   return (

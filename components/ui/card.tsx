@@ -1,7 +1,7 @@
 import { View, type ViewProps } from "react-native";
 import { cn } from "@/lib/utils";
 
-// Calor card (Phase 10): rounded surface, hairline border, soft elevation.
+// Trippl card (Phase 10): rounded surface, hairline border, soft elevation.
 export function Card({
   className,
   style,

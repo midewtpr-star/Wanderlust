@@ -17,7 +17,7 @@ import { useJoinTrip } from "@/hooks/use-join-trip";
 import { useRsvp } from "@/hooks/use-rsvp";
 import type { RsvpStatus } from "@/types";
 
-// Public invite landing (deep link: calor://join/<code> or <web-origin>/join/<code>).
+// Public invite landing (deep link: trippl://join/<code> or <web-origin>/join/<code>).
 export default function JoinScreen() {
   const { code } = useLocalSearchParams<{ code: string }>();
   const insets = useSafeAreaInsets();

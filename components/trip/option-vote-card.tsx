@@ -61,7 +61,7 @@ export function OptionVoteCard({
           ) : null}
         </View>
         {official ? (
-          <View className="rounded-full bg-primary px-2 py-0.5">
+          <View className="rounded-full border border-primary bg-accent-fill px-2 py-0.5">
             <Text className="text-xs font-semibold text-primary-foreground">
               Official
             </Text>

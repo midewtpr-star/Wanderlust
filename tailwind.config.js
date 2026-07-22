@@ -15,7 +15,10 @@ module.exports = {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         // Accent-driven, runtime-overridable (bold but sparse — interactive bits).
+        // `--accent` = the visible ink (text/stroke/border); `--accent-fill` = the
+        // solid fill (may be 'transparent' → outlined control for mono/near-bg).
         ring: "var(--accent)",
+        "accent-fill": "var(--accent-fill)",
         primary: {
           DEFAULT: "var(--accent)",
           foreground: "var(--accent-fg)",

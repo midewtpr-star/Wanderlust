@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import { fontFamily, NEUTRALS } from "@/constants/theme";
 import { useTheme } from "@/lib/theme-provider";
 
-// Calor input (Phase 10): rounded, hairline border, token colors, themed
+// Trippl input (Phase 10): rounded, hairline border, token colors, themed
 // placeholder + font.
 export function Input({
   className,

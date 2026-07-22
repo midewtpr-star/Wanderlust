@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 /*
-  Calor — design tokens (Phase 10; see docs/design.md).
+  Trippl — design tokens (Phase 10; see docs/design.md).
   Neutrals are HSL triplets referenced via tailwind.config as hsl(var(--x)).
   The ACCENT is a RAW color value, overridden live by the ThemeProvider so the
   accent (and any custom hex) recolors the app instantly. Default = Red.
@@ -27,7 +27,11 @@
     --input: 240 11% 91%;
     --radius: 0.75rem;
 
-    --accent: #ff3b30; /* runtime-overridden by ThemeProvider */
+    /* Accent (default = Black): --accent is the visible ink (text/stroke/border),
+       --accent-fill is the solid fill, --accent-fg the label on the fill.
+       Runtime-overridden by ThemeProvider. */
+    --accent: #000000;
+    --accent-fill: #000000;
     --accent-fg: #ffffff;
   }
 
@@ -47,8 +51,9 @@
     --border: 240 2% 22%; /* #38383A */
     --input: 240 2% 22%;
 
-    --accent: #ff453a;
-    --accent-fg: #ffffff;
+    --accent: #ffffff; /* Black accent flips to white in dark mode */
+    --accent-fill: #ffffff;
+    --accent-fg: #000000;
   }
 }
 

@@ -32,7 +32,7 @@ export default function ProfileScreen() {
 
         <View className="items-center gap-2 pt-8">
           <Logo size={30} />
-          <Text variant="caption">made with Calor</Text>
+          <Text variant="caption">made with Trippl</Text>
         </View>
       </ScrollView>
     </View>

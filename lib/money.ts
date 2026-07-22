@@ -1,4 +1,4 @@
-// Calor — money helpers. LEDGER MODE (decisions.md D3): amounts are integer
+// Trippl — money helpers. LEDGER MODE (decisions.md D3): amounts are integer
 // CENTS everywhere; never floats. Nothing here holds or moves funds — these are
 // honor-system records. Real custody (Stripe Connect + KYC) is the gated later
 // phase that flips on via config, not a rebuild.

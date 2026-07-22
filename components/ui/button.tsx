@@ -3,14 +3,17 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { fontFamily } from "@/constants/theme";
 
-// Calor button (Phase 10). Rounded/tactile; the accent drives the primary fill.
+// Trippl button (Phase 10). Rounded/tactile; the accent drives the primary fill.
 // Neutrals carry secondary/outline. See docs/design.md.
 const buttonVariants = cva(
   "flex-row items-center justify-center rounded-xl active:opacity-80",
   {
     variants: {
       variant: {
-        default: "bg-primary",
+        // Fill = accent-fill; a same-color accent border is seamless on solid
+        // accents but becomes a visible outline when the fill is transparent
+        // (White / near-bg accents) — so the primary button is never invisible.
+        default: "border border-primary bg-accent-fill",
         secondary: "bg-secondary",
         outline: "border border-border bg-transparent",
         ghost: "bg-transparent",

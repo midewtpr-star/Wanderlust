@@ -14,18 +14,18 @@ import { useAuth } from "@/lib/auth-provider";
 import {
   DEFAULT_ACCENT,
   DEFAULT_MODE,
-  accentForScheme,
-  contrastOn,
+  resolveAccentVars,
   type ThemeMode,
 } from "@/constants/theme";
 
-const KEY_MODE = "calor.theme_mode";
-const KEY_ACCENT = "calor.accent_color";
+const KEY_MODE = "trippl.theme_mode";
+const KEY_ACCENT = "trippl.accent_color";
 
 type ThemeState = {
   mode: ThemeMode; // 'light' | 'dark' | 'system'
   accent: string; // stored base hex (preset light value or a custom hex)
   scheme: "light" | "dark"; // effective scheme after resolving 'system'
+  accentInk: string; // the accent as a visible text/stroke color (for progress, etc.)
   setMode: (mode: ThemeMode) => void;
   setAccent: (hex: string) => void;
 };
@@ -118,14 +118,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     [mode, persist],
   );
 
-  const accentHex = accentForScheme(accent, scheme);
+  const { fill, ink, fg } = resolveAccentVars(accent, scheme);
   const accentVars = vars({
-    "--accent": accentHex,
-    "--accent-fg": contrastOn(accentHex),
+    "--accent": ink, // accent as text/stroke/border — always visible
+    "--accent-fill": fill, // solid fill ('transparent' → outlined control)
+    "--accent-fg": fg, // label on the fill (contrast-checked)
   });
 
   return (
-    <ThemeContext.Provider value={{ mode, accent, scheme, setMode, setAccent }}>
+    <ThemeContext.Provider
+      value={{ mode, accent, scheme, accentInk: ink, setMode, setAccent }}
+    >
       <View style={[{ flex: 1 }, accentVars]}>{children}</View>
     </ThemeContext.Provider>
   );

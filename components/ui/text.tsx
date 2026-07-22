@@ -3,7 +3,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { fontFamily, type FontWeight } from "@/constants/theme";
 
-// Calor text (Phase 10). Two roles, Apple-like: Display for large titles (tighter
+// Trippl text (Phase 10). Two roles, Apple-like: Display for large titles (tighter
 // tracking, heavier), Text for body/UI. See docs/design.md for the scale.
 const textVariants = cva("text-foreground", {
   variants: {

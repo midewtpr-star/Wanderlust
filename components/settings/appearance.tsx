@@ -9,6 +9,7 @@ import {
   accentForScheme,
   isValidHex,
   normalizeHex,
+  NEUTRALS,
   type ThemeMode,
 } from "@/constants/theme";
 import { cn } from "@/lib/utils";
@@ -23,25 +24,39 @@ function Swatch({
   color,
   label,
   selected,
+  ringColor,
   onPress,
 }: {
   color: string;
   label: string;
   selected: boolean;
+  ringColor: string;
   onPress: () => void;
 }) {
   return (
-    <Pressable onPress={onPress} className="items-center gap-1">
+    <Pressable onPress={onPress} className="items-center gap-1" style={{ width: 60 }}>
       <View
         style={{
           width: 44,
           height: 44,
           borderRadius: 22,
-          backgroundColor: color,
-          borderWidth: selected ? 3 : 1,
-          borderColor: selected ? color : "rgba(120,120,128,0.35)",
+          alignItems: "center",
+          justifyContent: "center",
+          borderWidth: selected ? 3 : 0,
+          borderColor: ringColor,
         }}
-      />
+      >
+        <View
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 17,
+            backgroundColor: color,
+            borderWidth: 1,
+            borderColor: "rgba(120,120,128,0.4)",
+          }}
+        />
+      </View>
       <Text variant="caption">{label}</Text>
     </Pressable>
   );
@@ -78,7 +93,9 @@ export function AppearanceSettings() {
                 onPress={() => setMode(m.id)}
                 className={cn(
                   "flex-1 items-center rounded-xl border py-2.5",
-                  active ? "border-primary bg-primary" : "border-border bg-secondary",
+                  active
+                    ? "border-primary bg-accent-fill"
+                    : "border-border bg-secondary",
                 )}
               >
                 <Text
@@ -103,6 +120,7 @@ export function AppearanceSettings() {
               key={p.id}
               color={accentForScheme(p.light, scheme)}
               label={p.name}
+              ringColor={NEUTRALS[scheme].text}
               selected={
                 !customOpen && accent.toLowerCase() === p.light.toLowerCase()
               }
@@ -115,6 +133,7 @@ export function AppearanceSettings() {
           <Swatch
             color={isPreset ? "#8E8E93" : accent}
             label="Custom"
+            ringColor={NEUTRALS[scheme].text}
             selected={customOpen || !isPreset}
             onPress={() => {
               setHex(accent);

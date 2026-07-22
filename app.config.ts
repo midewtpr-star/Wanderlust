@@ -1,34 +1,34 @@
 import type { ExpoConfig } from "expo/config";
 
-// Calor — dynamic Expo app config.
+// Trippl — dynamic Expo app config.
 // Dynamic (vs static app.json) so environment variables can flow into `extra`,
 // read back through expo-constants in lib/supabase.ts.
 //
-// Branding is LOCKED (Phase 10, decisions.md D11): name "Calor", slug/scheme
-// "calor", ids com.calor.app. The Calor brushstroke mark drives the icon +
-// splash (assets/logo/calor-mark*.png).
+// Branding is LOCKED (Phase 10, decisions.md D11): name "Trippl", slug/scheme
+// "trippl", ids com.trippl.app. The Trippl brushstroke mark drives the icon +
+// splash (assets/logo/trippl-mark*.png).
 const config: ExpoConfig = {
-  name: "Calor",
-  slug: "calor",
+  name: "Trippl",
+  slug: "trippl",
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   // Deep-link scheme (D2). Invite links resolve to app/join/[code]:
-  //   native  → calor://join/<code>
+  //   native  → trippl://join/<code>
   //   web     → <web-origin>/join/<code>
   // Expo Router derives the linking config from the file routes + this scheme.
   // TODO (production universal/app links): add iOS `ios.associatedDomains`
   //   (applinks:yourdomain.com) + Android `android.intentFilters` for
   //   https://yourdomain.com/join/* and host an AASA + assetlinks.json, so the
   //   web URL opens the installed app directly. Custom scheme + web URL is fine for now.
-  scheme: "calor",
+  scheme: "trippl",
   userInterfaceStyle: "automatic",
   ios: {
     supportsTablet: true,
-    bundleIdentifier: "com.calor.app",
+    bundleIdentifier: "com.trippl.app",
   },
   android: {
-    package: "com.calor.app",
+    package: "com.trippl.app",
     adaptiveIcon: {
       // Thin mark → generous padding on a solid white plate so it reads small.
       backgroundColor: "#FFFFFF",
@@ -43,7 +43,7 @@ const config: ExpoConfig = {
   plugins: [
     "expo-router",
     // Splash: the mark on a solid plate — black on white (light), white on
-    // dark-grey (dark), matching the Calor theme neutrals.
+    // dark-grey (dark), matching the Trippl theme neutrals.
     [
       "expo-splash-screen",
       {
@@ -52,7 +52,7 @@ const config: ExpoConfig = {
         imageWidth: 140,
         dark: {
           backgroundColor: "#1C1C1E",
-          image: "./assets/logo/calor-mark-white.png",
+          image: "./assets/logo/trippl-mark-white.png",
           imageWidth: 140,
         },
       },
@@ -75,16 +75,16 @@ const config: ExpoConfig = {
       "expo-image-picker",
       {
         photosPermission:
-          "Calor accesses your photos so you can add a trip cover or upload a flight itinerary.",
+          "Trippl accesses your photos so you can add a trip cover or upload a flight itinerary.",
         cameraPermission:
-          "Calor uses the camera so you can photograph your flight itinerary.",
+          "Trippl uses the camera so you can photograph your flight itinerary.",
       },
     ],
     [
       "expo-camera",
       {
         cameraPermission:
-          "Calor uses the camera so you can photograph your flight itinerary.",
+          "Trippl uses the camera so you can photograph your flight itinerary.",
         recordAudioAndroid: false,
       },
     ],
@@ -93,7 +93,7 @@ const config: ExpoConfig = {
       "expo-location",
       {
         locationWhenInUsePermission:
-          "Calor uses your location to tally trip miles for your recap.",
+          "Trippl uses your location to tally trip miles for your recap.",
       },
     ],
     // Video playback for activity media (Phase 8).
@@ -109,7 +109,7 @@ const config: ExpoConfig = {
     supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
     supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
     // Optional deployed web origin used to build shareable invite links on native
-    // (e.g. https://calor.vercel.app). On web we fall back to window.location.origin.
+    // (e.g. https://trippl.vercel.app). On web we fall back to window.location.origin.
     webUrl: process.env.EXPO_PUBLIC_WEB_URL,
   },
 };

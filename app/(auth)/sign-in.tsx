@@ -111,7 +111,7 @@ export default function SignInScreen() {
     <>
       <Stack.Screen options={{ title: "Sign in" }} />
       <Screen
-        title="Sign in to Calor"
+        title="Sign in to Trippl"
         subtitle={
           mode === "phone"
             ? "Phone-first (D4). SMS needs Twilio connected — use email to test now."

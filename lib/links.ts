@@ -5,7 +5,7 @@ import Constants from "expo-constants";
 // Build the shareable invite links for an invite code.
 // - webUrl: <web-origin>/join/<code> — opens in a browser (and, once universal
 //   links are configured, the installed app). Null on native if no web origin is set.
-// - nativeUrl: the app's scheme URL via expo-linking (calor://join/<code> in a
+// - nativeUrl: the app's scheme URL via expo-linking (trippl://join/<code> in a
 //   build; an exp:// URL in Expo Go dev).
 // - shareUrl: the best single link to share (prefer the web URL).
 export function buildInviteLinks(code: string): {
