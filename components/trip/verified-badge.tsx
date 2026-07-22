@@ -5,8 +5,10 @@ import { Text } from "@/components/ui/text";
 // are listed. For non-verified members, render <StepProgress/> instead.
 export function VerifiedBadge() {
   return (
-    <View className="rounded-full bg-green-100 px-2 py-0.5">
-      <Text className="text-xs font-semibold text-green-700">✓ Verified</Text>
+    <View className="rounded-full bg-primary px-2 py-0.5">
+      <Text className="text-xs font-semibold text-primary-foreground">
+        ✓ Verified
+      </Text>
     </View>
   );
 }

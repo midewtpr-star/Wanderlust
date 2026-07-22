@@ -42,7 +42,7 @@ export function OptionVoteCard({
   }
 
   return (
-    <Card className={official ? "gap-3 border-green-500" : "gap-3"}>
+    <Card className={official ? "gap-3 border-primary" : "gap-3"}>
       {option.image_url ? (
         <Image
           source={{ uri: option.image_url }}
@@ -61,8 +61,10 @@ export function OptionVoteCard({
           ) : null}
         </View>
         {official ? (
-          <View className="rounded-full bg-green-100 px-2 py-0.5">
-            <Text className="text-xs font-semibold text-green-700">Official</Text>
+          <View className="rounded-full bg-primary px-2 py-0.5">
+            <Text className="text-xs font-semibold text-primary-foreground">
+              Official
+            </Text>
           </View>
         ) : null}
       </View>

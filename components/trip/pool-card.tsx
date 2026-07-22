@@ -204,7 +204,7 @@ export function PoolCard({
               <Text
                 className={
                   share != null && myRemaining === 0
-                    ? "text-green-600"
+                    ? "font-semibold text-primary"
                     : "font-semibold"
                 }
               >

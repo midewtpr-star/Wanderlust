@@ -79,7 +79,7 @@ export function AirbnbSection({
       official?.total_cost != null ? Math.round(official.total_cost * 100) : null;
     return (
       <View className="gap-3">
-        <Card className="gap-3 border-green-500">
+        <Card className="gap-3 border-primary">
           <Text variant="muted" className="text-xs uppercase tracking-widest">
             Official stay
           </Text>

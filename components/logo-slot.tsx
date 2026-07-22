@@ -1,19 +1,46 @@
-import { View, Text } from "react-native";
+import { View, Image } from "react-native";
+import { Text } from "@/components/ui/text";
+import { useTheme } from "@/lib/theme-provider";
 import { cn } from "@/lib/utils";
 
-// [LOGO SLOT] — clearly-marked placeholder for the AppName logo (TBD, decisions.md D11).
-// Replace the contents with the real logo during the branding phase (build-plan Phase 10).
-export function LogoSlot({ className }: { className?: string }) {
+// The Calor brushstroke mark. Black in light mode, white in dark mode (the black
+// mark is invisible on dark backgrounds), switched automatically. D11 resolved.
+const BLACK = require("../assets/logo/calor-mark.png");
+const WHITE = require("../assets/logo/calor-mark-white.png");
+
+export function Logo({ size = 44 }: { size?: number }) {
+  const { scheme } = useTheme();
   return (
-    <View
-      className={cn(
-        "items-center justify-center rounded-xl border border-dashed border-border px-5 py-3",
-        className,
-      )}
-    >
-      <Text className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-        [ LOGO SLOT ]
+    <Image
+      source={scheme === "dark" ? WHITE : BLACK}
+      style={{ width: size, height: size }}
+      resizeMode="contain"
+    />
+  );
+}
+
+// Mark + "Calor" wordmark lockup, for auth screens and headers.
+export function LogoLockup({
+  size = 36,
+  className,
+}: {
+  size?: number;
+  className?: string;
+}) {
+  return (
+    <View className={cn("flex-row items-center gap-2", className)}>
+      <Logo size={size} />
+      <Text
+        className="text-2xl font-bold text-foreground"
+        style={{ letterSpacing: -0.5 }}
+      >
+        Calor
       </Text>
     </View>
   );
+}
+
+// Back-compat: screens that imported the old placeholder now get the real logo.
+export function LogoSlot({ className }: { className?: string }) {
+  return <LogoLockup className={cn("py-1", className)} />;
 }

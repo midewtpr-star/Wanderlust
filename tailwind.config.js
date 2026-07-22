@@ -1,8 +1,8 @@
 /** @type {import('tailwindcss').Config} */
-// AppName — Tailwind config for NativeWind v4.
-// Colors map to the CSS variables defined in global.css (shadcn / React Native
-// Reusables token system). These are PLACEHOLDER tokens — the real palette comes
-// from the locked design later (see docs: the UI trio is pending). D11.
+// Calor — Tailwind config for NativeWind v4 (Phase 10; see docs/design.md).
+// Neutrals map to HSL-triplet CSS vars in global.css. The ACCENT is a RAW color
+// var (--accent) overridden live by the ThemeProvider — primary/accent/ring all
+// resolve to it, so changing the accent (incl. a custom hex) recolors instantly.
 module.exports = {
   darkMode: "class",
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}"],
@@ -12,13 +12,19 @@ module.exports = {
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        // Accent-driven, runtime-overridable (bold but sparse — interactive bits).
+        ring: "var(--accent)",
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: "var(--accent)",
+          foreground: "var(--accent-fg)",
         },
+        accent: {
+          DEFAULT: "var(--accent)",
+          foreground: "var(--accent-fg)",
+        },
+        // Neutrals carry everything else.
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
           foreground: "hsl(var(--secondary-foreground))",
@@ -30,10 +36,6 @@ module.exports = {
         muted: {
           DEFAULT: "hsl(var(--muted))",
           foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",

@@ -1,6 +1,6 @@
-# AppName
+# Calor
 
-> `AppName` is a placeholder name (logo/name TBD — see `docs/decisions.md` D11). A group-trip planning app — Partiful, but for trips. Web + iOS + Android from one Expo/React Native codebase.
+> `Calor` is a placeholder name (logo/name TBD — see `docs/decisions.md` D11). A group-trip planning app — Partiful, but for trips. Web + iOS + Android from one Expo/React Native codebase.
 
 **This repo is at the scaffold stage** (build-plan Phase 0 ✅). Screens are labeled placeholders — no features, auth, or database yet. The source of truth for what gets built and why lives in **[`/docs`](./docs)** (`foundation.md`, `decisions.md`, `data-model.md`, `build-plan.md`) — read those before writing code.
 

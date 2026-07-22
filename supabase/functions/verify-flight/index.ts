@@ -1,4 +1,4 @@
-// AppName — Phase 4: verify-flight edge function (Deno).
+// Calor — Phase 4: verify-flight edge function (Deno).
 //
 // Receives { trip_id, path } where `path` points at a file the member already
 // uploaded to the PRIVATE `flight-itineraries` bucket. It:
@@ -93,7 +93,7 @@ async function geocode(query: string): Promise<{ lat: number; lng: number } | nu
       "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" +
       encodeURIComponent(query);
     const res = await fetch(url, {
-      headers: { "User-Agent": "AppName/1.0 (travel-proof verifier)" },
+      headers: { "User-Agent": "Calor/1.0 (travel-proof verifier)" },
     });
     if (!res.ok) return null;
     const arr = await res.json();

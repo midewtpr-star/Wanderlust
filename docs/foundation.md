@@ -1,8 +1,8 @@
-# AppName — Foundation
+# Calor — Foundation
 
 > **Status:** v2 — revised from the full brief. Last updated 2026-07-22. **Changes from v1:** MVP core loop expanded to the ten-step commit-and-plan flow — travel-proof becomes a **dual-path hard-confirm** (AI-verified flight **or** self-declared driving), money becomes **two pools (Airbnb + car) + a personal safe** with equal-split auto-calc, plus Airbnb voting + admin-lock + countdown, verified badge, step checklist, local ideas, activity docs, and a post-trip recap. Auth is now **decided** (phone-first). A large **Phase 2 / backlog** is recorded (kept strictly out of MVP). Stack gains **AI vision extraction** for itineraries and **expo-location**.
 > **Source of truth.** Every other doc references this; none restate it. If any doc disagrees with this one, **this one wins.**
-> **Codename** `AppName` is a placeholder for the real product name (TBD) — find-and-replace when locked. Logo TBD; every surface leaves a **`[LOGO SLOT]`** marker.
+> **Name (locked, Phase 10):** **Calor**. The brushstroke mark + full theming/typography system are applied; the design system is recorded in **`docs/design.md`** (D11 resolved).
 
 ---
 
@@ -109,7 +109,7 @@ Numbered so other docs cite `foundation.md §7 D3`. **Full rationale lives in `d
 | **D8** | **Admins capped at 3 per trip** (host counts toward the 3) | Keeps authority (lock pick, name-match override) tight in a large group. |
 | **D9** | **Post-trip recap = collages + stats in MVP; auto video montage is Phase 2** | Montages need server-side rendering; collages + stats ship client-side now. |
 | **D10** | **Push notifications in MVP** (expo-notifications) | Re-engagement is part of the commitment loop. |
-| **D11** | **`AppName` placeholder + `[LOGO SLOT]`**; branding deferred to its phase | Name/logo TBD; a consistent token makes the swap a painless find-and-replace. |
+| **D11** | **Brand = Calor** (resolved Phase 10): mark, runtime theming (mode + accent), Apple-like type; see `docs/design.md` | Placeholder token made the swap painless; a token + runtime-accent system keeps every screen cohesive + personalizable. |
 | **D12** | **Tenancy = Supabase RLS, scoped by `trip_members`** (admins via `trip_admins`) | Trip is the isolation unit; RLS makes an unscoped read a policy failure, not a silent leak. |
 
 ## §8 Scope

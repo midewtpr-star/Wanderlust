@@ -1,4 +1,4 @@
-// AppName — shared TypeScript types (mirror docs/data-model.md + the Phase 1 schema).
+// Calor — shared TypeScript types (mirror docs/data-model.md + the Phase 1 schema).
 
 export type ID = string;
 

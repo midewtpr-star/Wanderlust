@@ -101,7 +101,7 @@ export function PersonalSafeCard({
           {formatDate(unlockDate)}.
         </Text>
       ) : (
-        <Text className="text-center text-green-600">
+        <Text className="text-center font-medium text-primary">
           🎉 Unlocked — enjoy the trip!
         </Text>
       )}

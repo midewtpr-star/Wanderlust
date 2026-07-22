@@ -1,11 +1,11 @@
-# AppName — Build Plan
+# Calor — Build Plan
 
 > **What this governs:** the **phased MVP build order** + the **Phase 2 backlog**, each marked not-started. Read this to know what to build next and what "done" means.
 > **Authority:** subordinate to `foundation.md` (scope) and `decisions.md` (rationale); cites both by §/D-number. If this doc disagrees with `foundation.md`, **`foundation.md` wins.**
-> **Revised for v2.** Codename `AppName`; logo `[LOGO SLOT]` — TBD.
+> **Revised for v2.** Codename `Calor`; logo `[LOGO SLOT]` — TBD.
 
 **Status key:** ⬜ not-started · 🟡 in progress · ✅ done · ⏳ external lead time.
-**Phases 0–9 are ✅ done; Phases 10–12 + the backlog are ⬜ not-started.** Update each phase's marker (+ a short note) as work completes.
+**Phases 0–10 are ✅ done; Phases 11–12 + the backlog are ⬜ not-started.** Update each phase's marker (+ a short note) as work completes.
 
 **How to read this:** MVP phases are in intended build order (per brief). The **keystone unlock** is Phases 1–2 (auth + schema + RLS + trip-create); after that, most feature phases are trip-scoped slices. **Keep MVP tight — the Phase 2 backlog below is a parking lot, not a queue; nothing there is built until explicitly promoted (foundation §4-7, §8).**
 
@@ -15,7 +15,7 @@
 
 ## Phase 0 — Scaffold ✅ (2026-07-22)
 **Goal:** a running Expo app on all three targets, empty but healthy.
-**Deliverables (built):** Expo **SDK 57** + RN 0.86 + TS; Expo Router tree — `(auth)/sign-in`, `(tabs)` = Trips/Create/Profile, `trip/[id]`; **NativeWind v4** (+ Tailwind 3, `global.css` token system) + **React Native Reusables-style** `components/ui/` primitives (Button, Text) wired; `AppName` token + `[LOGO SLOT]` placeholders (→ D11); **single Supabase client** from `EXPO_PUBLIC_*` env via app config (`.env.example`, no secrets committed); the four **native modules installed + permissioned** (image-picker, camera, location, notifications) — config only, no logic; folder structure `app/ components/ lib/ hooks/ constants/ types/`.
+**Deliverables (built):** Expo **SDK 57** + RN 0.86 + TS; Expo Router tree — `(auth)/sign-in`, `(tabs)` = Trips/Create/Profile, `trip/[id]`; **NativeWind v4** (+ Tailwind 3, `global.css` token system) + **React Native Reusables-style** `components/ui/` primitives (Button, Text) wired; `Calor` token + `[LOGO SLOT]` placeholders (→ D11); **single Supabase client** from `EXPO_PUBLIC_*` env via app config (`.env.example`, no secrets committed); the four **native modules installed + permissioned** (image-picker, camera, location, notifications) — config only, no logic; folder structure `app/ components/ lib/ hooks/ constants/ types/`.
 **Depends on:** nothing (cold start).
 **Done when (verified):** ✅ `tsc --noEmit` passes · ✅ web export builds (NativeWind CSS emitted, classes compiled) and `expo start --web` serves HTTP 200 · ✅ iOS + Android Metro bundles compile (Hermes bytecode). *iOS/Android **simulator** launch isn't verifiable in the headless build env — native **bundling** was verified instead; run on a device/simulator locally (see README).*
 
@@ -122,11 +122,16 @@
 **Depends on:** Phase 8 (media), Phase 7 (checklist stats), expo-location (miles; privacy §12-5).
 **Done when (verified):** ✅ `tsc` passes · ✅ web + iOS + Android bundles compile · ✅ headless browser boots the client bundle without runtime errors. Live: on a past-dated trip with some photos, a member generates a recap showing a **real collage + real stats** and **shares/downloads** the recap image — verified by the operator after `db push`. **No auto video montage** (marked TODO seam only).
 
-## Phase 10 — Branding ⬜
-**Goal:** replace placeholders with the real identity (→ D11).
-**Deliverables:** find-and-replace `AppName` → real name (code + docs); real logo into every `[LOGO SLOT]`; app icon, splash, theme; store metadata.
-**Depends on:** name + logo chosen (foundation §12-11, 🕗).
-**Done when:** no `AppName` / `[LOGO SLOT]` remain; icons/splash render on all platforms.
+## Phase 10 — Branding ✅ (2026-07-22)
+**Goal:** replace placeholders with the real identity (→ D11). **Full design system in `docs/design.md`.**
+**Deliverables (built):**
+- **Identity = Calor.** `AppName`→`Calor`, `appname`→`calor` (slug + scheme `calor://`), ids `com.calor.app`; store display name Calor. The brushstroke **mark** ships black + auto-generated **white** variant (`assets/logo/calor-mark*.png`), placed in auth, the Trips header, and the splash (light black-on-white / dark white-on-grey). App **icon + splash + favicon + Android adaptive/monochrome** generated from the mark (padded on a white plate).
+- **Theming system** (`ThemeProvider`): `mode` (light/dark/**system**) + `accent`, persisted to the **profile** (`profiles.theme_mode` / `accent_color`, migration `20260722160001`) **and** AsyncStorage (instant/offline). Accent is a **runtime CSS variable** (`--accent` → `colors.primary/accent/ring`) so presets **and any custom hex** recolor the app live. Neutral tokens per spec (dark base `#1C1C1E`, not black). Accent presets Red (default)/Blue/Green/Yellow + Custom picker.
+- **Typography:** system font primary (real SF on Apple) + **Inter** bundled (Android/web fallback; SF Pro never bundled); two-role Apple type scale (`constants/theme.ts`).
+- **Restyle:** shared primitives (Button/Card/Text/Input) + tokens reworked, ad-hoc palette colors repointed to the accent (verified badge, progress fills, official/paid states), logo placement — every screen cohesive in both modes, nothing default-Tailwind.
+- **Settings → Appearance** (Profile): Light/Dark/System toggle + accent swatches + Custom hex, applying live; Calor logo + "made with Calor" footer.
+**Depends on:** name + logo (now chosen).
+**Done when (verified):** ✅ `tsc` passes · ✅ web + iOS + Android bundles compile · ✅ headless browser renders the Calor logo (correct variant per mode) and confirms Light/Dark + the red accent drive the UI in both modes (screenshots). No `AppName`/`[LOGO SLOT]` remain. *(The traced mark can be swapped for an exact PNG at `assets/logo/calor-mark*.png` — everything stays wired.)*
 
 ## Phase 11 — Polish ⬜
 **Goal:** make the (large) MVP feel finished.

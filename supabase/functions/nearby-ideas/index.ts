@@ -1,4 +1,4 @@
-// AppName — Phase 8: nearby-ideas edge function (Deno).
+// Calor — Phase 8: nearby-ideas edge function (Deno).
 //
 // Given a trip, returns a NORMALIZED list of local ideas (things to do / events)
 // near the destination:
@@ -57,7 +57,7 @@ async function geocode(query: string): Promise<{ lat: number; lng: number } | nu
       "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" +
       encodeURIComponent(query);
     const res = await fetch(url, {
-      headers: { "User-Agent": "AppName/1.0 (local-ideas)" },
+      headers: { "User-Agent": "Calor/1.0 (local-ideas)" },
     });
     if (!res.ok) return null;
     const arr = await res.json();

@@ -1,15 +1,17 @@
 import type { ReactNode } from "react";
 import { View } from "react-native";
 import Svg, { Circle } from "react-native-svg";
+import { useTheme } from "@/lib/theme-provider";
+import { accentForScheme, NEUTRALS } from "@/constants/theme";
 
 // Circular progress ring (react-native-svg — works on web + native). Starts at
-// 12 o'clock. Inline colors (SVG can't take NativeWind classes).
+// 12 o'clock. The fill uses the accent by default (SVG can't take NativeWind).
 export function ProgressRing({
   fraction,
   size = 128,
   stroke = 12,
-  filled = "#22c55e",
-  track = "#e5e7eb",
+  filled,
+  track,
   children,
 }: {
   fraction: number;
@@ -19,6 +21,9 @@ export function ProgressRing({
   track?: string;
   children?: ReactNode;
 }) {
+  const { accent, scheme } = useTheme();
+  const fill = filled ?? accentForScheme(accent, scheme);
+  const trackColor = track ?? NEUTRALS[scheme].border;
   const clamped = Math.max(0, Math.min(1, fraction));
   const c = size / 2;
   const r = (size - stroke) / 2;
@@ -34,12 +39,12 @@ export function ProgressRing({
       }}
     >
       <Svg width={size} height={size} style={{ position: "absolute" }}>
-        <Circle cx={c} cy={c} r={r} stroke={track} strokeWidth={stroke} fill="none" />
+        <Circle cx={c} cy={c} r={r} stroke={trackColor} strokeWidth={stroke} fill="none" />
         <Circle
           cx={c}
           cy={c}
           r={r}
-          stroke={filled}
+          stroke={fill}
           strokeWidth={stroke}
           fill="none"
           strokeDasharray={circ}

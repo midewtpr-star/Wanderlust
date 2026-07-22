@@ -1,8 +1,8 @@
-# AppName — Data Model
+# Calor — Data Model
 
 > **What this governs:** a *sketch* of the Postgres/Supabase schema — tables and key columns for the ten MVP core-loop flows, plus the reserved GroupPad seam. **Sketch only — no SQL migrations yet.**
 > **Authority:** subordinate to `foundation.md` (product/scope) and `decisions.md` (rationale). Cites decisions by D-number. If this doc disagrees with `foundation.md`, **`foundation.md` wins.**
-> **Revised for v2.** Codename `AppName`; logo `[LOGO SLOT]` — TBD.
+> **Revised for v2.** Codename `Calor`; logo `[LOGO SLOT]` — TBD.
 
 **Status key:** ✅ locked · 🕗 TBD · ⬜ planned.
 
@@ -83,7 +83,7 @@ Shareable invite link(s) (foundation §6-2). *(Built Phase 3; column names below
 |---|---|---|
 | `id` | uuid PK | |
 | `trip_id` | uuid FK → trips(id) | |
-| `code` | text UNIQUE | Unguessable code (DB default). Deep-links: `appname://join/<code>` / `<web>/join/<code>`. |
+| `code` | text UNIQUE | Unguessable code (DB default). Deep-links: `calor://join/<code>` / `<web>/join/<code>`. |
 | `invited_by` | uuid FK → profiles(id) | Any **member** may create an invite (Phase 3 loosened this from admin-only). |
 | `expires_at` | timestamptz null | null = no expiry. |
 | `created_at` | timestamptz | |

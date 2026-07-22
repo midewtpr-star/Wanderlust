@@ -1,8 +1,8 @@
-# AppName — Decisions
+# Calor — Decisions
 
 > **What this governs:** the *why* behind each locked decision — context, the alternative we rejected, consequences, and what would make us revisit. The authoritative **rationale record**.
 > **Authority:** the *set* of locked decisions and product scope is owned by `foundation.md §7`. This file never introduces a decision not indexed there; if the two disagree on whether/what a decision is, **`foundation.md` wins**. This file *explains*, it doesn't override.
-> Keyed by the same **D-numbers** as `foundation.md §7`. **Revised for v2** (the full commit-and-plan brief). Codename `AppName`, logo `[LOGO SLOT]` — TBD.
+> Keyed by the same **D-numbers** as `foundation.md §7`. **Revised for v2** (the full commit-and-plan brief). Codename `Calor`, logo `[LOGO SLOT]` — TBD.
 
 **Status key:** ✅ locked · 🕗 TBD · **[LOCKED]** settled.
 
@@ -176,17 +176,21 @@
 
 ---
 
-## D11 — `AppName` placeholder + `[LOGO SLOT]`, branding deferred ✅ [LOCKED]
+## D11 — Brand = **Calor**; full identity + theming system ✅ [LOCKED] (resolved Phase 10)
 
-**Context.** Real name and logo are TBD.
+**Context.** The build shipped against an `AppName`/`[LOGO SLOT]` placeholder so naming could be a painless global swap once the real identity was chosen.
 
-**Decision.** Use the literal token **`AppName`** everywhere (including code identifiers) and a marked **`[LOGO SLOT]`** for the logo; real name + branding land in the branding phase.
+**Decision (resolved).** The app is **Calor**. Phase 10 replaced every placeholder (`AppName`→`Calor`, `appname`→`calor`, `com.appname.app`→`com.calor.app`) and applied the full identity + a runtime theming system. **The design system is recorded in `docs/design.md`** (source-of-truth tokens live in `global.css`, `tailwind.config.js`, `constants/theme.ts`). Highlights:
+- **Mark:** a minimal hand-drawn brushstroke (open circle + detached arc), with black/white variants swapped automatically by theme; used in auth, the Trips header, splash, and the generated icon set.
+- **Theming:** `ThemeProvider` with `mode` (light/dark/**system** default) + an `accent` color, persisted to the **profile** (`profiles.theme_mode`, `accent_color`) **and** AsyncStorage. The accent is a **runtime CSS variable** (`--accent` → `colors.primary/accent/ring`), so presets **and any custom hex** recolor the app live. Neutral tokens are Apple-like (dark base is dark grey `#1C1C1E`, not black). Accent presets: Red (default), Blue, Green, Yellow, + Custom. The accent drives interactive/primary elements only — bold but sparse.
+- **Typography:** system font primary (real SF on Apple), **Inter** bundled as the Android/web fallback (SF Pro never bundled — licensing); a two-role Apple-like type scale (Display / Text).
+- **Aesthetic:** editorial + slick-modern — whitespace, big headers, hairline borders, soft card elevation, rounded tactile controls, existing reanimated animations retained.
 
-**Rationale.** One consistent placeholder makes naming a painless global find-and-replace and prevents half-named drift.
+**Rationale.** The consistent placeholder made the swap trivial; a token + runtime-accent system keeps every screen cohesive and lets users personalize (mode + accent) without a rebuild.
 
-**Rejected alternatives.** Inventing a working name now (risks sticking / messy rename).
+**Rejected alternatives.** Hardcoding the palette (no live accent / user choice); bundling SF Pro (licensing); pure-black dark mode (harsher than the Apple-grey base).
 
-**Revisit triggers.** Real name chosen → find-and-replace `AppName`; drop the logo into every `[LOGO SLOT]`.
+**Revisit triggers.** New brand direction → update `docs/design.md` + the token files; add accent presets by extending `ACCENT_PRESETS`.
 
 ---
 

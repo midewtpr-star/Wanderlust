@@ -30,7 +30,7 @@ export function InviteModal({
     if (!shareUrl) return;
     try {
       await Share.share({
-        message: `Join my trip on AppName: ${shareUrl}`,
+        message: `Join my trip on Calor: ${shareUrl}`,
         url: shareUrl,
       });
     } catch {
