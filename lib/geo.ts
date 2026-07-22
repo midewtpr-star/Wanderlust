@@ -21,3 +21,14 @@ export function formatMiles(miles: number): string {
   if (miles < 10) return `${miles.toFixed(1)} mi`;
   return `${Math.round(miles)} mi`;
 }
+
+export const METERS_PER_MILE = 1609.344;
+
+export function haversineMeters(
+  aLat: number,
+  aLng: number,
+  bLat: number,
+  bLng: number,
+): number {
+  return haversineMiles(aLat, aLng, bLat, bLng) * METERS_PER_MILE;
+}

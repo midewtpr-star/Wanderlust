@@ -298,6 +298,8 @@ Sub-events + mixed-media documentation. Local ideas (below) can seed activities.
 | `checklist_items_completed` | int null | From `member_steps`. |
 | `computed_at` | timestamptz | |
 
+> **As built (Phase 9).** The recap shipped as a **single `trip_recap` row** (no separate `recap_stats` table): `stats` is an inline **jsonb** blob (`places_visited` + names, `miles_covered`, `verified_members`, `steps_completed`, `confirmed_travelers`, `total_media`, `trip_days`), `collage_url` is **one** private `trip-media` path (singular, not `collage_urls[]`; capture-a-styled-view via react-native-view-shot), `generated_at` marks generation. There's **no `created_by`/`status`/`share_url`** — sharing exports the captured image live (`expo-sharing`/Web Share). **Insert/update loosened to any member** (was admin-only). **Miles** come from a new **`trip_distances`** table (opt-in, **self-only** — location is sensitive, §12-5); only the **aggregate** is exposed via `get_trip_distance_summary` (SECURITY DEFINER), never per-user values. Auto video montage stays Phase 2 (D9) — a marked TODO seam in `collage-view.tsx`.
+
 ## push_tokens  (D10)
 A user's devices for push. User-scoped, not trip-scoped.
 

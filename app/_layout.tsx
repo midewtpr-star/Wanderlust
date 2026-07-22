@@ -35,6 +35,7 @@ function RootNavigator() {
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="trip/[id]" options={{ headerShown: true, title: "Trip" }} />
       <Stack.Screen name="activity/[id]" options={{ headerShown: true, title: "Activity" }} />
+      <Stack.Screen name="recap/[id]" options={{ headerShown: true, title: "Trip recap" }} />
       <Stack.Screen name="join/[code]" options={{ headerShown: true, title: "Trip invite" }} />
     </Stack>
   );

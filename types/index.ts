@@ -252,3 +252,36 @@ export type ActivityMedia = {
   caption: string | null;
   created_at: string;
 };
+
+// --- Phase 9: post-trip recap + opt-in miles ---
+
+// Real, computed numbers stored into trip_recap.stats (no fabricated metrics).
+export type TripStats = {
+  places_visited: number;
+  place_names: string[];
+  miles_covered: number; // group total (miles) from opt-in tracking
+  miles_tracked_members: number; // how many opted in (for honesty)
+  member_count: number;
+  verified_members: number; // fully-verified members
+  steps_completed: number; // total completed member_steps
+  confirmed_travelers: number; // members with travel_proof done
+  total_media: number;
+  trip_days: number;
+};
+
+// A row of `trip_recap` (one per trip).
+export type TripRecap = {
+  id: ID;
+  trip_id: ID;
+  generated_at: string | null;
+  stats: TripStats | null;
+  collage_url: string | null; // PRIVATE trip-media storage path (sign to view)
+  created_at: string;
+};
+
+// The non-PII distance aggregate (get_trip_distance_summary RPC).
+export type DistanceSummary = {
+  total_meters: number;
+  tracked_count: number;
+  member_count: number;
+};

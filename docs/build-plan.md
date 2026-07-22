@@ -5,7 +5,7 @@
 > **Revised for v2.** Codename `AppName`; logo `[LOGO SLOT]` — TBD.
 
 **Status key:** ⬜ not-started · 🟡 in progress · ✅ done · ⏳ external lead time.
-**Phases 0–8 are ✅ done; Phases 9–12 + the backlog are ⬜ not-started.** Update each phase's marker (+ a short note) as work completes.
+**Phases 0–9 are ✅ done; Phases 10–12 + the backlog are ⬜ not-started.** Update each phase's marker (+ a short note) as work completes.
 
 **How to read this:** MVP phases are in intended build order (per brief). The **keystone unlock** is Phases 1–2 (auth + schema + RLS + trip-create); after that, most feature phases are trip-scoped slices. **Keep MVP tight — the Phase 2 backlog below is a parking lot, not a queue; nothing there is built until explicitly promoted (foundation §4-7, §8).**
 
@@ -109,11 +109,18 @@
 **Depends on:** Phase 2 (location). Independent of 4–7.
 **Done when (verified):** ✅ `tsc` passes · ✅ web + iOS + Android bundles compile · ✅ headless browser boots the client bundle (incl. expo-video) without runtime errors. Live: on a trip with a real destination, members see nearby ideas, turn one into an activity, and upload a photo + a short video with captions that everyone on the trip can view — verified by the operator after `db push`, `functions deploy nearby-ideas`, and `secrets set GOOGLE_PLACES_API_KEY`.
 
-## Phase 9 — Post-trip recap (collages + stats) ⬜
+## Phase 9 — Post-trip recap (collages + stats) ✅ (2026-07-22)
 **Goal:** the shareable payoff — **collages + stats only** (→ D9; montage is Phase 2).
-**Deliverables:** upload trip photos/videos → generate **photo collages** (client-side) + **`recap_stats`** (places visited, **miles covered** via expo-location, checklist items completed) → `trip_recap` with a **shareable** link to social.
-**Depends on:** Phase 8 (media), Phase 7 (checklist stats), expo-location (miles; privacy open, foundation §12-5).
-**Done when:** a trip generates collages + a stats recap that shares out. **No auto video montage.**
+**Deliverables (built):**
+- **Migration** `20260722150001_recap_distance.sql`: **`trip_distances`** (opt-in miles per user per trip, **self-only RLS** — location is sensitive, §12-5) + **`get_trip_distance_summary`** SECURITY DEFINER (exposes only the group **aggregate**, never per-user distances); **loosened `trip_recap` insert/update to any member** (was admin-only — the recap is member-generated).
+- **Opt-in miles** (`DistanceOptIn` + `useTripDistance`): explicit per-trip "Track my distance on this trip" consent → **foreground** `expo-location` accumulation during the trip window (jitter/jump-filtered, throttle-persisted). Non-opted-in members are excluded silently; the stat shows **"N of M members tracked."** A clear **TODO seam** marks where background tracking + its permissions go.
+- **Real stats** (`useTripStats` → `trip_recap.stats` jsonb): `places_visited` (activities with media or a linked place) + names; `miles_covered` (opt-in group total); `checklist_completed` (fully-verified members + total completed steps); plus cheap extras (confirmed travelers, total media, trip days). **Real numbers only.**
+- **Recap generation** (`app/recap/[id]`, available when `status='completed'` or start_date passed): a **"Generate recap"** action computes the stats and assembles a **photo collage on-device from real `trip-media` photos**, captured with **react-native-view-shot** to an image, uploaded to `trip-media`, with its path stored on `trip_recap.collage_url`. Few/no photos → **stats-only** recap (graceful). The capture-a-styled-view surface is the **marked Phase-2 video-montage seam** (D9).
+- **Recap screen:** the collage + stat tiles + cover/title/dates as one scrollable, screenshot-worthy "trip story."
+- **Sharing:** exports the recap card (react-native-view-shot) → native **share sheet** (`expo-sharing`) / **Web Share API** with a **download fallback** on web; copy/screenshot fallback messaging.
+- Hooks `useTripStats` / `useGenerateRecap` (as `useTripRecap`) / `useTripDistance`; loading/empty/error throughout.
+**Depends on:** Phase 8 (media), Phase 7 (checklist stats), expo-location (miles; privacy §12-5).
+**Done when (verified):** ✅ `tsc` passes · ✅ web + iOS + Android bundles compile · ✅ headless browser boots the client bundle without runtime errors. Live: on a past-dated trip with some photos, a member generates a recap showing a **real collage + real stats** and **shares/downloads** the recap image — verified by the operator after `db push`. **No auto video montage** (marked TODO seam only).
 
 ## Phase 10 — Branding ⬜
 **Goal:** replace placeholders with the real identity (→ D11).

@@ -19,7 +19,8 @@ import { ProgressPanel } from "@/components/trip/progress-panel";
 import { VerifiedCelebration } from "@/components/trip/verified-celebration";
 import { LocalIdeas } from "@/components/trip/local-ideas";
 import { ActivitiesSection } from "@/components/trip/activities-section";
-import { formatDateRange } from "@/lib/dates";
+import { DistanceOptIn } from "@/components/trip/distance-opt-in";
+import { formatDateRange, toISODate } from "@/lib/dates";
 import { useAuth } from "@/lib/auth-provider";
 import { useTrip } from "@/hooks/use-trip";
 import { useTripMembers } from "@/hooks/use-trip-members";
@@ -27,11 +28,6 @@ import { useRsvp } from "@/hooks/use-rsvp";
 import { useInvite } from "@/hooks/use-invite";
 import { useMemberVerification } from "@/hooks/use-member-verification";
 import type { ActivityInput, RsvpStatus } from "@/types";
-
-// Remaining dashboard sections (filled in by later phases).
-const SECTIONS = [
-  { key: "recap", title: "Post-trip recap", blurb: "Collages + stats after the trip (coming soon)." },
-];
 
 export default function TripDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -62,6 +58,13 @@ export default function TripDetailScreen() {
   const me = members.members.find((m) => m.user_id === user?.id);
   const isAdmin = me?.role === "host" || me?.role === "admin";
   const isHost = me?.role === "host";
+
+  // Recap unlocks once the trip has started; distance tracks within the window.
+  const today = toISODate(new Date());
+  const startPassed = !!trip?.start_date && today >= trip.start_date;
+  const recapAvailable = !!trip && (trip.status === "completed" || startPassed);
+  const withinWindow =
+    startPassed && (!trip?.end_date || today <= trip.end_date);
 
   async function onPickRsvp(next: RsvpStatus) {
     if (!user) return;
@@ -248,24 +251,29 @@ export default function TripDetailScreen() {
             </View>
           ) : null}
 
-          <View className="gap-3 px-6">
-            <Text variant="heading">More</Text>
-            {SECTIONS.map((s) => (
-              <Card key={s.key} className="flex-row items-center justify-between">
-                <View className="flex-1 pr-3">
-                  <Text className="font-semibold">{s.title}</Text>
-                  <Text variant="muted" numberOfLines={1}>
-                    {s.blurb}
+          {user ? (
+            <View className="gap-3 px-6 pb-4">
+              <Text variant="heading">Trip recap</Text>
+              <DistanceOptIn
+                tripId={trip.id}
+                userId={user.id}
+                withinWindow={withinWindow}
+              />
+              {recapAvailable ? (
+                <Button
+                  label="Open trip recap →"
+                  onPress={() => router.push(`/recap/${trip.id}`)}
+                />
+              ) : (
+                <Card>
+                  <Text variant="muted" className="text-center">
+                    Your recap — photo collage + trip stats — unlocks once the
+                    trip starts.
                   </Text>
-                </View>
-                <View className="rounded-full bg-muted px-3 py-1">
-                  <Text variant="muted" className="text-xs">
-                    Coming soon
-                  </Text>
-                </View>
-              </Card>
-            ))}
-          </View>
+                </Card>
+              )}
+            </View>
+          ) : null}
         </ScrollView>
       ) : null}
 
