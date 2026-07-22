@@ -21,6 +21,7 @@ import { LocalIdeas } from "@/components/trip/local-ideas";
 import { ActivitiesSection } from "@/components/trip/activities-section";
 import { DistanceOptIn } from "@/components/trip/distance-opt-in";
 import { ChatEntry } from "@/components/chat/chat-entry";
+import { OutfitEntry } from "@/components/outfits/outfit-entry";
 import { formatDateRange, toISODate } from "@/lib/dates";
 import { useAuth } from "@/lib/auth-provider";
 import { useTrip } from "@/hooks/use-trip";
@@ -29,6 +30,7 @@ import { useRsvp } from "@/hooks/use-rsvp";
 import { useInvite } from "@/hooks/use-invite";
 import { useMemberVerification } from "@/hooks/use-member-verification";
 import { useUnreadCounts } from "@/hooks/use-unread";
+import { useOutfitCount } from "@/hooks/use-outfits";
 import type { ActivityInput, RsvpStatus } from "@/types";
 
 export default function TripDetailScreen() {
@@ -41,12 +43,14 @@ export default function TripDetailScreen() {
   const rsvp = useRsvp(id, user?.id);
   const invite = useInvite(id);
   const { counts: unreadCounts, refresh: refreshUnread } = useUnreadCounts();
-  // Refresh the chat unread badge whenever the screen refocuses (e.g. returning
-  // from the chat, which clears it).
+  const { count: outfitCount, refresh: refreshOutfitCount } = useOutfitCount(id);
+  // Refresh chat unread + outfit count whenever the screen refocuses (e.g.
+  // returning from the chat or the outfit board).
   useFocusEffect(
     useCallback(() => {
       refreshUnread();
-    }, [refreshUnread]),
+      refreshOutfitCount();
+    }, [refreshUnread, refreshOutfitCount]),
   );
   const [inviteOpen, setInviteOpen] = useState(false);
   // Bumped when travel proof or a money step completes, so the checklist +
@@ -145,10 +149,14 @@ export default function TripDetailScreen() {
             </View>
           </View>
 
-          <View className="px-6 pb-4">
+          <View className="gap-3 px-6 pb-4">
             <ChatEntry
               unread={unreadCounts[trip.id] ?? 0}
               onPress={() => router.push(`/chat/${trip.id}`)}
+            />
+            <OutfitEntry
+              count={outfitCount}
+              onPress={() => router.push(`/outfits/${trip.id}`)}
             />
           </View>
 

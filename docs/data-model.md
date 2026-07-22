@@ -332,6 +332,56 @@ Real-time text chat scoped to a trip. **Promoted from the Phase 2 backlog** ("Tr
 
 ---
 
+## outfits  +  outfit_items  +  outfit_reactions  — outfit planner (promoted backlog item)
+Pinterest-powered outfit boards. **Promoted on explicit request**; MVP is link/pin + upload based (no gated Pinterest API — an OAuth seam is reserved in the edge function).
+
+**outfits**
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid PK | |
+| `trip_id` | uuid FK → trips(id) | On delete cascade. |
+| `owner_id` | uuid FK → profiles(id) | The member whose look this is. |
+| `title` | text not null | e.g. "Beach day fit". |
+| `day` | date null | Optional trip day (drives By-Day grouping). |
+| `activity_id` | uuid null FK → activities(id) | Optional link to an activity (on delete set null). |
+| `notes` | text null | |
+| `created_at` / `updated_at` | timestamptz | |
+
+**outfit_items** (moodboard cards; `owner_id` + `trip_id` denormalized for RLS)
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid PK | |
+| `outfit_id` | uuid FK → outfits(id) | On delete cascade. |
+| `source_url` | text null | Original pin/site link (null for uploads). |
+| `image_url` | text null | Remote preview URL (pinterest/link) **or** a private `trip-media` PATH when `provider='upload'` (sign to view). |
+| `title` | text null | |
+| `provider` | text | `pinterest` \| `link` \| `upload`. |
+| `position` | int | Order within the moodboard. |
+| `created_at` | timestamptz | |
+
+**outfit_reactions** (lightweight "love")
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid PK | |
+| `outfit_id` | uuid FK → outfits(id) | On delete cascade. |
+| `trip_id` / `user_id` | uuid | |
+| — | UNIQUE `(outfit_id, user_id)` | One love per member per outfit. |
+
+**link_previews** (server-side preview cache)
+
+| Column | Type | Notes |
+|---|---|---|
+| `url` | text PK | The pasted link (cache key). |
+| `title` / `image_url` / `author` / `provider` | text null | Normalized preview fields. |
+| `fetched_at` | timestamptz | 7-day TTL, enforced in the edge function. |
+
+> **As built (Outfit planner).** RLS: any trip member **reads** all outfits/items/reactions for their trip; a member **creates/edits/deletes only their OWN** outfits + items (items gated by an EXISTS check that the parent outfit is theirs) and toggles only their own reaction. Uploaded item images **reuse the private `trip-media` bucket** (`<trip_id>/<user_id>/…`, member-read via signed URLs) — no new bucket. Previews come from the **`link-preview`** edge function (Pinterest **oEmbed** + OpenGraph scrape fallback, cached in `link_previews`, graceful timeout/blocked handling), which also covers any non-Pinterest link; `link_previews` is written only by the function's service role (clients read-only). A **PINTEREST OAUTH SEAM** is documented in the edge function for later (connect a user's account to browse their own boards/pins). Real Pinterest API + image attachments beyond the reserved upload path are **not** built.
+
+---
+
 ## Local ideas — *not a table* (foundation §6-8)
 Nearby events + things-to-do are **fetched on demand from an external places/events API** (provider open, foundation §12-6) once the destination is set/verified — **not persisted**. A member can save an idea, which creates an `activities` row with `source='local_idea'`.
 
@@ -349,6 +399,8 @@ Nearby events + things-to-do are **fetched on demand from an external places/eve
 - **personal_safes / safe_deposits:** **self-only** — private even from other trip members.
 - **push_tokens:** self-only.
 - **messages:** membership-gated read; **insert/delete own only**; immutable (no edits). Streamed via Realtime (RLS enforced per-subscriber).
+- **outfits / outfit_items / outfit_reactions:** membership-gated read; **create/edit/delete your OWN only** (items gated to your own outfit). Uploaded item images live in the private `trip-media` bucket (signed-URL reads).
+- **link_previews:** read-only to members; written only by the `link-preview` edge function (service role).
 
 **Storage buckets:**
 - `trip-covers` — **public read**, authenticated write (uploaders manage their own objects); trip cover images. *(Built in Phase 2; was named `posters` in earlier drafts.)*

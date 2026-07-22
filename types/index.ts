@@ -305,3 +305,51 @@ export type ChatMessage = {
 
 // One row of the trip_unread_counts() RPC.
 export type TripUnread = { trip_id: ID; unread: number };
+
+// --- Outfit planner (Pinterest-powered; promoted backlog item) ---
+
+export type OutfitProvider = "pinterest" | "link" | "upload";
+
+// A row of `outfits` — one member's look for a trip.
+export type Outfit = {
+  id: ID;
+  trip_id: ID;
+  owner_id: ID;
+  title: string;
+  day: string | null; // ISO date (YYYY-MM-DD) or null (any day)
+  activity_id: ID | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+// A row of `outfit_items` — one moodboard card.
+export type OutfitItem = {
+  id: ID;
+  outfit_id: ID;
+  trip_id: ID;
+  owner_id: ID;
+  source_url: string | null; // original pin/site link (null for uploads)
+  image_url: string | null; // remote URL, or a private trip-media PATH when provider='upload'
+  title: string | null;
+  provider: OutfitProvider;
+  position: number;
+  created_at: string;
+};
+
+export type OutfitInput = {
+  title: string;
+  day?: string | null;
+  activity_id?: ID | null;
+  notes?: string | null;
+};
+
+// The link-preview edge function's normalized response.
+export type LinkPreview = {
+  ok: boolean;
+  url: string | null;
+  title: string | null;
+  image_url: string | null;
+  author: string | null;
+  provider: string; // 'pinterest' | 'link'
+};

@@ -130,7 +130,9 @@ Trip creation (incl. manual Airbnb-selection stub) · Invites + RSVP · Travel p
 
 Group readiness meter (live ring) · Trip Pass (boarding-pass identity card) · Readiness leaderboard · AI trip concierge (auto day-by-day itinerary) · Trip chat + announcements · In-trip Splitwise-style expense splitting + settle-up · Collaborative itinerary + packing list · Shared collaborative playlist (Spotify/Apple Music) · "Trip Wrapped" animated recap + auto video montage · Memory map (pins + miles) · Home-screen countdown widget · Trip templates (birthday/road-trip/beach-week) · **Real payment custody (Stripe Connect)** — the gated money phase · **Room/bed-based cost splitting**. Full list mirrored in **build-plan.md → Phase 2 backlog**.
 
-> **Promoted (2026-07-22):** the **Trip chat** part of "Trip chat + announcements" was **explicitly promoted** from this backlog and built as **real-time group messaging** (per-trip `messages` table + RLS + Supabase Realtime; see build-plan and data-model → `messages`). **Announcements** and image attachments remain deferred (attachment columns are reserved, unbuilt). This was a deliberate, instructed promotion — the rest of the backlog stays parked (§4-7).
+> **Promoted (2026-07-22):** two items were **explicitly promoted** from the backlog and built, on instruction — the rest stays parked (§4-7):
+> - **Trip chat** (from "Trip chat + announcements") → **real-time group messaging** (per-trip `messages` table + RLS + Supabase Realtime; see build-plan and data-model → `messages`). **Announcements** + image attachments remain deferred (columns reserved, unbuilt).
+> - **Outfit planner** (Pinterest-powered) → per-member **outfit boards** (`outfits` / `outfit_items` / `outfit_reactions` + a `link-preview` edge function; link/pin + image-upload based). The real **Pinterest OAuth** integration is deferred behind a documented seam.
 
 ## §9 Architecture keystones
 
