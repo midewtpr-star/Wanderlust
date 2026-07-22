@@ -5,7 +5,7 @@
 > **Revised for v2.** Codename `AppName`; logo `[LOGO SLOT]` — TBD.
 
 **Status key:** ⬜ not-started · 🟡 in progress · ✅ done · ⏳ external lead time.
-**Phases 0–4 are ✅ done; Phases 5–12 + the backlog are ⬜ not-started.** Update each phase's marker (+ a short note) as work completes.
+**Phases 0–5 are ✅ done; Phases 6–12 + the backlog are ⬜ not-started.** Update each phase's marker (+ a short note) as work completes.
 
 **How to read this:** MVP phases are in intended build order (per brief). The **keystone unlock** is Phases 1–2 (auth + schema + RLS + trip-create); after that, most feature phases are trip-scoped slices. **Keep MVP tight — the Phase 2 backlog below is a parking lot, not a queue; nothing there is built until explicitly promoted (foundation §4-7, §8).**
 
@@ -62,11 +62,19 @@
 **Depends on:** Phase 2 (destination), Phase 3 (members). AI provider = **Anthropic** (foundation §12-1).
 **Done when (verified):** ✅ `tsc` passes · ✅ web + iOS + Android bundles compile · ✅ headless browser boots the client bundle (reanimated/worklets init) without runtime errors. Live driving-instant-confirm + real-itinerary verify/animate + wrong-city fail + admin override are verified by the operator against their Supabase project after `db push`, `functions deploy verify-flight`, `secrets set ANTHROPIC_API_KEY`, and the airports seed (see PR/summary for exact steps).
 
-## Phase 5 — Money ledger (pools + personal safe) ⬜
+## Phase 5 — Money ledger (pools + personal safe) ✅ (2026-07-22)
 **Goal:** the full money UX as a **ledger, no custody** (→ D3, D5).
-**Deliverables:** `money_pools` for `airbnb` (always) and `car` (if `car_rental_ref`); set totals (Airbnb from the option's `total_cost_cents`); **equal per-person split** = `total / member_count`; log `contributions`; **personal_safes + safe_deposits** (private); **locked-until-`unlock_date`** UI on every pool + safe; progress-toward-share display. **Write the money layer against a ledger/provider interface with a custody switch** so Stripe flips on later (→ D3).
-**Depends on:** Phase 2 (car pool, Airbnb total), Phase 3 (member_count for split).
-**Done when:** members log contributions to each pool and to their private safe; totals + per-person shares display; locked/unlocked flips on the start date. **No real money moves.**
+**Deliverables (built):**
+- **Migration** `20260722130001_money_ledger.sql`: reconciled the money columns to **integer cents** (bigint) — the foundation (§5/§10) and data-model both specify cents; Phase 1 had used `numeric` to match the `_amount` names. Retyped + renamed to `total_cents` / `amount_cents` / `goal_cents`; **dropped the stored `per_person_amount`** (computed on read per §10); added `method`/`note` to contributions, `note` to deposits. **No new RLS** — the ledger runs entirely under Phase-1 policies (pools: member-read/admin-write; contributions: member-read/self-write; safes+deposits: self-only; member_steps: self-write).
+- **Ledger banner** on the Money card: "no real payment processing — Stripe Connect is the gated later phase" (D3). Amounts are **integer cents everywhere, never floats** (`lib/money.ts`).
+- **Two pools** (`airbnb` always; `car` only when `trips.car_rental_ref` set). Admin sets each total (Airbnb prefilled from the locked `airbnb_options` pick if any, else typed — voting/lock is Phase 6). **Auto equal-split** `perPersonCents = ceil(total / going-count)`, **recomputed on read** so it tracks total + going-count changes; the denominator ("split across N going") is shown and sourced from a single constant **`SPLIT_DENOMINATOR`** (D5).
+- **Contributions:** per pool, each member sees **my share / paid / remaining**, logs partial or full contributions (`pool_contributions`), and when their running total ≥ share the pool's **`member_steps` step (`airbnb_paid`/`car_paid`) completes + plays the step animation** (reuses the travel-proof reanimated checkmark). Group **progress bar** (contributed vs total) + a per-member paid/partial/unpaid list.
+- **Locked-until-trip-day:** both pools + the safe render **sealed until `unlock_date` (= trip start)**, then unlocked — a derived UI/ledger state, not custody.
+- **Personal safe** (`personal_safes` + `safe_deposits`, **private/self-only**): set a goal + unlock date (default = start), "Add to safe", **progress ring** (react-native-svg) toward the goal, sealed treatment until unlock.
+- **Progressive checklist** (`member_steps`): the member's `travel_proof` + `airbnb_paid` (+ `car_paid` if a car pool) with completion states, the next incomplete step surfaced ("Next: pay your car share"), and a "You're all set" state (the aggregate verified badge is Phase 7).
+- Hooks `usePools` / `useContribute` / `usePersonalSafe` / `useMemberSteps`; `lib/money.ts` (cents helpers, split constant, unlock check); loading/empty/error throughout.
+**Depends on:** Phase 2 (car pool, Airbnb total), Phase 3 (going-count for split), Phase 4 (travel_proof step).
+**Done when (verified):** ✅ `tsc` passes · ✅ web + iOS + Android bundles compile · ✅ headless browser boots the client bundle (incl. react-native-svg) without runtime errors. Live: a going member sees auto-calculated Airbnb+car shares, logs partial + full contributions (each full one animates + checks its step), pools show locked-until-start, and the private safe tracks its goal and stays sealed — verified by the operator against their Supabase project after `db push`. **No real money moves.**
 
 ## Phase 6 — Airbnb voting + admin lock + countdown ⬜
 **Goal:** the group agrees on and locks the Airbnb (foundation §6-5). **GroupPad seam stays manual (→ D7).**

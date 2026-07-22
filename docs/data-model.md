@@ -232,6 +232,8 @@ Materializes each member's required steps for the progressive flow + verified ba
 
 *Derivable from the underlying facts (a verified `travel_proof`, contributions ≥ share); materialized here for the checklist UI and updated by trigger/app. All required steps complete ⇒ `trip_members.is_verified = true` (the badge).*
 
+> **As built (Phase 5 — source of truth is the migrations).** The ledger amount columns match this sketch's **integer cents** (`money_pools.total_cents`, `pool_contributions.amount_cents`, `personal_safes.goal_cents`, `safe_deposits.amount_cents`) after the Phase-5 reconciliation (Phase 1 had used `numeric`). Differences from this sketch that stand as-built: **`money_pools` has no stored `per_person`** — the equal share is computed on read (`ceil(total_cents / going-count)`, §10); **timestamps are `contributed_at` / `deposited_at`** (not `logged_at`); **`safe_deposits` has no `trip_id`** (self-only RLS keys off `user_id` + its `safe_id`). **`member_steps`** shipped as `step` (enum **`travel_proof` / `airbnb_paid` / `car_paid`**) + a `completed` boolean + `completed_at` — not the `step_key` / `airbnb_money` / `status` names sketched above; a member marks their own money steps client-side when contributions ≥ share. The split denominator (going members) lives behind a single `SPLIT_DENOMINATOR` constant (D5). Everything is **ledger only** — no custody (D3).*
+
 ## activities  +  activity_media  (foundation §6-8/9)
 Sub-events + mixed-media documentation. Local ideas (below) can seed activities.
 

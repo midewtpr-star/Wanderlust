@@ -19,11 +19,13 @@ export function TravelProofCard({
   userId,
   isAdmin,
   members,
+  onStepChange,
 }: {
   tripId: string;
   userId: string;
   isAdmin: boolean;
   members: MemberWithRsvp[];
+  onStepChange?: () => void;
 }) {
   const proof = useTravelProof(tripId, userId);
   const status = useTravelStatus(tripId);
@@ -39,6 +41,7 @@ export function TravelProofCard({
     setDrivingSaving(false);
     if (ok) {
       status.refresh();
+      onStepChange?.();
       setMode("overview");
     }
   }
@@ -48,6 +51,7 @@ export function TravelProofCard({
     // user taps "Done" to return.
     proof.refresh();
     status.refresh();
+    onStepChange?.();
   }
 
   async function selfOverride(): Promise<boolean> {

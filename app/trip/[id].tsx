@@ -11,6 +11,9 @@ import { RsvpControl } from "@/components/trip/rsvp-control";
 import { RsvpWall } from "@/components/trip/rsvp-wall";
 import { InviteModal } from "@/components/trip/invite-modal";
 import { TravelProofCard } from "@/components/trip/travel-proof-card";
+import { MoneySection } from "@/components/trip/money-section";
+import { PersonalSafeCard } from "@/components/trip/personal-safe-card";
+import { StepChecklist } from "@/components/trip/step-checklist";
 import { formatDateRange } from "@/lib/dates";
 import { useAuth } from "@/lib/auth-provider";
 import { useTrip } from "@/hooks/use-trip";
@@ -21,7 +24,6 @@ import type { RsvpStatus } from "@/types";
 
 // Remaining dashboard sections (filled in by later phases).
 const SECTIONS = [
-  { key: "money", title: "Money", blurb: "Track the Airbnb + car pools and your safe." },
   { key: "airbnb", title: "Airbnb pick", blurb: "Add options, vote, and lock the winner." },
   { key: "activities", title: "Activities", blurb: "Plan things to do and document the trip." },
 ];
@@ -36,6 +38,9 @@ export default function TripDetailScreen() {
   const rsvp = useRsvp(id, user?.id);
   const invite = useInvite(id);
   const [inviteOpen, setInviteOpen] = useState(false);
+  // Bumped when travel proof or a money step completes, so the checklist refetches.
+  const [moneyVersion, setMoneyVersion] = useState(0);
+  const bumpChecklist = () => setMoneyVersion((v) => v + 1);
 
   // Admin = host or admin on the roster. The server (SECURITY DEFINER RPCs +
   // RLS) is the real gate; this only decides what to show.
@@ -141,6 +146,41 @@ export default function TripDetailScreen() {
                 userId={user.id}
                 isAdmin={isAdmin}
                 members={members.members}
+                onStepChange={bumpChecklist}
+              />
+            </View>
+          ) : null}
+
+          {user ? (
+            <View className="gap-3 px-6 pb-4">
+              <Text variant="heading">Money</Text>
+              <MoneySection
+                trip={trip}
+                userId={user.id}
+                isAdmin={isAdmin}
+                members={members.members}
+                onChanged={bumpChecklist}
+              />
+            </View>
+          ) : null}
+
+          {user ? (
+            <View className="gap-3 px-6 pb-4">
+              <PersonalSafeCard
+                tripId={trip.id}
+                userId={user.id}
+                defaultUnlockDate={trip.start_date}
+              />
+            </View>
+          ) : null}
+
+          {user ? (
+            <View className="gap-3 px-6 pb-4">
+              <StepChecklist
+                tripId={trip.id}
+                userId={user.id}
+                hasCarPool={!!trip.car_rental_ref}
+                version={moneyVersion}
               />
             </View>
           ) : null}

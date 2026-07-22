@@ -135,3 +135,60 @@ export type FlightVerdict = {
   date_in_window: boolean | null;
   warnings: string[];
 };
+
+// --- Phase 5: money ledger (integer CENTS everywhere — D3, D5) ---
+
+export type PoolType = "airbnb" | "car";
+
+// A row of `money_pools` (ledger only — no custody).
+export type MoneyPool = {
+  id: ID;
+  trip_id: ID;
+  type: PoolType;
+  total_cents: number | null;
+  unlock_date: string | null; // defaults to trip start_date
+  created_at: string;
+};
+
+// A row of `pool_contributions` (append-only ledger).
+export type PoolContribution = {
+  id: ID;
+  pool_id: ID;
+  trip_id: ID;
+  user_id: ID;
+  amount_cents: number;
+  method: string | null;
+  note: string | null;
+  contributed_at: string;
+};
+
+// A row of `personal_safes` (private, self-only).
+export type PersonalSafe = {
+  id: ID;
+  trip_id: ID;
+  user_id: ID;
+  goal_cents: number | null;
+  unlock_date: string | null;
+  created_at: string;
+};
+
+// A row of `safe_deposits` (append-only personal ledger; no trip_id — self-only).
+export type SafeDeposit = {
+  id: ID;
+  safe_id: ID;
+  user_id: ID;
+  amount_cents: number;
+  note: string | null;
+  deposited_at: string;
+};
+
+// The progressive checklist steps (member_steps.step enum).
+export type StepKey = "travel_proof" | "airbnb_paid" | "car_paid";
+
+export type MemberStep = {
+  trip_id: ID;
+  user_id: ID;
+  step: StepKey;
+  completed: boolean;
+  completed_at: string | null;
+};
