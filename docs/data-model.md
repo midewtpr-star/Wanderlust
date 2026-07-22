@@ -161,6 +161,8 @@ MVP: manual options + one group vote; an admin locks `trips.airbnb_pick`.
 
 *This pair **is** the GroupPad seam — GroupPad later supersedes/feeds `airbnb_options` and sets `trips.airbnb_pick`. See "GroupPad seam."*
 
+> **As built (Phase 6).** The votes table shipped as **`airbnb_votes`** (not `votes`) with `option_id` / `trip_id` / `user_id` + unique `(trip_id, user_id)`; changing a vote upserts (moves) it. `airbnb_options.total_cost` is **numeric dollars** (from Phase 2), converted to cents when it seeds the Airbnb pool on lock. Voting **informs**; an admin locks the official pick (`trips.airbnb_pick` + `status='locked'`), which also populates the Airbnb pool total if unset. Admin promote/demote writes `trip_admins` + `trip_members.role`; the max-3 cap (D8) is the DB trigger.
+
 ## money_pools  +  contributions  — ledger (D3, D5)
 Two shared pools per trip: `airbnb` (always) and `car` (only if `trips.car_rental_ref` set).
 
@@ -231,6 +233,8 @@ Materializes each member's required steps for the progressive flow + verified ba
 | — | UNIQUE `(trip_id, user_id, step_key)` | |
 
 *Derivable from the underlying facts (a verified `travel_proof`, contributions ≥ share); materialized here for the checklist UI and updated by trigger/app. All required steps complete ⇒ `trip_members.is_verified = true` (the badge).*
+
+> **As built (Phase 7).** `trip_members` has **no `is_verified` column** — the aggregate badge is **derived on read** from `member_steps` (`useMemberVerification`): `verified = travel_proof AND airbnb_paid AND (car_paid only when the trip has a car pool)`. No trigger materializes it; the client computes it from the member-readable `member_steps` rows and shows the badge everywhere members are listed (partial "n/3 steps" otherwise). The first time the current user crosses into verified, a one-time celebration plays (AsyncStorage-flagged).
 
 > **As built (Phase 5 — source of truth is the migrations).** The ledger amount columns match this sketch's **integer cents** (`money_pools.total_cents`, `pool_contributions.amount_cents`, `personal_safes.goal_cents`, `safe_deposits.amount_cents`) after the Phase-5 reconciliation (Phase 1 had used `numeric`). Differences from this sketch that stand as-built: **`money_pools` has no stored `per_person`** — the equal share is computed on read (`ceil(total_cents / going-count)`, §10); **timestamps are `contributed_at` / `deposited_at`** (not `logged_at`); **`safe_deposits` has no `trip_id`** (self-only RLS keys off `user_id` + its `safe_id`). **`member_steps`** shipped as `step` (enum **`travel_proof` / `airbnb_paid` / `car_paid`**) + a `completed` boolean + `completed_at` — not the `step_key` / `airbnb_money` / `status` names sketched above; a member marks their own money steps client-side when contributions ≥ share. The split denominator (going members) lives behind a single `SPLIT_DENOMINATOR` constant (D5). Everything is **ledger only** — no custody (D3).*
 

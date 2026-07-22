@@ -6,7 +6,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Countdown } from "@/components/trip/countdown";
 import { RsvpControl } from "@/components/trip/rsvp-control";
 import { RsvpWall } from "@/components/trip/rsvp-wall";
 import { InviteModal } from "@/components/trip/invite-modal";
@@ -14,17 +13,21 @@ import { TravelProofCard } from "@/components/trip/travel-proof-card";
 import { MoneySection } from "@/components/trip/money-section";
 import { PersonalSafeCard } from "@/components/trip/personal-safe-card";
 import { StepChecklist } from "@/components/trip/step-checklist";
+import { AirbnbSection } from "@/components/trip/airbnb-section";
+import { AdminManagement } from "@/components/trip/admin-management";
+import { ProgressPanel } from "@/components/trip/progress-panel";
+import { VerifiedCelebration } from "@/components/trip/verified-celebration";
 import { formatDateRange } from "@/lib/dates";
 import { useAuth } from "@/lib/auth-provider";
 import { useTrip } from "@/hooks/use-trip";
 import { useTripMembers } from "@/hooks/use-trip-members";
 import { useRsvp } from "@/hooks/use-rsvp";
 import { useInvite } from "@/hooks/use-invite";
+import { useMemberVerification } from "@/hooks/use-member-verification";
 import type { RsvpStatus } from "@/types";
 
 // Remaining dashboard sections (filled in by later phases).
 const SECTIONS = [
-  { key: "airbnb", title: "Airbnb pick", blurb: "Add options, vote, and lock the winner." },
   { key: "activities", title: "Activities", blurb: "Plan things to do and document the trip." },
 ];
 
@@ -33,19 +36,27 @@ export default function TripDetailScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user } = useAuth();
-  const { trip, loading, error, notAuthorized } = useTrip(id);
+  const { trip, loading, error, notAuthorized, refresh: refreshTrip } = useTrip(id);
   const members = useTripMembers(id);
   const rsvp = useRsvp(id, user?.id);
   const invite = useInvite(id);
   const [inviteOpen, setInviteOpen] = useState(false);
-  // Bumped when travel proof or a money step completes, so the checklist refetches.
+  // Bumped when travel proof or a money step completes, so the checklist +
+  // verification + progress panel refetch.
   const [moneyVersion, setMoneyVersion] = useState(0);
   const bumpChecklist = () => setMoneyVersion((v) => v + 1);
+
+  const hasCarPool = !!trip?.car_rental_ref;
+  const verification = useMemberVerification(id, hasCarPool, moneyVersion);
+  const currentUserVerified = user
+    ? verification.statusFor(user.id).verified
+    : false;
 
   // Admin = host or admin on the roster. The server (SECURITY DEFINER RPCs +
   // RLS) is the real gate; this only decides what to show.
   const me = members.members.find((m) => m.user_id === user?.id);
   const isAdmin = me?.role === "host" || me?.role === "admin";
+  const isHost = me?.role === "host";
 
   async function onPickRsvp(next: RsvpStatus) {
     if (!user) return;
@@ -105,12 +116,15 @@ export default function TripDetailScreen() {
             <Text variant="muted">
               {formatDateRange(trip.start_date, trip.end_date)}
             </Text>
-            <Card className="mt-2 items-center gap-2">
-              <Text variant="muted" className="text-xs uppercase tracking-widest">
-                Countdown
-              </Text>
-              <Countdown target={trip.start_date} />
-            </Card>
+            <View className="mt-2">
+              <ProgressPanel
+                trip={trip}
+                goingCount={members.counts.going}
+                verifiedCount={verification.verifiedCount}
+                memberCount={members.members.length}
+                version={moneyVersion}
+              />
+            </View>
           </View>
 
           <View className="gap-2 px-6 pb-4">
@@ -134,8 +148,15 @@ export default function TripDetailScreen() {
                 <Text className="text-destructive">{members.error}</Text>
               </Card>
             ) : (
-              <RsvpWall groups={members.groups} />
+              <RsvpWall groups={members.groups} statusFor={verification.statusFor} />
             )}
+            {isHost ? (
+              <AdminManagement
+                members={members.members}
+                tripId={trip.id}
+                onChange={members.refresh}
+              />
+            ) : null}
           </View>
 
           {user ? (
@@ -147,6 +168,19 @@ export default function TripDetailScreen() {
                 isAdmin={isAdmin}
                 members={members.members}
                 onStepChange={bumpChecklist}
+              />
+            </View>
+          ) : null}
+
+          {user ? (
+            <View className="gap-3 px-6 pb-4">
+              <Text variant="heading">Airbnb pick</Text>
+              <AirbnbSection
+                trip={trip}
+                userId={user.id}
+                isAdmin={isAdmin}
+                members={members.members}
+                onTripChange={refreshTrip}
               />
             </View>
           ) : null}
@@ -215,6 +249,14 @@ export default function TripDetailScreen() {
         nativeUrl={invite.links?.nativeUrl ?? null}
         shareUrl={invite.links?.shareUrl ?? null}
       />
+
+      {user && trip ? (
+        <VerifiedCelebration
+          verified={currentUserVerified}
+          tripId={trip.id}
+          userId={user.id}
+        />
+      ) : null}
     </>
   );
 }

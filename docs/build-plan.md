@@ -5,7 +5,7 @@
 > **Revised for v2.** Codename `AppName`; logo `[LOGO SLOT]` — TBD.
 
 **Status key:** ⬜ not-started · 🟡 in progress · ✅ done · ⏳ external lead time.
-**Phases 0–5 are ✅ done; Phases 6–12 + the backlog are ⬜ not-started.** Update each phase's marker (+ a short note) as work completes.
+**Phases 0–7 are ✅ done; Phases 8–12 + the backlog are ⬜ not-started.** Update each phase's marker (+ a short note) as work completes.
 
 **How to read this:** MVP phases are in intended build order (per brief). The **keystone unlock** is Phases 1–2 (auth + schema + RLS + trip-create); after that, most feature phases are trip-scoped slices. **Keep MVP tight — the Phase 2 backlog below is a parking lot, not a queue; nothing there is built until explicitly promoted (foundation §4-7, §8).**
 
@@ -76,17 +76,26 @@
 **Depends on:** Phase 2 (car pool, Airbnb total), Phase 3 (going-count for split), Phase 4 (travel_proof step).
 **Done when (verified):** ✅ `tsc` passes · ✅ web + iOS + Android bundles compile · ✅ headless browser boots the client bundle (incl. react-native-svg) without runtime errors. Live: a going member sees auto-calculated Airbnb+car shares, logs partial + full contributions (each full one animates + checks its step), pools show locked-until-start, and the private safe tracks its goal and stays sealed — verified by the operator against their Supabase project after `db push`. **No real money moves.**
 
-## Phase 6 — Airbnb voting + admin lock + countdown ⬜
+## Phase 6 — Airbnb voting + admin lock + countdown ✅ (2026-07-22)
 **Goal:** the group agrees on and locks the Airbnb (foundation §6-5). **GroupPad seam stays manual (→ D7).**
-**Deliverables:** add `airbnb_options` (manual link + total-cost); group **votes** (one per member, foundation §12-8); an **admin locks** `trips.airbnb_pick` (→ `status='locked'`); locked view shows the selection + overall progress + a **live date countdown**.
+**Deliverables (built):**
+- **Voting** on trip detail (replaces the "Airbnb pick" placeholder): lists `airbnb_options` (title/image/cost/notes + "Open listing ↗"); **one vote per member** via `airbnb_votes` (unique `trip_id,user_id`) — changing your vote **moves** it (upsert); **live tallies + voter avatars**. Members add options via the **GROUPPAD SEAM** form (comment kept; the real browse/AI-compare replaces this later, D7). Voting **informs** — it never auto-decides.
+- **Admin lock** (RLS `is_trip_admin`): an admin locks the official pick → `trips.airbnb_pick` + `status='locked'`; the group sees **"Official stay: &lt;title&gt;"** prominently, voting goes read-only (tallies remain). On lock, the **Airbnb pool total is seeded from the locked option's `total_cost`** if an admin hadn't set it manually. **Unlock/change** (with confirm) reopens voting → `status='planning'`.
+- **Admin management** (host-only): promote/demote admins with **role badges**; the **max-3 (D8)** cap is enforced by the DB trigger and surfaced as a clear limit message.
+- **Group progress + countdown panel** (prominent, near the top): Going count · # fully verified · Airbnb locked ✓/✗ · both pool progress bars · a large live countdown to `start_date`. Lightweight (seed of the Phase-2 readiness meter).
+- Hooks `useAirbnbVotes` / `useLockPick` / `useTripAdmins`; loading/empty/error throughout. **No migration** — runs under Phase-1 schema + RLS.
 **Depends on:** Phase 2 (options stub), Phase 3 (voters), Phase 1 (admins).
-**Done when:** members add options and vote; an admin locks the pick; the group sees the locked selection, progress, and a running countdown.
+**Done when (verified):** ✅ `tsc` passes · ✅ web + iOS + Android bundles compile · ✅ headless browser boots the client bundle without runtime errors. Live: members vote; an admin locks a pick and the group sees the official stay + the Airbnb pool total flows from it; promoting a 4th admin is blocked — verified by the operator against their Supabase project.
 
-## Phase 7 — Verified badge + step checklist ⬜
+## Phase 7 — Verified badge + step checklist ✅ (2026-07-22)
 **Goal:** the per-member readiness signal + progressive flow (foundation §5, §6-6/7).
-**Deliverables:** materialize `member_steps` (`travel_proof`, `airbnb_money`, `car_money` when a car pool exists); "money in" = contributions ≥ equal share; **verified badge** (`trip_members.is_verified`) when all required steps complete; **completion animations** + progressive reveal of remaining steps.
-**Depends on:** Phase 4 (travel proof), Phase 5 (money-in), Phase 6 (car pool presence).
-**Done when:** a member who finishes travel proof + Airbnb money (+ car money) shows the verified badge; completing a step animates and advances the checklist.
+**Deliverables (built):**
+- **Aggregate verified badge**, **derived** off `member_steps` (a computed hook — the built `trip_members` has no `is_verified` column): `verified = travel_proof AND airbnb_paid AND (car_paid only when a car pool exists)` (§5). `member_steps` is member-readable, so the badge shows for every member wherever they're listed — **RSVP wall, progress panel, member list** — with **partial progress ("2/3 steps")** for the rest.
+- **One-time celebration:** when the current user crosses into fully-verified, a celebratory animation plays **once** (reuses the reanimated checkmark; a per-trip+user AsyncStorage flag makes it once-only across sessions).
+- **Progressive step checklist** (built in Phase 5, completed here): `travel_proof` + `airbnb_paid` (+ `car_paid` when a car pool), completion states, next-step reveal, and the "You're all set" state — which the badge now realizes.
+- Hook `useMemberVerification` (+ `VerifiedBadge` / `StepProgress`); loading/empty/error throughout. **No migration.**
+**Depends on:** Phase 4 (travel proof), Phase 5 (money-in + checklist), Phase 6 (car pool presence).
+**Done when (verified):** ✅ `tsc` passes · ✅ web + iOS + Android bundles compile · ✅ headless client boots clean. Live: a member who's completed travel proof + both payments shows the **verified badge** with the **one-time celebration**; others show partial progress — verified by the operator against their Supabase project.
 
 ## Phase 8 — Local ideas + Activity docs ⬜
 **Goal:** inspiration + mixed-media documentation (foundation §6-8/9).
