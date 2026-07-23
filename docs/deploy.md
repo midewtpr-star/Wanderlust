@@ -15,7 +15,7 @@
 
 Audited and fixed before shipping:
 
-- **RLS:** every one of the **28 tables** has Row-Level Security **enabled** (verified: the list
+- **RLS:** every one of the **27 tables** has Row-Level Security **enabled** (verified: the list
   of created tables equals the list of RLS-enabled tables). Policies are membership-gated via
   `is_trip_member` / `is_trip_admin`; private data (personal safes, flight itineraries) is
   self/admin-only. Nothing is directly world-readable — the only `anon` grants are the four
@@ -65,17 +65,18 @@ Then run the following **against prod** (the CLI needs your access token — `su
 # 1) Link the repo to the PROD project (run from the repo root)
 supabase link --project-ref <PROD_PROJECT_REF>
 
-# 2) Apply ALL 14 migrations to prod
+# 2) Apply ALL 15 migrations to prod
 supabase db push
 
-# 3) Deploy the 4 Edge Functions to prod
+# 3) Deploy the 5 Edge Functions to prod
 supabase functions deploy verify-flight
 supabase functions deploy nearby-ideas
 supabase functions deploy notify-message
 supabase functions deploy link-preview
+supabase functions deploy generate-destination-theme
 
 # 4) Set the Edge Function secrets in PROD (server-only; never in the app)
-supabase secrets set ANTHROPIC_API_KEY=sk-ant-...    # verify-flight (itinerary vision)
+supabase secrets set ANTHROPIC_API_KEY=sk-ant-...    # verify-flight + generate-destination-theme
 supabase secrets set GOOGLE_PLACES_API_KEY=AIza...   # nearby-ideas (local ideas)
 #   notify-message + link-preview need no secrets.
 
@@ -206,7 +207,7 @@ verify on real devices, then promote to production review.
 |---|---|
 | App name | **Trippl** |
 | Subtitle / short description | e.g. "Group trips, actually planned." (iOS subtitle ≤ 30 chars) |
-| Full description | What it does: commit-and-plan trips — travel proof, shared money, Airbnb vote, chat, outfits, bring list, recap. |
+| Full description | What it does: commit-and-plan trips — travel proof, shared money (ledger), Airbnb vote, group chat, outfits, bring list, destination themes, recap. |
 | Keywords (iOS) | trip, group travel, planning, itinerary, split, packing, friends |
 | Category | Travel (primary) |
 | Privacy Policy URL | **Required** — host `PRIVACY.md` (see below) at a public URL and link it. |
@@ -215,7 +216,7 @@ verify on real devices, then promote to production review.
 | Screenshots — iOS | 6.7" (1290×2796) and 6.5" (1242×2688) at minimum; 12.9" iPad if you keep `supportsTablet`. |
 | Screenshots — Android | Phone (min 2, up to 8) + a 1024×500 feature graphic + 512×512 icon. |
 | App icon | Already generated (`assets/images/icon.png`). |
-| Data-safety / privacy questionnaire | Declare what you collect (see privacy policy) — both stores require this form. |
+| Data-safety / privacy questionnaire | Both stores require it — fill from the **Data disclosure** table below. |
 
 ### 🚨 Privacy policy is REQUIRED
 
@@ -227,6 +228,36 @@ content, chat messages, uploaded photos/videos, flight itineraries (processed by
 extract flight details), and location (for trip-mileage in the recap, opt-in)**, plus the
 processors used (**Supabase, Anthropic, Google Places, Expo push, Vercel**), retention, how to
 delete an account/data, children's-use stance, and a contact address.
+
+### 📋 Data disclosure (paste into Apple App Privacy + Google Data Safety)
+
+Trippl uses **no third-party analytics or advertising SDKs**, so **no data is used for tracking**
+(Apple: "Data Not Used to Track You") and **nothing is "shared"** in the store sense — data is
+only processed by our service providers on our behalf. Everything is **encrypted in transit
+(HTTPS)** and **user-deletable** (account/data deletion on request; wire an in-app delete before
+launch). Answer the forms as:
+
+| Data collected | Collected? | Linked to the user | Purpose | Notes for the form |
+|---|---|---|---|---|
+| **Email address** | Yes | Yes | App functionality, account management | Sign-in (email path). |
+| **Phone number** | Yes (if phone sign-in) | Yes | App functionality, account management | Phone-first OTP via Twilio. |
+| **Name** | Yes | Yes | App functionality | Display name; optional legal name used only to match a flight itinerary. |
+| **Photos or videos** | Yes | Yes | App functionality | Trip covers (public), activity/recap/outfit media (private, member-only). |
+| **Other user content — travel documents** | Yes | Yes | App functionality | Flight itinerary image/PDF; sent to Anthropic to extract flight details; stored private. |
+| **Messages / other user content** | Yes | Yes | App functionality | Group chat text; visible only to trip members. |
+| **Precise location** | Yes — **optional, opt-in** | Yes | App functionality | In-use only, to tally trip mileage for the recap; off by default; aggregate-only display. |
+| **User ID / device identifiers** | Yes | Yes | App functionality | User id; Expo push token for notifications. |
+| **Purchases / payment info** | **No** | — | — | **Ledger only — Trippl never processes real payments or collects card data.** |
+| **Financial info (amounts logged)** | Yes | Yes | App functionality | User-entered contribution/savings **numbers** in the ledger — not payment instruments. |
+| **Contacts** | **No** | — | — | Invites are link-based; no address-book access. |
+| **Usage data / diagnostics** | Minimal | Yes | App functionality, security | Standard host/server logs (Supabase/Vercel); no analytics SDK. |
+
+**Apple specifics:** "Data used to track you" → **None**. Data linked to you → the rows above.
+Third-party partners → service providers only (Supabase, Anthropic, Google Places, Twilio, Expo,
+Vercel), acting on our behalf.
+**Google specifics:** for each type above set **Collected = Yes, Shared = No**, **encrypted in
+transit = Yes**, **user can request deletion = Yes**; mark **Location** and **Financial info** as
+optional; declare **no data sold**. Do **not** declare Payment info (no card/transaction data).
 
 ---
 
@@ -249,12 +280,23 @@ eas submit --platform ios --profile production
 eas submit --platform android --profile production
 ```
 
-**Change backend (schema / functions):**
+**Change the backend — apply a new migration SAFELY to prod:**
 ```sh
-# Add a new migration, then:
-supabase db push                          # applies to the linked (prod) project
-supabase functions deploy <name>          # redeploy a changed Edge Function
+# 1. Write a NEW timestamped migration file (never edit an already-applied one — migrations are
+#    forward-only + append-only). Keep it idempotent (if not exists / drop policy if exists).
+# 2. Test it on DEV first (a separate project, or a local `supabase start` stack):
+supabase db push --project-ref <DEV_REF>
+# 3. See exactly what is pending against PROD before applying:
+supabase migration list --project-ref <PROD_REF>     # applied vs pending
+# 4. Ensure a PROD backup exists (enable Point-in-Time Recovery, or take a manual dump), then:
+supabase db push --project-ref <PROD_REF>
+# 5. Redeploy any changed Edge Function:
+supabase functions deploy <name> --project-ref <PROD_REF>
 ```
+Safety rules: never edit a migration that has already run (add a new one); avoid destructive drops
+without a backfill/rollback plan; RLS changes should be reviewed against `docs/data-model.md`;
+every migration in this repo is idempotent and safe to re-run.
 
 **Rule of thumb:** JS/UI fix → `eas update` + Vercel redeploy. Native/permission/version change →
-new `eas build` + `eas submit`. Schema/function change → `supabase db push` / `functions deploy`.
+new `eas build` + `eas submit`. Schema/function change → new migration → `supabase db push` /
+`functions deploy` (test on dev first).

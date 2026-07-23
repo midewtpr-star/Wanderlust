@@ -144,11 +144,12 @@
 ## Phase 12 — Deploy ✅ (deploy-ready — go-live gated on your accounts)
 **Goal:** shippable on all three platforms.
 **Done (in the repo, 2026-07-23):**
-- **Pre-launch audit + fixes** — RLS **enabled on all 28 tables** (verified), private buckets (`flight-itineraries`, `trip-media`) + signed URLs, **no secrets in client/repo** (only Edge Function secrets; `.env*` gitignored), **ESLint** added + `npm run lint`/`typecheck` green, web + iOS + Android production builds succeed, loading/empty/error states verified.
+- **Pre-launch audit + fixes** — RLS **enabled on all 27 tables** (verified: created-tables list == RLS-enabled list, incl. messages/outfits/bring/link_previews); private buckets (`flight-itineraries`, `trip-media`) + signed URLs, public `trip-covers`; **no secrets in client/repo or git history** (git-history scan: no real key ever committed; only `sk-ant-...` placeholders; `.env*` gitignored); **ledger-mode "no real payment processing" banner** present in the money UI; **ESLint** + `npm run lint`/`typecheck` green; web + iOS + Android production builds succeed; loading/empty/error states verified (no cover / no destination / no media / zero members all degrade gracefully).
 - **Env wiring per build profile** — `lib/supabase.ts` reads `EXPO_PUBLIC_SUPABASE_*` from `app.config.ts extra`; **nothing hardcoded**; `EXPO_PUBLIC_WEB_URL` drives invite-link origin.
 - **Web:** `vercel.json` (build cmd → `expo export --platform web`, output `dist`, `cleanUrls`, rewrites for every dynamic route).
 - **Native:** `eas.json` (development / preview / production, `appVersionSource: remote`); `app.config.ts` ids `com.trippl.app`, icon/splash, all permission strings, `runtimeVersion`, iOS export-compliance flag, `extra.eas.projectId` hook.
-- **Handoff:** `docs/deploy.md` (full step-by-step runbook with 🛑 STOP points) + `PRIVACY.md` (privacy-policy draft) + an update runbook.
+- **Backend:** **5 Edge Functions** (verify-flight, nearby-ideas, notify-message, link-preview, generate-destination-theme) + **15 migrations** — exact prod deploy/secrets/seed steps in `docs/deploy.md`.
+- **Handoff:** `docs/deploy.md` (full step-by-step runbook with 🛑 STOP points, a **paste-ready data-disclosure summary** for the Apple/Google privacy forms, and a **safe prod-migration** runbook) + `PRIVACY.md` (privacy-policy draft).
 
 **Pending you (accounts / dashboard clicks — all steps in `docs/deploy.md`):** create the **prod Supabase** project (push migrations, set Edge secrets, seed airports, configure auth/redirects); deploy **web on Vercel** (import repo + set env vars); `eas init` + **push credentials** + prod EAS env vars; **Apple Developer ($99/yr)** + **Google Play ($25)** accounts + app records; run `eas build`/`eas submit`; publish the privacy policy.
 
