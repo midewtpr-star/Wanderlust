@@ -7,6 +7,7 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { Stack, useLocalSearchParams } from "expo-router";
+import { TripThemeProvider } from "@/lib/trip-theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
@@ -115,7 +116,7 @@ export default function RecapScreen() {
   }
 
   return (
-    <>
+    <TripThemeProvider tripId={id}>
       <Stack.Screen options={{ title: "Trip recap" }} />
       {tripLoading ? (
         <View className="flex-1 items-center justify-center bg-background">
@@ -210,6 +211,6 @@ export default function RecapScreen() {
           </View>
         </ScrollView>
       )}
-    </>
+    </TripThemeProvider>
   );
 }

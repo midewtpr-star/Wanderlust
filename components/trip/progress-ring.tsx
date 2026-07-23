@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { View } from "react-native";
 import Svg, { Circle } from "react-native-svg";
-import { useTheme } from "@/lib/theme-provider";
+import { useEffectiveAccent } from "@/lib/trip-theme";
 import { NEUTRALS } from "@/constants/theme";
 
 // Circular progress ring (react-native-svg — works on web + native). Starts at
@@ -21,8 +21,8 @@ export function ProgressRing({
   track?: string;
   children?: ReactNode;
 }) {
-  const { accentInk, scheme } = useTheme();
-  const fill = filled ?? accentInk;
+  const { ink, scheme } = useEffectiveAccent();
+  const fill = filled ?? ink;
   const trackColor = track ?? NEUTRALS[scheme].border;
   const clamped = Math.max(0, Math.min(1, fraction));
   const c = size / 2;

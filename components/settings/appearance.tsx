@@ -62,10 +62,29 @@ function Swatch({
   );
 }
 
+function Toggle({ on }: { on: boolean }) {
+  return (
+    <View
+      className={cn(
+        "h-6 w-11 justify-center rounded-full px-0.5",
+        on ? "border border-primary bg-accent-fill" : "bg-secondary",
+      )}
+    >
+      <View
+        className={cn(
+          "h-5 w-5 rounded-full bg-background",
+          on ? "self-end" : "self-start",
+        )}
+      />
+    </View>
+  );
+}
+
 // Appearance settings: Light / Dark / System + accent presets and a custom hex.
 // Changes apply live (ThemeProvider recolors the app) and persist.
 export function AppearanceSettings() {
-  const { mode, accent, scheme, setMode, setAccent } = useTheme();
+  const { mode, accent, scheme, setMode, setAccent, forceOwnAccent, setForceOwnAccent } =
+    useTheme();
   const [customOpen, setCustomOpen] = useState(false);
   const [hex, setHex] = useState(accent);
 
@@ -154,6 +173,25 @@ export function AppearanceSettings() {
             />
           </View>
         ) : null}
+      </View>
+
+      <View className="gap-2">
+        <Text variant="muted">Destination themes</Text>
+        <Pressable
+          onPress={() => setForceOwnAccent(!forceOwnAccent)}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: forceOwnAccent }}
+          className="flex-row items-center justify-between"
+        >
+          <View className="flex-1 pr-3">
+            <Text>Always use my own accent</Text>
+            <Text variant="caption">
+              On = keep your accent everywhere and ignore each trip&apos;s
+              destination theme.
+            </Text>
+          </View>
+          <Toggle on={forceOwnAccent} />
+        </Pressable>
       </View>
     </Card>
   );

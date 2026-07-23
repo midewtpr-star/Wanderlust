@@ -11,6 +11,7 @@ import { ReactionButton } from "@/components/outfits/reaction-button";
 import { ItemCard } from "@/components/outfits/item-card";
 import { AddItemModal } from "@/components/outfits/add-item-modal";
 import { useAuth } from "@/lib/auth-provider";
+import { TripThemeProvider } from "@/lib/trip-theme";
 import { useOutfit, useOutfitReaction } from "@/hooks/use-outfits";
 import { useOutfitItems, type OutfitItemWithUrl } from "@/hooks/use-outfit-items";
 import { formatDate } from "@/lib/dates";
@@ -49,7 +50,7 @@ export default function OutfitMoodboardScreen() {
   const headerTitle = outfit?.title ?? "Outfit";
 
   return (
-    <>
+    <TripThemeProvider tripId={tripId}>
       <Stack.Screen options={{ title: headerTitle }} />
       <View className="flex-1 bg-background">
         {loading ? (
@@ -150,7 +151,7 @@ export default function OutfitMoodboardScreen() {
         onAddUpload={addUpload}
         busy={busy}
       />
-    </>
+    </TripThemeProvider>
   );
 }
 

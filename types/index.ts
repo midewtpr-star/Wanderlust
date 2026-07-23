@@ -5,6 +5,20 @@ export type ID = string;
 export type TripStatus = "planning" | "locked" | "active" | "completed";
 export type MemberRole = "host" | "admin" | "member";
 
+// --- Destination themes ---
+// Where a trip's palette came from (priority: cover image → curated → generated).
+export type ThemeSource = "cover_image" | "curated" | "generated";
+
+// A trip's generated theme. Colors are raw hex; they only drive the accent layer
+// inside the trip (contrast-clamped at use). motif is a one-word decorative key.
+export type TripTheme = {
+  primary: string;
+  secondary: string;
+  surface_tint: string;
+  motif: string;
+  source: ThemeSource;
+};
+
 // A row of `trips`.
 export type Trip = {
   id: ID;
@@ -19,6 +33,7 @@ export type Trip = {
   car_rental_ref: string | null;
   airbnb_pick: ID | null;
   status: TripStatus;
+  theme: TripTheme | null; // destination theme (null = default Trippl accent)
   created_at: string;
   updated_at: string;
 };

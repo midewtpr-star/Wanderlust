@@ -20,26 +20,31 @@ import {
 
 const KEY_MODE = "trippl.theme_mode";
 const KEY_ACCENT = "trippl.accent_color";
+const KEY_FORCE = "trippl.force_own_accent";
 
 type ThemeState = {
   mode: ThemeMode; // 'light' | 'dark' | 'system'
   accent: string; // stored base hex (preset light value or a custom hex)
   scheme: "light" | "dark"; // effective scheme after resolving 'system'
   accentInk: string; // the accent as a visible text/stroke color (for progress, etc.)
+  forceOwnAccent: boolean; // "always use my own accent" — overrides destination themes
   setMode: (mode: ThemeMode) => void;
   setAccent: (hex: string) => void;
+  setForceOwnAccent: (value: boolean) => void;
 };
 
 const ThemeContext = createContext<ThemeState | undefined>(undefined);
 
-// Mode + accent, persisted to the Supabase profile AND AsyncStorage (local wins
-// for instant/offline; the profile reconciles across devices on sign-in). Accent
-// is applied as a runtime CSS variable so it recolors the whole app live.
+// Mode + accent (+ the "always use my own accent" override), persisted to the
+// Supabase profile AND AsyncStorage (local wins for instant/offline; the profile
+// reconciles across devices on sign-in). Accent is applied as a runtime CSS
+// variable so it recolors the whole app live.
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const device = useDeviceScheme(); // OS scheme (reactive), independent of NativeWind
   const [mode, setModeState] = useState<ThemeMode>(DEFAULT_MODE);
   const [accent, setAccentState] = useState<string>(DEFAULT_ACCENT);
+  const [forceOwnAccent, setForceState] = useState<boolean>(false);
 
   // Resolve 'system' → a concrete scheme ourselves, then push the concrete scheme
   // to NativeWind. ('system' with darkMode:"class" doesn't toggle the .dark class
@@ -57,12 +62,14 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // Instant: hydrate from local storage on start (offline-safe).
   useEffect(() => {
     (async () => {
-      const [m, a] = await Promise.all([
+      const [m, a, f] = await Promise.all([
         AsyncStorage.getItem(KEY_MODE),
         AsyncStorage.getItem(KEY_ACCENT),
+        AsyncStorage.getItem(KEY_FORCE),
       ]);
       if (m === "light" || m === "dark" || m === "system") setModeState(m);
       if (a) setAccentState(a);
+      if (f === "true" || f === "false") setForceState(f === "true");
     })();
   }, []);
 
@@ -72,11 +79,12 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("theme_mode, accent_color")
+        .select("theme_mode, accent_color, force_own_accent")
         .eq("id", user.id)
         .maybeSingle();
       const m = data?.theme_mode as ThemeMode | undefined;
       const a = data?.accent_color as string | undefined;
+      const f = data?.force_own_accent as boolean | undefined;
       if (m === "light" || m === "dark" || m === "system") {
         setModeState(m);
         AsyncStorage.setItem(KEY_MODE, m);
@@ -85,37 +93,40 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         setAccentState(a);
         AsyncStorage.setItem(KEY_ACCENT, a);
       }
+      if (typeof f === "boolean") {
+        setForceState(f);
+        AsyncStorage.setItem(KEY_FORCE, String(f));
+      }
     })();
   }, [user]);
-
-  const persist = useCallback(
-    (m: ThemeMode, a: string) => {
-      AsyncStorage.setItem(KEY_MODE, m);
-      AsyncStorage.setItem(KEY_ACCENT, a);
-      if (user) {
-        supabase
-          .from("profiles")
-          .update({ theme_mode: m, accent_color: a })
-          .eq("id", user.id);
-      }
-    },
-    [user],
-  );
 
   const setMode = useCallback(
     (m: ThemeMode) => {
       setModeState(m);
-      persist(m, accent);
+      AsyncStorage.setItem(KEY_MODE, m);
+      if (user) supabase.from("profiles").update({ theme_mode: m }).eq("id", user.id);
     },
-    [accent, persist],
+    [user],
   );
 
   const setAccent = useCallback(
     (a: string) => {
       setAccentState(a);
-      persist(mode, a);
+      AsyncStorage.setItem(KEY_ACCENT, a);
+      if (user) supabase.from("profiles").update({ accent_color: a }).eq("id", user.id);
     },
-    [mode, persist],
+    [user],
+  );
+
+  const setForceOwnAccent = useCallback(
+    (value: boolean) => {
+      setForceState(value);
+      AsyncStorage.setItem(KEY_FORCE, String(value));
+      if (user) {
+        supabase.from("profiles").update({ force_own_accent: value }).eq("id", user.id);
+      }
+    },
+    [user],
   );
 
   const { fill, ink, fg } = resolveAccentVars(accent, scheme);
@@ -127,7 +138,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   return (
     <ThemeContext.Provider
-      value={{ mode, accent, scheme, accentInk: ink, setMode, setAccent }}
+      value={{
+        mode,
+        accent,
+        scheme,
+        accentInk: ink,
+        forceOwnAccent,
+        setMode,
+        setAccent,
+        setForceOwnAccent,
+      }}
     >
       <View style={[{ flex: 1 }, accentVars]}>{children}</View>
     </ThemeContext.Provider>

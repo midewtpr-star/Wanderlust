@@ -1,5 +1,5 @@
 import { View } from "react-native";
-import { useTheme } from "@/lib/theme-provider";
+import { useEffectiveAccent } from "@/lib/trip-theme";
 import { NEUTRALS } from "@/constants/theme";
 
 // Simple horizontal progress bar. Inline styles (NativeWind className isn't wired
@@ -16,8 +16,8 @@ export function ProgressBar({
   filled?: string;
   track?: string;
 }) {
-  const { accentInk, scheme } = useTheme();
-  const fill = filled ?? accentInk;
+  const { ink, scheme } = useEffectiveAccent();
+  const fill = filled ?? ink;
   const trackColor = track ?? NEUTRALS[scheme].border;
   const pct = Math.round(Math.max(0, Math.min(1, fraction)) * 100);
   return (

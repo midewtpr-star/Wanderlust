@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { View, ScrollView, ActivityIndicator, Pressable } from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
+import { TripThemeProvider } from "@/lib/trip-theme";
 import * as WebBrowser from "expo-web-browser";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
@@ -50,7 +51,7 @@ export default function ActivityDetailScreen() {
   );
 
   return (
-    <>
+    <TripThemeProvider tripId={activity?.trip_id}>
       <Stack.Screen options={{ title: activity?.title ?? "Activity" }} />
       {loading ? (
         <View className="flex-1 items-center justify-center bg-background">
@@ -110,6 +111,6 @@ export default function ActivityDetailScreen() {
           )}
         </ScrollView>
       )}
-    </>
+    </TripThemeProvider>
   );
 }

@@ -23,6 +23,9 @@ import { DistanceOptIn } from "@/components/trip/distance-opt-in";
 import { ChatEntry } from "@/components/chat/chat-entry";
 import { OutfitEntry } from "@/components/outfits/outfit-entry";
 import { BringEntry } from "@/components/bring/bring-entry";
+import { TripThemeProvider } from "@/lib/trip-theme";
+import { DestinationMotif } from "@/components/trip/destination-motif";
+import { TripThemeSection } from "@/components/trip/trip-theme-section";
 import { formatDateRange, toISODate } from "@/lib/dates";
 import { useAuth } from "@/lib/auth-provider";
 import { useTrip } from "@/hooks/use-trip";
@@ -120,21 +123,25 @@ export default function TripDetailScreen() {
           </Text>
         </View>
       ) : trip ? (
+        <TripThemeProvider tripId={id}>
         <ScrollView
           className="flex-1 bg-background"
           contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
         >
-          {trip.cover_url ? (
-            <Image
-              source={{ uri: trip.cover_url }}
-              style={{ width: "100%", height: 200 }}
-              contentFit="cover"
-            />
-          ) : (
-            <View className="h-[200px] w-full items-center justify-center bg-muted">
-              <Text variant="muted">No cover</Text>
-            </View>
-          )}
+          <View className="relative">
+            {trip.cover_url ? (
+              <Image
+                source={{ uri: trip.cover_url }}
+                style={{ width: "100%", height: 200 }}
+                contentFit="cover"
+              />
+            ) : (
+              <View className="h-[200px] w-full items-center justify-center bg-muted">
+                <Text variant="muted">No cover</Text>
+              </View>
+            )}
+            <DestinationMotif />
+          </View>
 
           <View className="gap-2 p-6">
             <Text variant="title">{trip.title}</Text>
@@ -167,6 +174,8 @@ export default function TripDetailScreen() {
               onPress={() => router.push(`/bring/${trip.id}`)}
             />
           </View>
+
+          <TripThemeSection trip={trip} isAdmin={isAdmin} />
 
           <View className="gap-2 px-6 pb-4">
             <Text variant="heading">Your RSVP</Text>
@@ -308,6 +317,7 @@ export default function TripDetailScreen() {
             </View>
           ) : null}
         </ScrollView>
+        </TripThemeProvider>
       ) : null}
 
       <InviteModal

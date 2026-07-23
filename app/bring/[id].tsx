@@ -10,6 +10,7 @@ import { BringRow } from "@/components/bring/bring-row";
 import { BringItemModal } from "@/components/bring/bring-item-modal";
 import { VerifiedAnimation } from "@/components/trip/verified-animation";
 import { useAuth } from "@/lib/auth-provider";
+import { TripThemeProvider } from "@/lib/trip-theme";
 import { useTrip } from "@/hooks/use-trip";
 import { useTripMembers } from "@/hooks/use-trip-members";
 import {
@@ -151,7 +152,7 @@ export default function BringListScreen() {
   }
 
   return (
-    <>
+    <TripThemeProvider tripId={id}>
       <Stack.Screen options={{ title: headerTitle }} />
       <View className="flex-1 bg-background">
         {tripLoading || bring.loading ? (
@@ -281,7 +282,7 @@ export default function BringListScreen() {
           </View>
         </Pressable>
       </Modal>
-    </>
+    </TripThemeProvider>
   );
 }
 

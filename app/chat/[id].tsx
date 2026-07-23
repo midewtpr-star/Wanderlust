@@ -19,6 +19,7 @@ import { SendButton } from "@/components/chat/send-button";
 import { MessageRow, type ChatRow } from "@/components/chat/message-row";
 import { useAuth } from "@/lib/auth-provider";
 import { useTheme } from "@/lib/theme-provider";
+import { TripThemeProvider } from "@/lib/trip-theme";
 import { supabase } from "@/lib/supabase";
 import { registerPushTokenAsync } from "@/lib/push";
 import { useTrip } from "@/hooks/use-trip";
@@ -192,7 +193,7 @@ export default function ChatScreen() {
   const headerTitle = trip?.title ? `${trip.title} · Chat` : "Chat";
 
   return (
-    <>
+    <TripThemeProvider tripId={id}>
       <Stack.Screen options={{ title: headerTitle }} />
       <KeyboardAvoidingView
         className="flex-1 bg-background"
@@ -277,7 +278,7 @@ export default function ChatScreen() {
           </View>
         ) : null}
       </KeyboardAvoidingView>
-    </>
+    </TripThemeProvider>
   );
 }
 

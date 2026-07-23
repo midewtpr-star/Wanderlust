@@ -9,6 +9,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { OutfitCard } from "@/components/outfits/outfit-card";
 import { CreateOutfitModal } from "@/components/outfits/create-outfit-modal";
 import { useAuth } from "@/lib/auth-provider";
+import { TripThemeProvider } from "@/lib/trip-theme";
 import { useTrip } from "@/hooks/use-trip";
 import { useActivities } from "@/hooks/use-activities";
 import { useOutfits, type OutfitCard as OutfitCardData } from "@/hooks/use-outfits";
@@ -95,7 +96,7 @@ export default function OutfitBoardScreen() {
   const headerTitle = trip?.title ? `${trip.title} · Outfits` : "Outfits";
 
   return (
-    <>
+    <TripThemeProvider tripId={id}>
       <Stack.Screen options={{ title: headerTitle }} />
       <View className="flex-1 bg-background">
         {tripLoading || loading ? (
@@ -170,7 +171,7 @@ export default function OutfitBoardScreen() {
         activities={activities}
         saving={saving}
       />
-    </>
+    </TripThemeProvider>
   );
 }
 
