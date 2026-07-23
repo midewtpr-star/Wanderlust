@@ -11,6 +11,10 @@ const config: ExpoConfig = {
   name: "Trippl",
   slug: "trippl",
   version: "1.0.0",
+  // OTA + native-build compatibility key: `eas update` ships JS-only updates to
+  // builds sharing this runtime version. Bump native deps ⇒ bump the app version.
+  runtimeVersion: { policy: "appVersion" },
+  // owner: "your-expo-username-or-org", // set to your Expo account/org for EAS (see docs/deploy.md)
   orientation: "portrait",
   icon: "./assets/images/icon.png",
   // Deep-link scheme (D2). Invite links resolve to app/join/[code]:
@@ -26,6 +30,9 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: "com.trippl.app",
+    // Standard HTTPS/crypto only → declare no non-exempt encryption, so App Store
+    // Connect skips the export-compliance question on every submission.
+    infoPlist: { ITSAppUsesNonExemptEncryption: false },
   },
   android: {
     package: "com.trippl.app",
@@ -111,6 +118,9 @@ const config: ExpoConfig = {
     // Optional deployed web origin used to build shareable invite links on native
     // (e.g. https://trippl.vercel.app). On web we fall back to window.location.origin.
     webUrl: process.env.EXPO_PUBLIC_WEB_URL,
+    // Populated by `eas init` (it prints the EAS project ID). Enables Expo push
+    // tokens (lib/push.ts) + EAS Update; in EAS builds it is also auto-injected.
+    eas: { projectId: process.env.EAS_PROJECT_ID },
   },
 };
 

@@ -1,11 +1,5 @@
 import { useState } from "react";
-import {
-  Modal,
-  View,
-  Pressable,
-  ScrollView,
-  ActivityIndicator,
-} from "react-native";
+import { Modal, View, Pressable, ScrollView } from "react-native";
 import { Image } from "expo-image";
 import * as ImagePicker from "expo-image-picker";
 import { Text } from "@/components/ui/text";

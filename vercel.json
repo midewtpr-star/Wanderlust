@@ -1,0 +1,18 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npx expo export --platform web",
+  "outputDirectory": "dist",
+  "framework": null,
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "rewrites": [
+    { "source": "/trip/:id", "destination": "/trip/[id]" },
+    { "source": "/chat/:id", "destination": "/chat/[id]" },
+    { "source": "/outfits/:id", "destination": "/outfits/[id]" },
+    { "source": "/outfit/:id", "destination": "/outfit/[id]" },
+    { "source": "/bring/:id", "destination": "/bring/[id]" },
+    { "source": "/recap/:id", "destination": "/recap/[id]" },
+    { "source": "/activity/:id", "destination": "/activity/[id]" },
+    { "source": "/join/:code", "destination": "/join/[code]" }
+  ]
+}

@@ -5,7 +5,7 @@
 > **Revised for v2.** Codename `Trippl`; logo `[LOGO SLOT]` — TBD.
 
 **Status key:** ⬜ not-started · 🟡 in progress · ✅ done · ⏳ external lead time.
-**Phases 0–10 are ✅ done; Phases 11–12 are ⬜ not-started.** Three added features beyond the core phases — **Trip group chat**, the **Outfit planner**, and the **Shared bring list** — were **explicitly requested and built (2026-07-22)**; see the backlog table below. Update each phase's marker (+ a short note) as work completes.
+**Phases 0–10 are ✅ done. Phase 12 (Deploy) is ✅ deploy-ready** — the pre-launch audit, all build/deploy config (`vercel.json`, `eas.json`, `app.config.ts`, env wiring), and the `docs/deploy.md` runbook are complete; **go-live is gated on your accounts** (Supabase prod, Vercel, EAS, Apple, Google — see `docs/deploy.md`). **Phase 11 (Polish) is ⬜ not-started** (states/lint were covered incidentally by the deploy audit). Three added features beyond the core phases — **Trip group chat**, the **Outfit planner**, and the **Shared bring list** — were **explicitly requested and built (2026-07-22)**; see the backlog table below. Update each phase's marker (+ a short note) as work completes.
 
 **How to read this:** MVP phases are in intended build order (per brief). The **keystone unlock** is Phases 1–2 (auth + schema + RLS + trip-create); after that, most feature phases are trip-scoped slices. **Keep MVP tight — the Phase 2 backlog below is a parking lot, not a queue; nothing there is built until explicitly promoted (foundation §4-7, §8).**
 
@@ -139,11 +139,20 @@
 **Depends on:** the feature phases (3–9).
 **Done when:** the core loop feels solid on all three platforms; open-question decisions are closed or explicitly deferred.
 
-## Phase 12 — Deploy ⬜
+## Phase 12 — Deploy ✅ (deploy-ready — go-live gated on your accounts)
 **Goal:** shippable on all three platforms.
-**Deliverables:** **EAS Build** (iOS + Android); **Expo web export → Vercel**; production Supabase (RLS verified, buckets, phone-auth provider, env); store submission prep. ⏳ App Store / Play + SMS provider lead time.
-**Depends on:** Phases 10–11.
-**Done when:** web is live on Vercel; iOS/Android builds produced via EAS and submitted; production Supabase verified.
+**Done (in the repo, 2026-07-23):**
+- **Pre-launch audit + fixes** — RLS **enabled on all 28 tables** (verified), private buckets (`flight-itineraries`, `trip-media`) + signed URLs, **no secrets in client/repo** (only Edge Function secrets; `.env*` gitignored), **ESLint** added + `npm run lint`/`typecheck` green, web + iOS + Android production builds succeed, loading/empty/error states verified.
+- **Env wiring per build profile** — `lib/supabase.ts` reads `EXPO_PUBLIC_SUPABASE_*` from `app.config.ts extra`; **nothing hardcoded**; `EXPO_PUBLIC_WEB_URL` drives invite-link origin.
+- **Web:** `vercel.json` (build cmd → `expo export --platform web`, output `dist`, `cleanUrls`, rewrites for every dynamic route).
+- **Native:** `eas.json` (development / preview / production, `appVersionSource: remote`); `app.config.ts` ids `com.trippl.app`, icon/splash, all permission strings, `runtimeVersion`, iOS export-compliance flag, `extra.eas.projectId` hook.
+- **Handoff:** `docs/deploy.md` (full step-by-step runbook with 🛑 STOP points) + `PRIVACY.md` (privacy-policy draft) + an update runbook.
+
+**Pending you (accounts / dashboard clicks — all steps in `docs/deploy.md`):** create the **prod Supabase** project (push migrations, set Edge secrets, seed airports, configure auth/redirects); deploy **web on Vercel** (import repo + set env vars); `eas init` + **push credentials** + prod EAS env vars; **Apple Developer ($99/yr)** + **Google Play ($25)** accounts + app records; run `eas build`/`eas submit`; publish the privacy policy.
+
+**Live vs pending:** *code + config = **done***; *web live + iOS/Android in store review = after you complete the gated steps (⏳ store review + SMS-provider lead time).*
+**Depends on:** Phases 10 (+ optional 11).
+**Done when:** web is live on Vercel; iOS/Android builds produced via EAS and submitted; production Supabase verified. **(Repo is ready for all three; execution is yours.)**
 
 ---
 

@@ -6,6 +6,7 @@ node_modules/
 # Expo
 .expo/
 dist/
+dist-native/
 web-build/
 expo-env.d.ts
 
@@ -32,7 +33,11 @@ yarn-error.*
 
 # env files (never commit secrets) — keep .env.example tracked
 .env
-.env*.local
+.env.*
+!.env.example
+
+# store-submission credentials (Google Play service account key, etc.)
+secrets/
 
 # typescript
 *.tsbuildinfo

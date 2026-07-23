@@ -68,7 +68,6 @@ export function useMemberVerification(
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [load, version]);
 
   const requiredCount = requiredSteps.length;

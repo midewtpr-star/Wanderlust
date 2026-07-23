@@ -10,7 +10,6 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { CollageView } from "@/components/trip/collage-view";
 import { StatTiles } from "@/components/trip/stat-tiles";
 import { supabase } from "@/lib/supabase";

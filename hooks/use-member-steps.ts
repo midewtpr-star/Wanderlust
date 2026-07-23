@@ -36,7 +36,6 @@ export function useMemberSteps(
 
   useEffect(() => {
     load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [load, version]);
 
   return { steps, loading, error, refresh: load };
