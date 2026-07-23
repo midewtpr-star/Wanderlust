@@ -1,10 +1,13 @@
-import { Text as RNText, type TextProps } from "react-native";
+import { Text as RNText, type TextProps, type TextStyle } from "react-native";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { fontFamily, type FontWeight } from "@/constants/theme";
+import { skinType, type TypeRole } from "@/constants/skins";
+import { useSkin } from "@/lib/skin";
 
-// Trippl text (Phase 10). Two roles, Apple-like: Display for large titles (tighter
-// tracking, heavier), Text for body/UI. See docs/design.md for the scale.
+// Trippl text. Two roles, Apple-like (Display / Text). The active SKIN layers its
+// own typography voice on top (family + case + tracking) — editorial serif display,
+// collage mono body, poster condensed-caps display — without changing the scale.
 const textVariants = cva("text-foreground", {
   variants: {
     variant: {
@@ -30,6 +33,17 @@ const WEIGHT: Record<string, FontWeight> = {
   caption: "regular",
 };
 
+// Which typographic role each variant plays (drives the skin's type treatment).
+const ROLE: Record<string, TypeRole> = {
+  "display-xl": "display",
+  "display-lg": "display",
+  title: "display",
+  heading: "heading",
+  default: "body",
+  muted: "body",
+  caption: "label",
+};
+
 export type TextVariant = VariantProps<typeof textVariants>;
 
 export function Text({
@@ -38,11 +52,20 @@ export function Text({
   style,
   ...props
 }: TextProps & TextVariant) {
-  const family = fontFamily(WEIGHT[variant ?? "default"]);
+  const { skin } = useSkin();
+  const v = variant ?? "default";
+  const st = skinType(skin, ROLE[v]);
+  const family = st.fontFamily ?? fontFamily(WEIGHT[v]);
+
+  const skinStyle: TextStyle = {};
+  if (family) skinStyle.fontFamily = family;
+  if (st.textTransform) skinStyle.textTransform = st.textTransform;
+  if (st.letterSpacing != null) skinStyle.letterSpacing = st.letterSpacing;
+
   return (
     <RNText
       className={cn(textVariants({ variant }), className)}
-      style={family ? [{ fontFamily: family }, style] : style}
+      style={[skinStyle, style]}
       {...props}
     />
   );

@@ -2,11 +2,14 @@ import { Pressable, Text, type PressableProps } from "react-native";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { fontFamily } from "@/constants/theme";
+import { skinRadius } from "@/constants/skins";
+import { useSkin } from "@/lib/skin";
 
-// Trippl button (Phase 10). Rounded/tactile; the accent drives the primary fill.
-// Neutrals carry secondary/outline. See docs/design.md.
+// Trippl button. The accent drives the primary fill; the active SKIN sets the
+// corner radius (editorial rounded / poster hard-edged) and, for poster, uppercase
+// labels. See docs/design.md.
 const buttonVariants = cva(
-  "flex-row items-center justify-center rounded-xl active:opacity-80",
+  "flex-row items-center justify-center active:opacity-80",
   {
     variants: {
       variant: {
@@ -57,14 +60,20 @@ export function Button({
   textClassName,
   ...props
 }: ButtonProps) {
+  const { skin } = useSkin();
+  const posterLabel =
+    skin === "poster"
+      ? { textTransform: "uppercase" as const, letterSpacing: 0.6 }
+      : {};
   return (
     <Pressable
-      className={cn(buttonVariants({ variant, size }), className)}
+      className={cn(buttonVariants({ variant, size }), skinRadius(skin), className)}
+      accessibilityRole="button"
       {...props}
     >
       <Text
         className={cn(buttonTextVariants({ variant }), textClassName)}
-        style={{ fontFamily: fontFamily("semibold") }}
+        style={{ fontFamily: fontFamily("semibold"), ...posterLabel }}
       >
         {label}
       </Text>

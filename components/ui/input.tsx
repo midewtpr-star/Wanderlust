@@ -1,23 +1,25 @@
 import { TextInput, type TextInputProps } from "react-native";
 import { cn } from "@/lib/utils";
-import { fontFamily, NEUTRALS } from "@/constants/theme";
-import { useTheme } from "@/lib/theme-provider";
+import { fontFamily } from "@/constants/theme";
+import { skinRadius } from "@/constants/skins";
+import { useSkin } from "@/lib/skin";
 
-// Trippl input (Phase 10): rounded, hairline border, token colors, themed
-// placeholder + font.
+// Trippl input: hairline border, token colors, themed placeholder. Corner radius +
+// placeholder color follow the active skin.
 export function Input({
   className,
   style,
   ...props
 }: TextInputProps & { className?: string }) {
-  const { scheme } = useTheme();
+  const { skin, neutrals } = useSkin();
   return (
     <TextInput
       className={cn(
-        "h-12 w-full rounded-xl border border-border bg-background px-3.5 text-base text-foreground",
+        "h-12 w-full border border-border bg-background px-3.5 text-base text-foreground",
+        skinRadius(skin),
         className,
       )}
-      placeholderTextColor={NEUTRALS[scheme].textSecondary}
+      placeholderTextColor={neutrals.textSecondary}
       style={[{ fontFamily: fontFamily("regular") }, style]}
       {...props}
     />

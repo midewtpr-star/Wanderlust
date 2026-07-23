@@ -14,7 +14,7 @@ import {
 } from "@expo-google-fonts/inter";
 import { AuthProvider, useAuth } from "@/lib/auth-provider";
 import { ThemeProvider, useTheme } from "@/lib/theme-provider";
-import { NEUTRALS, fontFamily } from "@/constants/theme";
+import { fontFamily } from "@/constants/theme";
 
 // Keep the splash screen up until we know the session (and fonts), to avoid a
 // flash of the wrong route / unstyled text.
@@ -23,7 +23,7 @@ SplashScreen.preventAutoHideAsync();
 // Route protection: signed-out users are sent to (auth), except on PUBLIC routes.
 function RootNavigator() {
   const { session, loading } = useAuth();
-  const { scheme } = useTheme();
+  const { neutrals } = useTheme();
   const segments = useSegments();
   const router = useRouter();
 
@@ -36,8 +36,8 @@ function RootNavigator() {
     }
   }, [session, loading, segments, router]);
 
-  const n = NEUTRALS[scheme];
-  // Themed native headers (flat, editorial — no shadow, neutral background).
+  const n = neutrals; // current skin × scheme
+  // Themed native headers (flat — no shadow, neutral background per skin).
   const themedHeader = {
     headerStyle: { backgroundColor: n.bg },
     headerTintColor: n.text,

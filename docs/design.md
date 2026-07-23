@@ -69,3 +69,35 @@ Each trip's UI is themed to its destination — a generated palette + motif, so 
 - **Contrast safety (non-negotiable, both modes).** No generated color is used raw: `resolveThemeAccent` clamps a color's **lightness** (preserving hue/saturation) until it meets WCAG contrast against the current mode's background — **≥ 4.5:1** for ink (text/stroke/border), **≥ 3:1** for fills — and pairs each fill with a contrast-checked label. A generated color never becomes the page background or body text; neutrals stay from the token system.
 - **Application (tasteful).** `primary` → the trip accent (buttons, send, active states, progress, countdown, verified highlight); `secondary` + `surface_tint` → a subtle animated **motif** wash on the trip header (`DestinationMotif`, react-native-svg; a restrained pattern per motif family — artdeco / alpine / citynight / tropical / … — that fades + rises in on entry). Editorial restraint still rules — bold but sparse.
 - **Host controls.** The trip's Theme section (trip detail) previews the palette + motif + source, lets any member opt out, and lets the host/admin **regenerate**, pick a **variant**, or set a **manual color**. Writes go through the `save_trip_theme` / `set_trip_theme_pref` SECURITY DEFINER RPCs.
+
+## App skins — three selectable visual versions (Section 13)
+
+Trippl ships **three selectable skins** — **Editorial** (default), **Collage**, **Poster** — picked per user in Settings and applied globally. A skin is **look-only**. Source: `constants/skins.ts`, `lib/skin.tsx`, the skin axis in `lib/theme-provider.tsx`, `components/settings/skin-picker.tsx`, `components/trip/skin-trip-header.tsx`; schema `profiles.app_skin`.
+
+**Governing rule.** A skin MAY change color tokens, typography, ornament, texture, component styling (fills/borders/radii/elevation), imagery treatment, motion personality, and microcopy voice. A skin **MAY NOT** change information architecture, navigation, which screens exist, where controls live, what any component does, or the underlying data — *switch skins and every feature is in exactly the same place.*
+
+**Non-negotiable in all three:** WCAG AA contrast, ≥44pt touch targets, full light + dark, functional loading/empty/error states, and the four signature moments (verified badge, itinerary verified, countdown, recap) in each skin's voice.
+
+**Three coexisting axes.** `skin` (global, per user) × `light/dark` (mode) × `accent`/destination color are independent. The user's manual accent still overrides destination color where it applies, in every skin.
+
+**Density rule.** Skins express most on HERO surfaces (invite preview, trip dashboard header, verification, recap) and calm toward legibility on DENSE surfaces (chat, money ledger, bring list, forms, settings) — decoration recedes as information density rises. In this build that's structural: skin ornament lives only on the trip-dashboard header (`SkinTripHeader`); dense screens carry only the token + type layer.
+
+**How it's built (no per-screen rewrites).** The whole app is CSS-variable + shared-primitive driven, so a skin is a token layer:
+- **Neutrals + radius:** the `ThemeProvider` sets the *current skin's* `--background`/`--foreground`/`--card`/`--secondary`/`--muted`/`--border`/`--radius` for the whole app (light + dark), so every token surface re-skins from one place. `SkinScope` does the same for a subtree (the picker's live previews). Native chrome (root header, tab bar) + inline consumers read `useTheme().neutrals` / `useSkin()`.
+- **Typography:** `Text` maps each variant to a role and applies the skin's family/case/tracking — Editorial **serif** display, Collage **mono** body + caps labels, Poster **condensed uppercase** display + caps labels — without changing the type scale. (Long body text never goes all-caps — density rule.)
+- **Component styling:** `Button` / `Card` / `Input` take their radius (and poster's uppercase labels / flat cards) from the skin.
+- **Hero ornament:** `SkinTripHeader` renders the destination motif (Editorial), a graph-paper grid + wash + tape (Collage), or a bold color field + wedge (Poster) over the trip cover, animated in.
+
+**Per-skin token sheets** (neutrals in `SKIN_NEUTRALS`, light/dark each):
+
+| Skin | Feeling | bg (light/dark) | Type voice | Radius | Ornament / signature |
+|---|---|---|---|---|---|
+| **Editorial** (default) | quiet, expensive | `#FFFFFF` / `#1C1C1E` | serif display + clean sans body | rounded-2xl | restraint; destination motif; monochrome fields |
+| **Collage** | corkboard, tactile | warm paper `#FBF7EF` / `#111013` | bold sans display + **mono** body; caps labels; emoji ok | rounded-xl | graph-paper grid, gradient zones, tape/stickers; hot-pink/teal signature |
+| **Poster** | concert poster | cream `#F7EFDD` / cobalt-black `#0B1533` | **ultra-condensed uppercase** display; caps labels | hard (rounded-sm), flat cards | full color fields + wedge; cobalt/cream signature |
+
+**Skin × destination interaction.** Editorial + Collage: destination palette drives the accent (Editorial) and the gradient zones + sticker tint (Collage), personality unchanged. **Poster:** the destination palette drives the full color FIELD + wedge at poster scale (a Miami trip renders in Miami's colors), via `SkinTripHeader` reading the trip's theme.
+
+**Picker.** Settings → **App skin**: three large *live previews* (real LA-trip example content — "Los Angeles · Aug 18–23 · 20 going"), each rendered in its skin via `SkinScope`; tap to select; the choice persists to the profile + AsyncStorage and applies app-wide.
+
+**Scoped for this pass (deferred, documented).** The switchable three-skin *system* (tokens, type, component styling, picker, dashboard hero, both modes) is built. The deepest per-skin flourishes are the next iteration: Collage's full **cut-out-object navigation** with drag/wobble physics + boarding-pass/jar/flip-clock trip-board objects (with the existing entry cards as the mandated accessible fallback), Poster's **duotone image pipeline** + the caps-over-script collision on every hero (needs a bundled condensed grotesque + script face — currently system-condensed + caps), and the full 18-hero-screen / component-matrix design pass. None change IA/nav.

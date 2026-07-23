@@ -17,10 +17,19 @@ import {
   resolveAccentVars,
   type ThemeMode,
 } from "@/constants/theme";
+import {
+  DEFAULT_SKIN,
+  isSkin,
+  skinVars,
+  skinNeutral,
+  type Skin,
+  type SkinNeutral,
+} from "@/constants/skins";
 
 const KEY_MODE = "trippl.theme_mode";
 const KEY_ACCENT = "trippl.accent_color";
 const KEY_FORCE = "trippl.force_own_accent";
+const KEY_SKIN = "trippl.app_skin";
 
 type ThemeState = {
   mode: ThemeMode; // 'light' | 'dark' | 'system'
@@ -28,27 +37,29 @@ type ThemeState = {
   scheme: "light" | "dark"; // effective scheme after resolving 'system'
   accentInk: string; // the accent as a visible text/stroke color (for progress, etc.)
   forceOwnAccent: boolean; // "always use my own accent" — overrides destination themes
+  skin: Skin; // the user's selected visual skin (global; look-only)
+  neutrals: SkinNeutral; // current skin × scheme neutrals (for JS/native color consumers)
   setMode: (mode: ThemeMode) => void;
   setAccent: (hex: string) => void;
   setForceOwnAccent: (value: boolean) => void;
+  setSkin: (skin: Skin) => void;
 };
 
 const ThemeContext = createContext<ThemeState | undefined>(undefined);
 
-// Mode + accent (+ the "always use my own accent" override), persisted to the
-// Supabase profile AND AsyncStorage (local wins for instant/offline; the profile
-// reconciles across devices on sign-in). Accent is applied as a runtime CSS
-// variable so it recolors the whole app live.
+// Mode + accent + skin (+ the "always use my own accent" override), persisted to
+// the Supabase profile AND AsyncStorage (local wins for instant/offline; the
+// profile reconciles across devices on sign-in). Neutrals + accent are applied as
+// runtime CSS variables — the current SKIN's neutral/radius tokens plus the accent
+// — so the whole app re-skins + recolors live.
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const device = useDeviceScheme(); // OS scheme (reactive), independent of NativeWind
   const [mode, setModeState] = useState<ThemeMode>(DEFAULT_MODE);
   const [accent, setAccentState] = useState<string>(DEFAULT_ACCENT);
   const [forceOwnAccent, setForceState] = useState<boolean>(false);
+  const [skin, setSkinState] = useState<Skin>(DEFAULT_SKIN);
 
-  // Resolve 'system' → a concrete scheme ourselves, then push the concrete scheme
-  // to NativeWind. ('system' with darkMode:"class" doesn't toggle the .dark class
-  // on web, so we also toggle it explicitly on the document element.)
   const scheme: "light" | "dark" =
     mode === "system" ? (device === "dark" ? "dark" : "light") : mode;
 
@@ -62,14 +73,16 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   // Instant: hydrate from local storage on start (offline-safe).
   useEffect(() => {
     (async () => {
-      const [m, a, f] = await Promise.all([
+      const [m, a, f, sk] = await Promise.all([
         AsyncStorage.getItem(KEY_MODE),
         AsyncStorage.getItem(KEY_ACCENT),
         AsyncStorage.getItem(KEY_FORCE),
+        AsyncStorage.getItem(KEY_SKIN),
       ]);
       if (m === "light" || m === "dark" || m === "system") setModeState(m);
       if (a) setAccentState(a);
       if (f === "true" || f === "false") setForceState(f === "true");
+      if (isSkin(sk)) setSkinState(sk);
     })();
   }, []);
 
@@ -79,12 +92,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("theme_mode, accent_color, force_own_accent")
+        .select("theme_mode, accent_color, force_own_accent, app_skin")
         .eq("id", user.id)
         .maybeSingle();
       const m = data?.theme_mode as ThemeMode | undefined;
       const a = data?.accent_color as string | undefined;
       const f = data?.force_own_accent as boolean | undefined;
+      const sk = data?.app_skin as Skin | undefined;
       if (m === "light" || m === "dark" || m === "system") {
         setModeState(m);
         AsyncStorage.setItem(KEY_MODE, m);
@@ -96,6 +110,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       if (typeof f === "boolean") {
         setForceState(f);
         AsyncStorage.setItem(KEY_FORCE, String(f));
+      }
+      if (isSkin(sk)) {
+        setSkinState(sk);
+        AsyncStorage.setItem(KEY_SKIN, sk);
       }
     })();
   }, [user]);
@@ -129,8 +147,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     [user],
   );
 
+  const setSkin = useCallback(
+    (s: Skin) => {
+      setSkinState(s);
+      AsyncStorage.setItem(KEY_SKIN, s);
+      if (user) supabase.from("profiles").update({ app_skin: s }).eq("id", user.id);
+    },
+    [user],
+  );
+
   const { fill, ink, fg } = resolveAccentVars(accent, scheme);
-  const accentVars = vars({
+  const neutrals = skinNeutral(skin, scheme);
+  // One vars() call: the current skin's neutral + radius tokens, plus the accent.
+  const rootVars = vars({
+    ...skinVars(skin, scheme),
     "--accent": ink, // accent as text/stroke/border — always visible
     "--accent-fill": fill, // solid fill ('transparent' → outlined control)
     "--accent-fg": fg, // label on the fill (contrast-checked)
@@ -144,12 +174,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         scheme,
         accentInk: ink,
         forceOwnAccent,
+        skin,
+        neutrals,
         setMode,
         setAccent,
         setForceOwnAccent,
+        setSkin,
       }}
     >
-      <View style={[{ flex: 1 }, accentVars]}>{children}</View>
+      <View style={[{ flex: 1 }, rootVars]}>{children}</View>
     </ThemeContext.Provider>
   );
 }

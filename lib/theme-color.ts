@@ -156,6 +156,13 @@ export function deriveTint(primary: string): string {
   return rgbToHex(...hslToRgb(h, Math.min(0.5, s), 0.94));
 }
 
+// Hex → the "H S% L%" triplet NativeWind expects inside hsl(var(--x)).
+export function hexToHslTriplet(hex: string): string {
+  const n = normalizeHex(hex) ?? "#000000";
+  const [h, s, l] = rgbToHsl(...hexToRgb(n));
+  return `${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
+}
+
 // A subtle rgba wash from a hex, for surface tint / motif overlays.
 export function rgba(hex: string, alpha: number): string {
   const p = normalizeHex(hex);

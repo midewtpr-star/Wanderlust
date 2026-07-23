@@ -1,7 +1,7 @@
 import { Tabs } from "expo-router";
 import { Text } from "react-native";
 import { useTheme } from "@/lib/theme-provider";
-import { NEUTRALS, accentForScheme, fontFamily } from "@/constants/theme";
+import { accentForScheme, fontFamily } from "@/constants/theme";
 import { LogoLockup } from "@/components/logo-slot";
 
 // Emoji tab icons keep the app dependency-light and cross-platform.
@@ -10,8 +10,8 @@ function TabIcon({ emoji }: { emoji: string }) {
 }
 
 export default function TabsLayout() {
-  const { scheme, accent } = useTheme();
-  const n = NEUTRALS[scheme];
+  const { scheme, accent, neutrals } = useTheme();
+  const n = neutrals; // current skin × scheme (global chrome follows the skin)
   const accentHex = accentForScheme(accent, scheme);
 
   return (

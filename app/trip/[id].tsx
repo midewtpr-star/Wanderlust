@@ -24,7 +24,7 @@ import { ChatEntry } from "@/components/chat/chat-entry";
 import { OutfitEntry } from "@/components/outfits/outfit-entry";
 import { BringEntry } from "@/components/bring/bring-entry";
 import { TripThemeProvider } from "@/lib/trip-theme";
-import { DestinationMotif } from "@/components/trip/destination-motif";
+import { SkinTripHeader } from "@/components/trip/skin-trip-header";
 import { TripThemeSection } from "@/components/trip/trip-theme-section";
 import { formatDateRange, toISODate } from "@/lib/dates";
 import { useAuth } from "@/lib/auth-provider";
@@ -140,7 +140,7 @@ export default function TripDetailScreen() {
                 <Text variant="muted">No cover</Text>
               </View>
             )}
-            <DestinationMotif />
+            <SkinTripHeader />
           </View>
 
           <View className="gap-2 p-6">

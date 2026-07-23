@@ -3,6 +3,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { AppearanceSettings } from "@/components/settings/appearance";
+import { SkinPicker } from "@/components/settings/skin-picker";
 import { Logo } from "@/components/logo-slot";
 import { useAuth } from "@/lib/auth-provider";
 
@@ -25,6 +26,8 @@ export default function ProfileScreen() {
           <Text variant="display-lg">Settings</Text>
           <Text variant="muted">{label}</Text>
         </View>
+
+        <SkinPicker />
 
         <AppearanceSettings />
 

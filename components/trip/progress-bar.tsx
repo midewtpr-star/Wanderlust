@@ -1,6 +1,6 @@
 import { View } from "react-native";
 import { useEffectiveAccent } from "@/lib/trip-theme";
-import { NEUTRALS } from "@/constants/theme";
+import { useSkin } from "@/lib/skin";
 
 // Simple horizontal progress bar. Inline styles (NativeWind className isn't wired
 // onto arbitrary style props here); the fill uses the visible accent ink so mono
@@ -16,9 +16,10 @@ export function ProgressBar({
   filled?: string;
   track?: string;
 }) {
-  const { ink, scheme } = useEffectiveAccent();
+  const { ink } = useEffectiveAccent();
+  const { neutrals } = useSkin();
   const fill = filled ?? ink;
-  const trackColor = track ?? NEUTRALS[scheme].border;
+  const trackColor = track ?? neutrals.border;
   const pct = Math.round(Math.max(0, Math.min(1, fraction)) * 100);
   return (
     <View
