@@ -1,0 +1,69 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Trippl — design tokens (Phase 10; see docs/design.md).
+  Neutrals are HSL triplets referenced via tailwind.config as hsl(var(--x)).
+  The ACCENT is a RAW color value, overridden live by the ThemeProvider so the
+  accent (and any custom hex) recolors the app instantly. Default = Red.
+  Dark base is dark grey (#1C1C1E), not pure black.
+*/
+@layer base {
+  :root {
+    --background: 0 0% 100%; /* #FFFFFF */
+    --foreground: 0 0% 0%; /* #000000 */
+    --card: 240 9% 96%; /* surface #F5F5F7 */
+    --card-foreground: 0 0% 0%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+    --secondary: 240 9% 96%; /* surface */
+    --secondary-foreground: 0 0% 0%;
+    --muted: 240 9% 96%; /* surface */
+    --muted-foreground: 240 3% 44%; /* text-secondary #6E6E73 */
+    --destructive: 4 100% 59%; /* iOS red — semantic (delete/error), fixed */
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 11% 91%; /* #E5E5EA */
+    --input: 240 11% 91%;
+    --radius: 0.75rem;
+
+    /* Accent (default = Black): --accent is the visible ink (text/stroke/border),
+       --accent-fill is the solid fill, --accent-fg the label on the fill.
+       Runtime-overridden by ThemeProvider. */
+    --accent: #000000;
+    --accent-fill: #000000;
+    --accent-fg: #ffffff;
+  }
+
+  .dark:root {
+    --background: 240 4% 11%; /* #1C1C1E */
+    --foreground: 0 0% 100%;
+    --card: 240 2% 18%; /* #2C2C2E */
+    --card-foreground: 0 0% 100%;
+    --popover: 240 4% 11%;
+    --popover-foreground: 0 0% 100%;
+    --secondary: 240 2% 18%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 240 2% 18%;
+    --muted-foreground: 240 2% 69%; /* #AEAEB2 */
+    --destructive: 4 100% 61%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 240 2% 22%; /* #38383A */
+    --input: 240 2% 22%;
+
+    --accent: #ffffff; /* Black accent flips to white in dark mode */
+    --accent-fill: #ffffff;
+    --accent-fg: #000000;
+  }
+}
+
+/* Web typography: system font on Apple devices (real San Francisco), bundled
+   Inter elsewhere. Native platforms set the family in code (constants/theme). */
+@layer base {
+  html,
+  body,
+  #root {
+    font-family: -apple-system, BlinkMacSystemFont, "Inter", "Inter_400Regular",
+      system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+}

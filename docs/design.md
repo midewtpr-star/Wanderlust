@@ -1,0 +1,177 @@
+# Trippl — Design System
+
+> **What this governs:** the brand identity + theming/typography system applied in Phase 10 (build-plan). Resolves the placeholder from `decisions.md` D11. Source-of-truth for tokens lives in code (`global.css`, `tailwind.config.js`, `constants/theme.ts`); this doc is the rationale + reference.
+
+---
+
+## Ported design-system tokens (CANONICAL — read this, not the HTML export)
+
+The Claude Design UI export (`Trippl.dc.html`) is the canonical design. Its `theme()` method is **ported verbatim into `constants/design-tokens.ts` → `resolveTheme(skin, mode, accent)`**, which is the single source of truth for skin × mode styling. `ThemeProvider` computes the token set, exposes it as **`useTheme().tokens`**, and re-points the Tailwind CSS-var bridge from it. On **web it also mirrors the vars onto `:root`** so React Native `<Modal>` content (which portals outside the themed `<View>`) stays on the live skin × accent instead of the `global.css` fallback — e.g. a primary `Button` inside the B4 report sheet renders cobalt, not the default black. Verify any combination at the dev route **`/dev/design?skin=<>&mode=<>`**. Overrides vs. earlier docs are logged in `decisions.md → DS-1…DS-5`.
+
+**`resolveTheme` returns:** `bg, surface, surface2, text, dim, border, accent, accentInk, accentBg, ground, screenBase, cardBg, cardBorder, tileBg, tileBorder, radius, btnRadius, shadow, fontBody, displayFont, displayItalic, scriptFont, numFont`.
+
+**Neutrals (all skins share the base):** light `bg #FFFFFF · surface #F5F5F7 · surface2 #ECECEF · text #000000 · dim #6E6E73 · border #E5E5EA`; dark `bg #1C1C1E · surface #2C2C2E · surface2 #3A3A3C · text #FFFFFF · dim #AEAEB2 · border #38383A`.
+
+**Per-skin (light / dark):**
+
+| | Editorial (default) | Collage | Poster |
+|---|---|---|---|
+| Screen ground | solid `bg` | graph-paper grid (22px) + pink wash over `#F5F2EE`/`#161618` | cobalt **field** `#2547C6`/`#182a7a` |
+| Text | `#000`/`#fff` | `#000`/`#fff` | cream `#EFE7DB` |
+| Card | `#FFFFFF`/`surface`, 1px border | `#FFFFFF`/`#232326`, **1.5px hard** `#141414`/`#000` + **3px offset hard shadow** | `#1C3AAE`/`#101f5e`, no border |
+| Radius / btn | 16 / 999 (pill) | 6 / 6 | 2 / 2 |
+| Accent | cobalt `#2547C6`/`#6E8CFF` (user-pickable) | hot pink `#FF2E93`/`#FF4FB0` | cream `#EFE7DB` / `#9DB0FF` (accentInk = field; primary btn = cream) |
+| Display font | Playfair Display (roman+italic) | Archivo Black | Anton (condensed caps) + Great Vibes script |
+| Body font | system-ui / Inter | Space Mono | Archivo |
+
+**RN re-expressions of web-only CSS** (`components/ui/`):
+- **`<ScreenGround>`** — the per-skin background. Collage grid = a tiled `react-native-svg` `<Pattern>` (seamless, theme-aware); pink wash = `expo-linear-gradient`; poster = solid field; editorial = solid.
+- **`<HardShadow>`** — collage's `3px 3px 0` shadow as a **duplicate offset layer** behind the element (RN's native shadow blurs; this stays hard on iOS/Android/web).
+- **Responsive display scale** — the export's `clamp()` sizes → `displaySize(role, width)` keyed to phone/tablet/desktop breakpoints.
+- Press/focus via `Pressable` + Reanimated; `:hover` is web-only.
+
+**Semantic colours** (informational, never decorative — pair with icon/text): success `#34C759` · warning `#FF9500` · error `#FF3B30` · info `#007AFF`. **Spacing** = 4pt scale (`SPACING`); **min touch target 44pt** (`TOUCH_MIN`). Fonts bundled via `expo-font` in `app/_layout.tsx`; **SF Pro never bundled**.
+
+**Screen adoption (Phase A2) + the density rule.** Every screen renders on the per-skin ground and pulls colour/type/shape from tokens. The **density rule** decides how loud a surface is:
+- **Loud / hero surfaces** wrap in **`<ScreenGround>`** (so collage shows its grid, poster its field) and use **`<HeroCover>`** for the cover header (editorial Playfair roman+italic over a scrim · collage a hard-framed, taped photo + pink title sticker · poster a duotone under a cobalt wash + Anton caps): **trip dashboard, Trips list, auth, the invite/join preview, recap** (passport/profile join them in Phase B).
+- **Calm / dense surfaces** (chat, money, forms, settings, bring, outfits, journal, activity) stay on the **flat skin base** (no grid — the bridge already themes `bg-background` per skin) with token cards; loud ornament is deliberately omitted.
+- Shared primitives are token-driven: `Text` (per-skin display/body fonts), `Button`/`Card` (surface, border, radius, accent, collage hard shadow via `<HardShadow>`), `Input` (sits on the card surface, never the field), `TripCard` (hero card + hard shadow). Editorial hero titles mix roman + italic; collage/poster reserve caps for headers/labels (long body stays legible).
+
+**Motion (Phase A3).** The design system's keyframes are ported to Reanimated in **`components/ui/motion.tsx`**: `Pop` · `BadgeIn` · `RingPulse` · `Confetti` (16-piece `confFall`) · `ScanLine` · `Shimmer` · `Floaty` · `FadeUp` · `Spinner`. Every one respects the OS **reduce-motion** setting (`useReducedMotion`): decorative/looping motion is dropped and entrances snap to their final state, so nothing essential is lost.
+- **The four signature moments.** ① *Step completion* — the check **pops** in, the row dims + strikes through, and the next step **reveals** (`step-checklist`; driven by real step state, never a fake tap). ② *Verified celebration* — `BadgeIn` + `RingPulse` + 16-piece confetti, fired **once** and dismissible (`VerifiedCelebration`/`VerifiedAnimation`). ③ *Itinerary scan* — a `ScanLine` sweeps the itinerary card while the real `verify-flight` runs, then resolves to the success badge (`FlightVerify`; the timing is the async result, not a fixed 1.9s). ④ *Countdown* — ticks live everywhere, tabular figures, seconds accent-tinted (`Countdown`).
+- Verify the interactive moments (tap steps → check off + reveal next → celebration once; scan) at **`/dev/design`**.
+
+**The private/public boundary (B1).** A hard architectural layout primitive, **`<Boundary variant="inside"|"world">`** (`components/ui/boundary.tsx`), signalling the boundary three ways at once so it never depends on reading a label:
+- **inside a trip** → a warm ground (per skin: editorial paper, collage kraft-over-grid, poster darkened field), a coloured **left rail**, and a persistent **"🔒 Inside · &lt;trip&gt;"** word. Applied to the trip dashboard, journal, bring list, recap (and every other trip surface adopts the same one-line wrap).
+- **out in the world** → a cool ground, **no rail, edge-to-edge**, and a persistent **"🌐 World"** word. For passport / profiles / connections / nearby (built in B2–B5).
+- **The hard rule:** trip-scoped content may render **only** inside a trip, never on a world surface. The pure decision lives in `lib/surface.ts` (`tripContentAllowed`); the runtime guard is **`<TripContent>`** (`components/ui/surface-context.tsx`) — content wrapped in it renders inside but is dropped on a world surface. Proven by **`__tests__/boundary.test.tsx`** (run `npm test`): `<TripContent>` renders inside but is blocked on a world surface. Demo at `/dev/design`.
+
+**The travel passport (B2).** A **world surface** (`app/passport.tsx`, wrapped in `<Boundary variant="world">`) that reads a member's *lifetime* travel identity — and **only ever from data they already generated**, never new input:
+- **Derived-only, client-side (`hooks/use-passport.ts`).** Eight counters — **trips · places · countries · continents · airports · landmarks · miles · days** — are computed on the client from the user's own completed trips, activities, **verified** flight proofs, and distance ledger, so they honour RLS and **shrink when a trip is deleted** (nothing is cached that a delete wouldn't undo). *Places* = distinct trip destinations; *countries*/*continents* come from a **curated** geo map (`constants/geo.ts` — `resolveGeo` matches a destination name, else nearest-by-coordinate); *airports* = distinct arrival codes from verified flights; *landmarks* = activity titles name-matched to a seeded `landmarks` table; *miles* = summed verified/ledger distance with a **coverage caveat** shown when partial. Nothing is invented or estimated — an unrecognised destination simply doesn't add to a counter. A `passport_stats` row (self-only RLS) is upserted as a shareable snapshot.
+- **A real world map, not a decoration (`components/passport/world-map.tsx`).** Actual **Natural Earth country geometry** (`world-atlas` 110m → GeoJSON via `topojson-client`, **177 countries**) rendered as `react-native-svg` `<Path>`s — so it draws **identically on web, iOS and Android with no map SDK, no API key and offline**. Visited countries fill with the skin **accent** (cobalt / hot-pink / cobalt-on-navy), the rest are quiet land on ocean; pins drop on top as **zoom-dependent counted clusters** (a `+ / −` control tightens the cluster cell as you zoom, and the map recolours per skin/mode — light ocean vs. the poster's dark-navy field). Empty state stays non-embarrassing ("your visited places will pin here"). The whole passport card is view-captured to a **shareable image** (same approach as the recap). Demo (6 sample pins, all three skins) at `/dev/design`.
+- **No trip content crosses over.** The passport shows *aggregates and geography*, never a specific trip's chat / money / media / member list — the B1 boundary rule holds on this surface.
+
+**Profiles & connections (B3).** The outward-facing identity layer + the friend graph — three **world surfaces** (`app/profile/[id].tsx`, `app/connections.tsx`, plus the calm `app/profile-edit.tsx` form):
+- **Private by default.** A profile carries `handle` (case-insensitively unique, `[a-z0-9_]{3,20}`), `bio`, `home_city` and `visibility` (**private** unless the owner opts into public). The `profiles_select` RLS says a row is readable by: the owner, a **co-trip-member** (trip function, always), or — when **not blocked** either way — a **public** profile or an **accepted connection**. The same rule widens the B2 `passport_stats` read, so a viewable profile can show its owner's lifetime counters (the outward-shareable aggregate), writes staying self-only.
+- **The friend graph.** `connections` is one row per unordered pair (`request → accept`, or `block`). Every transition runs through a **SECURITY DEFINER RPC** (`send_connection_request` / `respond_connection_request` / `remove_connection` / `set_connection_block`) — the table itself has only a read policy for the two parties, so there are no illegal client writes to defend against. A **block hides both users from each other on every world surface**, both directions (block-inside-a-shared-trip is the stronger Phase 21 guarantee; the seam is noted).
+- **How you're connected (provenance).** A profile shows *how you know each other*: **shared trips** (`get_profile_provenance` returns only trips the **viewer is also in**, so it can never leak a trip's existence) and a **mutual-connections count** (number only — never a private person's graph). Discovery (`search_profiles`) matches **public** profiles only, excluding self + blocks.
+- **THE HARD RULE (jest-proven).** Being a connection widens *profile* visibility; it **never** grants access to trip content. `lib/social.ts` states this as code — `connectionGrantsTripAccess(state)` is constant-`false` for every relationship state, and the profile/connections screens are **world** surfaces where trip content can't render. `__tests__/social.test.tsx` pins it: a fully-visible (public + connected) profile still cannot show trip content — visibility ≠ trip access. Row UI (`components/profile/person-row.tsx`) is a calm list row (avatar + name + @handle); demo at `/dev/design`.
+
+**Safety & moderation (B4 — built _before_ discovery).** The trust-and-safety layer the social surfaces sit on. Enforced in the DB (`supabase/migrations/20260722260001_safety.sql`), mirrored in pure `lib/safety.ts`, with a published policy at `docs/safety-policy.md`:
+- **Age gate → band, never the date.** `set_age_band(birthdate)` derives `adult|minor` and stores **only the band** (the raw DOB is never persisted). A **DB trigger forces a minor's profile private** on every write, and `profiles_select` + `search_profiles` **exclude minors, suspended, and no-age users** from public visibility and discovery. The `profile-edit` **public toggle is locked** until an adult DOB is confirmed, with plain-language reasons. `canBePublic` / `isDiscoverable` in `lib/safety.ts` mirror this and are **jest-pinned** (`__tests__/safety.test.tsx`: a minor is never public/discoverable).
+- **Report, one tap from every surface.** A reusable **`<ReportSheet>` / `<ReportAction>`** (`components/safety/report-sheet.tsx`) with a fixed **reason taxonomy** (`REPORT_REASONS`), wired on **profiles** (Report beside Block) and **chat** (long-press a member's message). Reports are private, **moderator-read only**, rate-limited (`submit_report`, 20/hr).
+- **Block, everywhere + bidirectional.** Reuses the B3 block; B4 **extends invisibility into chat** (`messages_select` drops a blocked pair's messages, per-subscriber so it holds over Realtime) — you never see, and are never seen by, someone in a block with you.
+- **Rate limits + suspension.** Connection requests (30/hr) and messages (20/60s) are capped and **blocked for suspended accounts** (fold into `send_connection_request` + a messages trigger). A **suspended** user drops out of discovery and can't write.
+- **Moderation queue.** `app/moderation.tsx` (a calm internal tool, **gated to `is_moderator`**, shown in Settings only for staff): inspect open reports and **dismiss / remove content / suspend**, every action written to a `moderation_actions` audit trail via `moderate_resolve_report`.
+- **Unchanged invariant:** none of this widens trip access — safety governs *world* surfaces + the age/block/report machinery; trip content stays gated on membership.
+
+**Nearby travelers (B5 — built _after_ safety).** Opt-in, per-trip discovery of *other* travelers heading to the same coarse area during overlapping dates (`app/nearby/[id].tsx`, a **world surface**). Strict rules, enforced in `supabase/migrations/20260722270001_nearby.sql` + mirrored in pure `lib/nearby.ts`:
+- **Never device location.** The "area" is a **geohash of the trip's PUBLIC destination** (`location_lat/lng`) — the app never collects or stores a user's live location, sidestepping the open §12-5 location-privacy question entirely. Stored at precision 5 (still just the public destination); matched on the **precision-3 prefix (~150 km region)** so two travelers to the same metro match without a precise point.
+- **Off by default, mutual, reversible.** A `discovery_optins` row exists only after an explicit opt-in; the screen's `Switch` is off until you flip it. You **only see others if you're opted in** (`find_nearby_travelers` returns nothing otherwise); contact is still a **mutual-consent connection request** (B3). Turning it **off deletes the row** → you vanish from others' results immediately.
+- **Safety-gated (both directions).** Opt-in requires a **verified adult**, trip member, not suspended (`set_nearby_optin` raises otherwise); matches exclude self, **minors, suspended, expired windows, and anyone in a block with you** — both directions. `nearbyEligible` in `lib/nearby.ts` mirrors this and is **jest-pinned** (`__tests__/nearby.test.tsx`: geohash region match + window overlap + minor/suspended excluded).
+- **Entry:** a **🧭 Nearby travelers** card on the trip screen → the world surface; results are calm `PersonRow`s → tap to a profile → connect. No trip content is shown — only opted-in travelers' minimal public identity.
+
+**Music on shares (B6 — final Release 2 feature).** Optional music for a trip's share, built around a **swappable, operator-configured catalogue** (`lib/music.ts`):
+- **Cleared-catalogue only, never uploads.** `MusicCatalogProvider` is an interface the operator plugs a **cleared/licensed** catalogue into (via `EXPO_PUBLIC_MUSIC_PROVIDER`); the app **ships with none configured** — `getMusicProvider()` returns null and the picker shows a clear **"Music isn't set up yet"** state. No Spotify/Apple/commercial-audio uploads, ever. A built-in **example catalogue** (metadata only, no audio) exists solely to exercise the UI.
+- **Pick / preview / trim** (`components/share/music-picker.tsx`): a bottom sheet listing the catalogue, a **draggable 15-second trim window** (`TrimBar`, using View responder props so it drags on web + native), and **preview** playback via `expo-audio` (only mounted when a track has a cleared preview URL — disabled with a note otherwise). The chosen track + trim + **retained rights metadata** persist to `share_audio` (`hooks/use-share-music.ts`), ready for the export to bake in.
+- **Export without music is equally prominent.** The recap's **"Share / download recap"** stays the primary path and always works; music is an explicit, optional **"Add music"** button beside it. Because the current export is image-only, **baking audio into the file is a documented seam** tied to the Phase-2 **video** recap (D9) — the picker is honest about this ("music plays on video recaps"), and the stored selection is ready for it. Demo at `/dev/design`.
+
+## Identity
+
+- **Name:** Trippl. `name`/`slug`/`scheme` = `trippl`, ids `com.trippl.app`. The old `AppName`/`appname` placeholders are fully replaced.
+- **Mark:** a minimal, hand-drawn black brushstroke — a large open circle (gap upper-right) with a small detached arc floating above. Files: `assets/logo/trippl-mark.png` (black) and `assets/logo/trippl-mark-white.png` (white, auto-generated by inverting the black mark, for dark mode). The `<Logo>` / `<LogoLockup>` components (`components/logo-slot.tsx`) auto-swap black↔white by theme. *(The provided `trippl-mark.png` wasn't in the repo, so the brushstroke mark is used as-is; drop your exact PNG at that path to replace it — the white variant + icon/splash regenerate from it and everything stays wired.)*
+- **Placement:** auth screens (mark + wordmark), the Trips header (nav), and the splash screen. App icon + splash + favicon + Android adaptive/monochrome are generated from the mark on a solid white plate with generous padding (the stroke is thin — it needs the padding to read at small sizes).
+
+## Theming
+
+- **`ThemeProvider`** (`lib/theme-provider.tsx`) exposes `mode` (`light | dark | system`, default `system`), `accent` (hex), the effective `scheme`, and `setMode` / `setAccent`.
+- **Persistence:** both `mode` and `accent` are written to **AsyncStorage** (instant, offline) **and** the Supabase **profile** (`profiles.theme_mode`, `profiles.accent_color`) — local applies immediately; the profile reconciles across devices on sign-in.
+- **Mode:** we resolve `system` → a concrete scheme ourselves (from the OS), push it to NativeWind, and toggle the `.dark` class on the web document (NativeWind's `system` + `darkMode:"class"` does not toggle the class on web).
+- **Accent = runtime CSS variables** (raw colors, set by the ThemeProvider via NativeWind `vars()` on a root wrapper — works web + native; default baked into `global.css` = **Black**). Three vars resolve from the chosen accent + scheme (`resolveAccentVars` in `constants/theme.ts`):
+  - **`--accent`** — the accent as **ink** (text / stroke / border); always visible. `tailwind.config` maps `primary`, `accent`, and `ring` to this, so links, borders, and `text-primary` recolor live.
+  - **`--accent-fill`** — the **solid fill** for buttons/badges (`bg-accent-fill`). For accents that would vanish against the background (White, or a near-bg custom hex) this becomes `transparent`, so the control renders **outlined** (accent-ink border + label) instead of invisible.
+  - **`--accent-fg`** — the **label** color on the fill, contrast-checked (white or black) so text is legible on any accent.
+  - Every accent-driven control pairs `bg-accent-fill` with a `border-primary` (seamless on solid accents, a visible outline when the fill is transparent) — so **no accent is ever invisible**, in either mode.
+
+### Neutral tokens (HSL vars in `global.css`; Apple-like)
+
+| Token | Light | Dark |
+|---|---|---|
+| bg (`background`) | `#FFFFFF` | `#1C1C1E` (dark grey, **not** pure black) |
+| surface (`card`/`muted`/`secondary`) | `#F5F5F7` | `#2C2C2E` |
+| text (`foreground`) | `#000000` | `#FFFFFF` |
+| text-secondary (`muted-foreground`) | `#6E6E73` | `#AEAEB2` |
+| border (`border`/`input`) | `#E5E5EA` | `#38383A` |
+
+`destructive` stays a fixed iOS red (semantic: delete/error), independent of the accent.
+
+### Accent presets (default = **Black**; vivid chromatics)
+
+| Name | Light | Dark | Notes |
+|---|---|---|---|
+| **Black** (default) | `#000000` | `#FFFFFF` | **Mode-aware** — flips to stay visible; gives a clean monochrome look out of the box. |
+| White | `#FFFFFF` | `#000000` | Mode-aware **inverse** — renders as an outlined/ghost control (accent-ink border + label), never invisible. |
+| Red | `#FF3B30` | `#FF453A` | |
+| Orange | `#FF9500` | `#FF9F0A` | |
+| Yellow | `#FFCC00` | `#FFD60A` | |
+| Green | `#34C759` | `#30D158` | |
+| Blue | `#007AFF` | `#0A84FF` | |
+| Purple | `#AF52DE` | `#BF5AF2` | |
+| Pink | `#FF2D55` | `#FF375F` | |
+| **Custom** | any hex (picker in Settings) | same hex | |
+
+**Rule:** the two monochrome accents (Black, White) auto-flip to a shade visible against the current mode's background; all chromatic accents keep their true vivid value in both modes (a color-distance check, not luminance, so vivid-but-light colors like Yellow stay solid). Buttons always pair the fill with a contrast-checked label. The accent drives interactive/primary elements only — primary buttons, links, active states, selected toggles, progress fills, the verified badge — **bold but sparse**. Neutrals carry everything else.
+
+## Typography
+
+- **System font primary** (no `fontFamily` on iOS → real San Francisco; web uses a `-apple-system, …, "Inter", …` stack so Apple devices get SF and others get Inter).
+- **Inter bundled** as the cross-platform fallback (`@expo-google-fonts/inter` via the `expo-font` plugin); applied per-weight on Android. **SF Pro is never bundled** (licensing).
+- **Type scale** (`constants/theme.ts` `TYPE`, two Apple-like roles): `display-xl` (40/700, tight tracking), `display-lg` (30/700), `title` (22/600), `heading`, `body` (16/400), `caption` (13). Exposed as `<Text variant="…">`.
+
+## Aesthetic
+
+Editorial + slick-modern: generous whitespace, big confident headers (display styles), a black/white foundation with the single accent, restraint. Rounded/tactile controls (`rounded-xl`/`2xl`), hairline borders using the `border` token, soft card elevation, and the existing reanimated verified/step animations retained. All screens use the shared primitives (`Button`, `Card`, `Text`, `Input`) + tokens, so nothing reads as default Tailwind.
+
+## Destination themes (per-trip)
+
+Each trip's UI is themed to its destination — a generated palette + motif, so a trip to Miami feels like Miami and Aspen feels like Aspen. Source lives in `constants/destination-themes.ts`, `lib/theme-color.ts`, `hooks/use-trip-theme.ts`, `lib/trip-theme.tsx`, and the `generate-destination-theme` edge function; schema in `trips.theme` + the two opt-out columns.
+
+- **Scope — inside a trip only.** The theme drives the ACCENT layer within a trip and all its sections (chat, money, voting, activities, outfits, bring list, recap). **Global chrome stays neutral Trippl** (Trips list, Create, Settings, auth, tab bar), so the app's identity is stable.
+- **How it applies (no per-component work).** Every trip-scoped screen wraps in `<TripThemeProvider tripId>`, which overrides the three accent CSS variables (`--accent` / `--accent-fill` / `--accent-fg`) for that subtree — so every class-based accent consumer (primary + send buttons, active states, chips, badges, progress fills, the verified highlight) recolors automatically. The few SVG / inline-style consumers (progress ring/bar) read `useEffectiveAccent()`, which returns the trip accent inside a themed trip and the user's global accent otherwise. **Neutrals never change.**
+- **Precedence — user choice always wins.** ON by default, overridden by either a per-member per-trip opt-out (`trip_members.use_destination_theme`, toggled in the trip's Theme section) or a global "Always use my own accent" (`profiles.force_own_accent`, in Settings → Appearance). When either is set, the trip uses the member's own accent.
+- **Palette sources (priority):** (1) **cover image** — vibrant colors extracted from the host's poster (edge fn, imagescript); (2) **curated map** — ~32 hand-picked destination palettes + motifs; (3) **LLM** — the edge fn asks a model for a palette (forced-tool strict JSON; `ANTHROPIC_API_KEY`, server-only). The result is cached once on `trips.theme` (generate-once → instant on later loads). Every failure (no destination, no cover, extraction/LLM error) falls back to the default Trippl accent — theming never blocks or crashes.
+- **Contrast safety (non-negotiable, both modes).** No generated color is used raw: `resolveThemeAccent` clamps a color's **lightness** (preserving hue/saturation) until it meets WCAG contrast against the current mode's background — **≥ 4.5:1** for ink (text/stroke/border), **≥ 3:1** for fills — and pairs each fill with a contrast-checked label. A generated color never becomes the page background or body text; neutrals stay from the token system.
+- **Application (tasteful).** `primary` → the trip accent (buttons, send, active states, progress, countdown, verified highlight); `secondary` + `surface_tint` → a subtle animated **motif** wash on the trip header (`DestinationMotif`, react-native-svg; a restrained pattern per motif family — artdeco / alpine / citynight / tropical / … — that fades + rises in on entry). Editorial restraint still rules — bold but sparse.
+- **Host controls.** The trip's Theme section (trip detail) previews the palette + motif + source, lets any member opt out, and lets the host/admin **regenerate**, pick a **variant**, or set a **manual color**. Writes go through the `save_trip_theme` / `set_trip_theme_pref` SECURITY DEFINER RPCs.
+
+## App skins — three selectable visual versions (Section 13)
+
+Trippl ships **three selectable skins** — **Editorial** (default), **Collage**, **Poster** — picked per user in Settings and applied globally. A skin is **look-only**. Source: `constants/skins.ts`, `lib/skin.tsx`, the skin axis in `lib/theme-provider.tsx`, `components/settings/skin-picker.tsx`, `components/trip/skin-trip-header.tsx`; schema `profiles.app_skin`.
+
+**Governing rule.** A skin MAY change color tokens, typography, ornament, texture, component styling (fills/borders/radii/elevation), imagery treatment, motion personality, and microcopy voice. A skin **MAY NOT** change information architecture, navigation, which screens exist, where controls live, what any component does, or the underlying data — *switch skins and every feature is in exactly the same place.*
+
+**Non-negotiable in all three:** WCAG AA contrast, ≥44pt touch targets, full light + dark, functional loading/empty/error states, and the four signature moments (verified badge, itinerary verified, countdown, recap) in each skin's voice.
+
+**Three coexisting axes.** `skin` (global, per user) × `light/dark` (mode) × `accent`/destination color are independent. The user's manual accent still overrides destination color where it applies, in every skin.
+
+**Density rule.** Skins express most on HERO surfaces (invite preview, trip dashboard header, verification, recap) and calm toward legibility on DENSE surfaces (chat, money ledger, bring list, forms, settings) — decoration recedes as information density rises. In this build that's structural: skin ornament lives only on the trip-dashboard header (`SkinTripHeader`); dense screens carry only the token + type layer.
+
+**How it's built (no per-screen rewrites).** The whole app is CSS-variable + shared-primitive driven, so a skin is a token layer:
+- **Neutrals + radius:** the `ThemeProvider` sets the *current skin's* `--background`/`--foreground`/`--card`/`--secondary`/`--muted`/`--border`/`--radius` for the whole app (light + dark), so every token surface re-skins from one place. `SkinScope` does the same for a subtree (the picker's live previews). Native chrome (root header, tab bar) + inline consumers read `useTheme().neutrals` / `useSkin()`.
+- **Typography:** `Text` maps each variant to a role and applies the skin's family/case/tracking — Editorial **serif** display, Collage **mono** body + caps labels, Poster **condensed uppercase** display + caps labels — without changing the type scale. (Long body text never goes all-caps — density rule.)
+- **Component styling:** `Button` / `Card` / `Input` take their radius (and poster's uppercase labels / flat cards) from the skin.
+- **Hero ornament:** `SkinTripHeader` renders the destination motif (Editorial), a graph-paper grid + wash + tape (Collage), or a bold color field + wedge (Poster) over the trip cover, animated in.
+
+**Per-skin token sheets** (neutrals in `SKIN_NEUTRALS`, light/dark each):
+
+| Skin | Feeling | bg (light/dark) | Type voice | Radius | Ornament / signature |
+|---|---|---|---|---|---|
+| **Editorial** (default) | quiet, expensive | `#FFFFFF` / `#1C1C1E` | serif display + clean sans body | rounded-2xl | restraint; destination motif; monochrome fields |
+| **Collage** | corkboard, tactile | warm paper `#FBF7EF` / `#111013` | bold sans display + **mono** body; caps labels; emoji ok | rounded-xl | graph-paper grid, gradient zones, tape/stickers; hot-pink/teal signature |
+| **Poster** | concert poster | cream `#F7EFDD` / cobalt-black `#0B1533` | **ultra-condensed uppercase** display; caps labels | hard (rounded-sm), flat cards | full color fields + wedge; cobalt/cream signature |
+
+**Skin × destination interaction.** Editorial + Collage: destination palette drives the accent (Editorial) and the gradient zones + sticker tint (Collage), personality unchanged. **Poster:** the destination palette drives the full color FIELD + wedge at poster scale (a Miami trip renders in Miami's colors), via `SkinTripHeader` reading the trip's theme.
+
+**Picker.** Settings → **App skin**: three large *live previews* (real LA-trip example content — "Los Angeles · Aug 18–23 · 20 going"), each rendered in its skin via `SkinScope`; tap to select; the choice persists to the profile + AsyncStorage and applies app-wide.
+
+**Scoped for this pass (deferred, documented).** The switchable three-skin *system* (tokens, type, component styling, picker, dashboard hero, both modes) is built. The deepest per-skin flourishes are the next iteration: Collage's full **cut-out-object navigation** with drag/wobble physics + boarding-pass/jar/flip-clock trip-board objects (with the existing entry cards as the mandated accessible fallback), Poster's **duotone image pipeline** + the caps-over-script collision on every hero (needs a bundled condensed grotesque + script face — currently system-condensed + caps), and the full 18-hero-screen / component-matrix design pass. None change IA/nav.
