@@ -37,6 +37,10 @@ The Claude Design UI export (`Trippl.dc.html`) is the canonical design. Its `the
 - **Calm / dense surfaces** (chat, money, forms, settings, bring, outfits, journal, activity) stay on the **flat skin base** (no grid — the bridge already themes `bg-background` per skin) with token cards; loud ornament is deliberately omitted.
 - Shared primitives are token-driven: `Text` (per-skin display/body fonts), `Button`/`Card` (surface, border, radius, accent, collage hard shadow via `<HardShadow>`), `Input` (sits on the card surface, never the field), `TripCard` (hero card + hard shadow). Editorial hero titles mix roman + italic; collage/poster reserve caps for headers/labels (long body stays legible).
 
+**Motion (Phase A3).** The design system's keyframes are ported to Reanimated in **`components/ui/motion.tsx`**: `Pop` · `BadgeIn` · `RingPulse` · `Confetti` (16-piece `confFall`) · `ScanLine` · `Shimmer` · `Floaty` · `FadeUp` · `Spinner`. Every one respects the OS **reduce-motion** setting (`useReducedMotion`): decorative/looping motion is dropped and entrances snap to their final state, so nothing essential is lost.
+- **The four signature moments.** ① *Step completion* — the check **pops** in, the row dims + strikes through, and the next step **reveals** (`step-checklist`; driven by real step state, never a fake tap). ② *Verified celebration* — `BadgeIn` + `RingPulse` + 16-piece confetti, fired **once** and dismissible (`VerifiedCelebration`/`VerifiedAnimation`). ③ *Itinerary scan* — a `ScanLine` sweeps the itinerary card while the real `verify-flight` runs, then resolves to the success badge (`FlightVerify`; the timing is the async result, not a fixed 1.9s). ④ *Countdown* — ticks live everywhere, tabular figures, seconds accent-tinted (`Countdown`).
+- Verify the interactive moments (tap steps → check off + reveal next → celebration once; scan) at **`/dev/design`**.
+
 ## Identity
 
 - **Name:** Trippl. `name`/`slug`/`scheme` = `trippl`, ids `com.trippl.app`. The old `AppName`/`appname` placeholders are fully replaced.

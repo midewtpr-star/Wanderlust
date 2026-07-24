@@ -1,8 +1,8 @@
-import { useEffect, useRef } from "react";
-import { Animated, type DimensionValue, type ViewStyle } from "react-native";
+import { type DimensionValue, type ViewStyle } from "react-native";
+import { Shimmer } from "@/components/ui/motion";
 
-// Pulsing placeholder box for loading states. Uses a neutral slate tint (with
-// animated opacity) so it reads fine in light + dark without theme wiring.
+// Loading placeholder — a gradient shimmer sweep (design system), matched to the
+// final layout. Under "reduce motion" it renders as a static neutral box.
 export function Skeleton({
   width = "100%",
   height = 16,
@@ -14,27 +14,5 @@ export function Skeleton({
   radius?: number;
   style?: ViewStyle;
 }) {
-  const v = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const anim = Animated.loop(
-      Animated.sequence([
-        Animated.timing(v, { toValue: 1, duration: 700, useNativeDriver: false }),
-        Animated.timing(v, { toValue: 0, duration: 700, useNativeDriver: false }),
-      ]),
-    );
-    anim.start();
-    return () => anim.stop();
-  }, [v]);
-
-  const backgroundColor = v.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["rgba(148,163,184,0.20)", "rgba(148,163,184,0.45)"],
-  });
-
-  return (
-    <Animated.View
-      style={[{ width, height, borderRadius: radius, backgroundColor }, style]}
-    />
-  );
+  return <Shimmer width={width} height={height} radius={radius} style={style} />;
 }

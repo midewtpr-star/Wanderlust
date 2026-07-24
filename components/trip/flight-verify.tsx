@@ -12,6 +12,8 @@ import {
   signedItineraryUrl,
   type PickedFile,
 } from "@/lib/storage";
+import { useTheme } from "@/lib/theme-provider";
+import { ScanLine } from "@/components/ui/motion";
 import type { FlightVerdict } from "@/types";
 import { VerifiedAnimation } from "./verified-animation";
 
@@ -41,6 +43,7 @@ export function FlightVerify({
   const [error, setError] = useState<string | null>(null);
   const [uploadedPath, setUploadedPath] = useState<string | null>(null);
   const [overriding, setOverriding] = useState(false);
+  const { tokens: t } = useTheme();
 
   async function runVerification(file: PickedFile) {
     setError(null);
@@ -119,12 +122,22 @@ export function FlightVerify({
     if (ok) onVerified();
   }
 
-  // --- working ---
+  // --- working: the itinerary scan moment (a scan line sweeps while the real
+  // verify-flight function runs; it resolves to the success badge below). ---
   if (phase === "working") {
     return (
-      <View className="items-center gap-3 py-6">
-        <ActivityIndicator />
-        <Text variant="muted">{statusText}</Text>
+      <View className="gap-3 py-2">
+        <View
+          className="items-center justify-center border border-border bg-muted"
+          style={{ height: 168, overflow: "hidden", borderRadius: t.radius }}
+        >
+          <Text style={{ fontSize: 44 }}>🧾</Text>
+          <ScanLine color={t.accent} />
+        </View>
+        <View className="flex-row items-center justify-center gap-2">
+          <ActivityIndicator />
+          <Text variant="muted">{statusText}</Text>
+        </View>
       </View>
     );
   }
@@ -134,7 +147,7 @@ export function FlightVerify({
     if (verdict?.ok) {
       return (
         <View className="gap-2">
-          <VerifiedAnimation />
+          <VerifiedAnimation confetti={false} />
           <Card className="gap-1">
             {verdict.resolved_city ? (
               <Text className="text-center">
