@@ -235,3 +235,24 @@
 **Rejected alternatives.** A new journal-media bucket (needless duplication); admin-editable entries (wrong for personal authorship); requiring text on every entry (blocks pure photo/video dumps).
 
 **Revisit triggers.** Abuse of entries in a shared trip → add report/hide (arrives with Phase 21 moderation, which will cover `journal_entry` + `media` targets).
+
+---
+
+# Design-system adoption — the Claude Design UI export is canonical
+
+> The attached Claude Design UI system (`Trippl.dc.html` → its `theme()` method) is now the **canonical design**. Where it disagrees with earlier `/docs` decisions, **the design system wins**. Its token system is ported into `constants/design-tokens.ts` (`resolveTheme(skin, mode, accent)`) and documented in `docs/design.md → Ported design-system tokens`. Overrides logged below with a one-line reason each.
+
+## DS-1 — Default accent is COBALT, not black (amends D11) ✅ [LOCKED]
+Default accent = **cobalt `#2547C6` light / `#6E8CFF` dark** (mode-aware). Reason: it is the design system's default. The **full picker stays** (cobalt, black, white, red, orange, yellow, green, blue, purple, pink, custom) — black is simply no longer the default. Editorial uses the picked accent; collage/poster override it with their signature accent.
+
+## DS-2 — Typography is per-skin display fonts (amends D11) ✅ [LOCKED]
+Bundled via `expo-font`: **Playfair Display** (editorial display, roman + italic), **Anton** (poster display), **Archivo** (poster/collage body + tabular numerals + collage display), **Space Mono** (collage body), **Great Vibes** (poster script). Reason: the design system defines type as a per-skin signature. Body/UI baseline stays **system-ui + Inter**; **SF Pro is never bundled** (licensing, per D11).
+
+## DS-3 — Collage is neo-brutalist scrapbook (amends the earlier "soft" collage) ✅ [LOCKED]
+**1.5px hard black border, 3px offset hard shadow (no blur), radius 6, graph-paper grid ground + pink gradient wash, hot-pink accent `#FF2E93`/`#FF4FB0`, Space Mono body.** Reason: matches the design system. RN re-expressions: the grid is a tiled `react-native-svg` `<Pattern>`; the hard shadow is a duplicate offset layer (`<HardShadow>`, hard edge on iOS/Android/web); the wash is `expo-linear-gradient`.
+
+## DS-4 — Poster inverts to a cobalt field (amends the earlier cream poster) ✅ [LOCKED]
+**The screen background IS the cobalt field (`#2547C6` / `#182a7a`), text is cream `#EFE7DB`, cards are a deeper blue (`#1C3AAE` / `#101f5e`), radius 2, no card border, accent is cream-on-cobalt** (dark-mode accent `#9DB0FF`). Reason: matches the design system. (The prior poster used a cream page with navy ink — fully superseded.)
+
+## DS-5 — Token architecture ✅ [LOCKED]
+`resolveTheme()` is the single source of truth; the `ThemeProvider` computes the token set and both exposes it (`useTheme().tokens`) and re-points the Tailwind CSS-variable bridge from it (so un-migrated screens shift palette immediately; screens migrate to tokens in Phase A2). `clamp()` display sizes become a breakpoint-keyed responsive scale (`displaySize`). A dev-only `/dev/design` harness renders every skin × mode for verification. Reason: keep one authority and RN-native techniques, not an approximation of the web export.

@@ -2,6 +2,38 @@
 
 > **What this governs:** the brand identity + theming/typography system applied in Phase 10 (build-plan). Resolves the placeholder from `decisions.md` D11. Source-of-truth for tokens lives in code (`global.css`, `tailwind.config.js`, `constants/theme.ts`); this doc is the rationale + reference.
 
+---
+
+## Ported design-system tokens (CANONICAL — read this, not the HTML export)
+
+The Claude Design UI export (`Trippl.dc.html`) is the canonical design. Its `theme()` method is **ported verbatim into `constants/design-tokens.ts` → `resolveTheme(skin, mode, accent)`**, which is the single source of truth for skin × mode styling. `ThemeProvider` computes the token set, exposes it as **`useTheme().tokens`**, and re-points the Tailwind CSS-var bridge from it. Verify any combination at the dev route **`/dev/design?skin=<>&mode=<>`**. Overrides vs. earlier docs are logged in `decisions.md → DS-1…DS-5`.
+
+**`resolveTheme` returns:** `bg, surface, surface2, text, dim, border, accent, accentInk, accentBg, ground, screenBase, cardBg, cardBorder, tileBg, tileBorder, radius, btnRadius, shadow, fontBody, displayFont, displayItalic, scriptFont, numFont`.
+
+**Neutrals (all skins share the base):** light `bg #FFFFFF · surface #F5F5F7 · surface2 #ECECEF · text #000000 · dim #6E6E73 · border #E5E5EA`; dark `bg #1C1C1E · surface #2C2C2E · surface2 #3A3A3C · text #FFFFFF · dim #AEAEB2 · border #38383A`.
+
+**Per-skin (light / dark):**
+
+| | Editorial (default) | Collage | Poster |
+|---|---|---|---|
+| Screen ground | solid `bg` | graph-paper grid (22px) + pink wash over `#F5F2EE`/`#161618` | cobalt **field** `#2547C6`/`#182a7a` |
+| Text | `#000`/`#fff` | `#000`/`#fff` | cream `#EFE7DB` |
+| Card | `#FFFFFF`/`surface`, 1px border | `#FFFFFF`/`#232326`, **1.5px hard** `#141414`/`#000` + **3px offset hard shadow** | `#1C3AAE`/`#101f5e`, no border |
+| Radius / btn | 16 / 999 (pill) | 6 / 6 | 2 / 2 |
+| Accent | cobalt `#2547C6`/`#6E8CFF` (user-pickable) | hot pink `#FF2E93`/`#FF4FB0` | cream `#EFE7DB` / `#9DB0FF` (accentInk = field; primary btn = cream) |
+| Display font | Playfair Display (roman+italic) | Archivo Black | Anton (condensed caps) + Great Vibes script |
+| Body font | system-ui / Inter | Space Mono | Archivo |
+
+**RN re-expressions of web-only CSS** (`components/ui/`):
+- **`<ScreenGround>`** — the per-skin background. Collage grid = a tiled `react-native-svg` `<Pattern>` (seamless, theme-aware); pink wash = `expo-linear-gradient`; poster = solid field; editorial = solid.
+- **`<HardShadow>`** — collage's `3px 3px 0` shadow as a **duplicate offset layer** behind the element (RN's native shadow blurs; this stays hard on iOS/Android/web).
+- **Responsive display scale** — the export's `clamp()` sizes → `displaySize(role, width)` keyed to phone/tablet/desktop breakpoints.
+- Press/focus via `Pressable` + Reanimated; `:hover` is web-only.
+
+**Semantic colours** (informational, never decorative — pair with icon/text): success `#34C759` · warning `#FF9500` · error `#FF3B30` · info `#007AFF`. **Spacing** = 4pt scale (`SPACING`); **min touch target 44pt** (`TOUCH_MIN`). Fonts bundled via `expo-font` in `app/_layout.tsx`; **SF Pro never bundled**.
+
+*Screens migrate from the CSS-var classes onto `useTheme().tokens` + `<ScreenGround>`/`<HardShadow>` in Phase A2; A1 established the token layer + primitives.*
+
 ## Identity
 
 - **Name:** Trippl. `name`/`slug`/`scheme` = `trippl`, ids `com.trippl.app`. The old `AppName`/`appname` placeholders are fully replaced.

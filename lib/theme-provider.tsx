@@ -14,17 +14,22 @@ import { useAuth } from "@/lib/auth-provider";
 import {
   DEFAULT_ACCENT,
   DEFAULT_MODE,
+  accentForScheme,
   resolveAccentVars,
   type ThemeMode,
 } from "@/constants/theme";
 import {
   DEFAULT_SKIN,
   isSkin,
-  skinVars,
   skinNeutral,
   type Skin,
   type SkinNeutral,
 } from "@/constants/skins";
+import {
+  resolveTheme,
+  tokenNeutralVars,
+  type ThemeTokens,
+} from "@/constants/design-tokens";
 
 const KEY_MODE = "trippl.theme_mode";
 const KEY_ACCENT = "trippl.accent_color";
@@ -39,6 +44,7 @@ type ThemeState = {
   forceOwnAccent: boolean; // "always use my own accent" — overrides destination themes
   skin: Skin; // the user's selected visual skin (global; look-only)
   neutrals: SkinNeutral; // current skin × scheme neutrals (for JS/native color consumers)
+  tokens: ThemeTokens; // the full ported design-system token set for the current skin × mode
   setMode: (mode: ThemeMode) => void;
   setAccent: (hex: string) => void;
   setForceOwnAccent: (value: boolean) => void;
@@ -156,15 +162,22 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     [user],
   );
 
-  const { fill, ink, fg } = resolveAccentVars(accent, scheme);
+  // The full ported token set for this skin × mode. Editorial uses the user's
+  // accent (mode-aware); collage/poster override it with their signature accent.
+  const tokens = resolveTheme(skin, scheme, accentForScheme(accent, scheme));
   const neutrals = skinNeutral(skin, scheme);
-  // One vars() call: the current skin's neutral + radius tokens, plus the accent.
-  const rootVars = vars({
-    ...skinVars(skin, scheme),
-    "--accent": ink, // accent as text/stroke/border — always visible
-    "--accent-fill": fill, // solid fill ('transparent' → outlined control)
-    "--accent-fg": fg, // label on the fill (contrast-checked)
-  });
+
+  // Accent CSS vars. Editorial keeps the picker's outlined-when-invisible behaviour
+  // (White / near-bg accents → outlined). Collage/Poster use their fixed accent.
+  const { fill, ink, fg } = resolveAccentVars(accent, scheme);
+  const accentVars =
+    skin === "editorial"
+      ? { "--accent": ink, "--accent-fill": fill, "--accent-fg": fg }
+      : { "--accent": tokens.accent, "--accent-fill": tokens.accentBg, "--accent-fg": tokens.accentInk };
+  const effectiveInk = skin === "editorial" ? ink : tokens.accent;
+
+  // One vars() call: the skin's neutral + radius tokens, plus the accent.
+  const rootVars = vars({ ...tokenNeutralVars(tokens), ...accentVars });
 
   return (
     <ThemeContext.Provider
@@ -172,10 +185,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         mode,
         accent,
         scheme,
-        accentInk: ink,
+        accentInk: effectiveInk,
         forceOwnAccent,
         skin,
         neutrals,
+        tokens,
         setMode,
         setAccent,
         setForceOwnAccent,

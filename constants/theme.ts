@@ -36,7 +36,8 @@ export type AccentPreset = {
 };
 
 export const ACCENT_PRESETS: AccentPreset[] = [
-  { id: "black", name: "Black", light: "#000000", dark: "#FFFFFF" }, // default
+  { id: "cobalt", name: "Cobalt", light: "#2547C6", dark: "#6E8CFF" }, // default (design system)
+  { id: "black", name: "Black", light: "#000000", dark: "#FFFFFF" }, // mode-aware mono
   { id: "white", name: "White", light: "#FFFFFF", dark: "#000000" }, // inverse
   { id: "red", name: "Red", light: "#FF3B30", dark: "#FF453A" },
   { id: "orange", name: "Orange", light: "#FF9500", dark: "#FF9F0A" },
@@ -49,7 +50,9 @@ export const ACCENT_PRESETS: AccentPreset[] = [
 
 export type ThemeMode = "light" | "dark" | "system";
 
-export const DEFAULT_ACCENT = "#000000"; // Black (monochrome out of the box)
+// Default = Cobalt, mode-aware (#2547C6 light / #6E8CFF dark) — the design system
+// default (supersedes the old Black default; see docs/decisions.md D11 override).
+export const DEFAULT_ACCENT = "#2547C6";
 export const DEFAULT_MODE: ThemeMode = "system";
 
 // Resolve the accent's raw variant for a scheme: preset → its light/dark hex; a

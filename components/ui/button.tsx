@@ -1,9 +1,14 @@
-import { Pressable, Text, type PressableProps } from "react-native";
+import {
+  Pressable,
+  Text,
+  type PressableProps,
+  type StyleProp,
+  type ViewStyle,
+} from "react-native";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { fontFamily } from "@/constants/theme";
-import { skinRadius } from "@/constants/skins";
-import { useSkin } from "@/lib/skin";
+import { useTheme } from "@/lib/theme-provider";
 
 // Trippl button. The accent drives the primary fill; the active SKIN sets the
 // corner radius (editorial rounded / poster hard-edged) and, for poster, uppercase
@@ -58,16 +63,18 @@ export function Button({
   size,
   className,
   textClassName,
+  style,
   ...props
 }: ButtonProps) {
-  const { skin } = useSkin();
+  const { tokens: t } = useTheme();
   const posterLabel =
-    skin === "poster"
+    t.skin === "poster"
       ? { textTransform: "uppercase" as const, letterSpacing: 0.6 }
       : {};
   return (
     <Pressable
-      className={cn(buttonVariants({ variant, size }), skinRadius(skin), className)}
+      className={cn(buttonVariants({ variant, size }), className)}
+      style={[{ borderRadius: t.btnRadius }, style as StyleProp<ViewStyle>]}
       accessibilityRole="button"
       {...props}
     >
