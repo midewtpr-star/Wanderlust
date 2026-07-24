@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { View, ScrollView, ActivityIndicator } from "react-native";
+import { View, ScrollView, ActivityIndicator, Pressable } from "react-native";
 import { Stack, useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
@@ -166,6 +166,21 @@ export default function TripDetailScreen() {
               count={journalCount}
               onPress={() => router.push(`/journal/${trip.id}`)}
             />
+            <Pressable
+              onPress={() => router.push(`/nearby/${trip.id}`)}
+              accessibilityRole="button"
+              accessibilityLabel="Find nearby travelers"
+            >
+              <Card className="flex-row items-center justify-between active:opacity-90">
+                <View className="flex-1 pr-3">
+                  <Text variant="heading">🧭 Nearby travelers</Text>
+                  <Text variant="muted">See who else is heading your way — opt-in, off by default</Text>
+                </View>
+                <Text variant="muted" className="text-xl">
+                  ›
+                </Text>
+              </Card>
+            </Pressable>
           </View>
 
           <TripThemeSection trip={trip} isAdmin={isAdmin} />

@@ -72,6 +72,24 @@ Report any user-generated surface; moderators review + act. Migration `202607222
 
 > **As built (B4).** `profiles` gained **`age_band`** (`adult|minor`), **`age_set_at`**, **`is_moderator`** (bool, flipped by an operator), **`suspended_at`**. A **trigger forces a minor private**; `profiles_select`'s public branch + `search_profiles` **exclude minors, suspended, and no-age** users (so under-18 is never public/discoverable — enforced in trigger + policy + client `lib/safety.ts`, pinned by `__tests__/safety.test.tsx`). **Block invisibility extended to chat** (`messages_select` adds `and not has_block_with(sender_id)`). **Rate limits:** `send_connection_request` (30/hr + suspension gate) and a `messages` BEFORE-INSERT trigger (20/60s + suspension gate). Safety governs world surfaces + the age/block/report machinery only — **trip content stays gated on membership**.
 
+## discovery_optins  — Nearby Travelers (Release 2 · B5)
+Per-trip, opt-in discovery of other travelers heading to the same coarse area during overlapping dates. Migration `20260722270001_nearby.sql`. **OFF by default** (a row exists only after an explicit opt-in).
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid PK | |
+| `user_id` | uuid FK → profiles(id) | Self-managed (RLS). |
+| `trip_id` | uuid FK → trips(id) | |
+| `area_geohash` | text | Precision-5 geohash of the **trip's public destination** — **never device/live location**. Matched on the precision-3 (~150 km) prefix. |
+| `window_start` / `window_end` | date | = the trip's dates (temporal match + auto-expiry). |
+| `expires_at` | date | trip end + grace; stale rows are filtered, harmless. |
+| `created_at` / `updated_at` | timestamptz | |
+| — | UNIQUE `(user_id, trip_id)` | One opt-in per trip. |
+
+*RPCs (SECURITY DEFINER): `set_nearby_optin(trip, geohash, enabled)` (guards member + **adult** + not-suspended; window read server-side; upsert on / delete off), `find_nearby_travelers(trip)` (region-prefix + window-overlap match, excluding self/minor/suspended/expired/blocked-both-ways; returns rows **only if the caller is opted in**).*
+
+> **RLS + rules (B5).** `discovery_optins` is **self-manage only** (`user_id = auth.uid()`); seeing others is only ever through `find_nearby_travelers`. **Mutual visibility** (opted-in-only), **mutual-consent contact** (a B3 connection request — Nearby never exposes a direct message path), **coarse area from the public destination** (no device location), and **immediate opt-out** (disable = delete). No trip content is exposed — only opted-in travelers' minimal public identity.
+
 ## trips
 Central object + tenancy unit (foundation §5).
 

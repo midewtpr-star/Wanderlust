@@ -65,6 +65,12 @@ The Claude Design UI export (`Trippl.dc.html`) is the canonical design. Its `the
 - **Moderation queue.** `app/moderation.tsx` (a calm internal tool, **gated to `is_moderator`**, shown in Settings only for staff): inspect open reports and **dismiss / remove content / suspend**, every action written to a `moderation_actions` audit trail via `moderate_resolve_report`.
 - **Unchanged invariant:** none of this widens trip access — safety governs *world* surfaces + the age/block/report machinery; trip content stays gated on membership.
 
+**Nearby travelers (B5 — built _after_ safety).** Opt-in, per-trip discovery of *other* travelers heading to the same coarse area during overlapping dates (`app/nearby/[id].tsx`, a **world surface**). Strict rules, enforced in `supabase/migrations/20260722270001_nearby.sql` + mirrored in pure `lib/nearby.ts`:
+- **Never device location.** The "area" is a **geohash of the trip's PUBLIC destination** (`location_lat/lng`) — the app never collects or stores a user's live location, sidestepping the open §12-5 location-privacy question entirely. Stored at precision 5 (still just the public destination); matched on the **precision-3 prefix (~150 km region)** so two travelers to the same metro match without a precise point.
+- **Off by default, mutual, reversible.** A `discovery_optins` row exists only after an explicit opt-in; the screen's `Switch` is off until you flip it. You **only see others if you're opted in** (`find_nearby_travelers` returns nothing otherwise); contact is still a **mutual-consent connection request** (B3). Turning it **off deletes the row** → you vanish from others' results immediately.
+- **Safety-gated (both directions).** Opt-in requires a **verified adult**, trip member, not suspended (`set_nearby_optin` raises otherwise); matches exclude self, **minors, suspended, expired windows, and anyone in a block with you** — both directions. `nearbyEligible` in `lib/nearby.ts` mirrors this and is **jest-pinned** (`__tests__/nearby.test.tsx`: geohash region match + window overlap + minor/suspended excluded).
+- **Entry:** a **🧭 Nearby travelers** card on the trip screen → the world surface; results are calm `PersonRow`s → tap to a profile → connect. No trip content is shown — only opted-in travelers' minimal public identity.
+
 ## Identity
 
 - **Name:** Trippl. `name`/`slug`/`scheme` = `trippl`, ids `com.trippl.app`. The old `AppName`/`appname` placeholders are fully replaced.

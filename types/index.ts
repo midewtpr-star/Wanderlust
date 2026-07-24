@@ -581,6 +581,21 @@ export type ReportInput = {
 
 export type ModerationActionKind = "dismiss" | "remove_content" | "suspend_user" | "unsuspend_user";
 
+// --- Nearby Travelers (Release 2 · B5) ---
+
+// A discoverable traveler heading to the same coarse area during an overlapping
+// window (from find_nearby_travelers). Minimal public identity only — contact is
+// a separate mutual-consent connection request.
+export type NearbyTraveler = {
+  id: ID;
+  display_name: string | null;
+  handle: string | null;
+  avatar_url: string | null;
+  home_city: string | null;
+  window_start: string | null;
+  window_end: string | null;
+};
+
 // A row from list_open_reports() (moderator queue).
 export type ModerationReport = {
   id: ID;

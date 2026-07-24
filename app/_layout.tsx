@@ -77,6 +77,7 @@ function RootNavigator() {
       <Stack.Screen name="connections" options={{ headerShown: true, title: "Connections" }} />
       <Stack.Screen name="profile-edit" options={{ headerShown: true, title: "Edit profile" }} />
       <Stack.Screen name="moderation" options={{ headerShown: true, title: "Moderation" }} />
+      <Stack.Screen name="nearby/[id]" options={{ headerShown: true, title: "Nearby travelers" }} />
       <Stack.Screen name="dev/design" options={{ headerShown: true, title: "Design tokens" }} />
     </Stack>
   );
