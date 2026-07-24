@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BringRow } from "@/components/bring/bring-row";
 import { BringItemModal } from "@/components/bring/bring-item-modal";
+import { Boundary } from "@/components/ui/boundary";
 import { VerifiedAnimation } from "@/components/trip/verified-animation";
 import { useAuth } from "@/lib/auth-provider";
 import { TripThemeProvider } from "@/lib/trip-theme";
@@ -154,7 +155,7 @@ export default function BringListScreen() {
   return (
     <TripThemeProvider tripId={id}>
       <Stack.Screen options={{ title: headerTitle }} />
-      <View className="flex-1 bg-background">
+      <Boundary variant="inside" tripName={trip?.title}>
         {tripLoading || bring.loading ? (
           <ListSkeleton />
         ) : notAuthorized ? (
@@ -259,7 +260,7 @@ export default function BringListScreen() {
             )}
           </>
         )}
-      </View>
+      </Boundary>
 
       <BringItemModal
         visible={!!modal}

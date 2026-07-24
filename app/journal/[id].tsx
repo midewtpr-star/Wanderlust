@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { JournalEntryCard } from "@/components/journal/entry-card";
 import { JournalComposer } from "@/components/journal/journal-composer";
+import { Boundary } from "@/components/ui/boundary";
 import { useAuth } from "@/lib/auth-provider";
 import { TripThemeProvider } from "@/lib/trip-theme";
 import { useTrip } from "@/hooks/use-trip";
@@ -92,7 +93,7 @@ export default function JournalScreen() {
   return (
     <TripThemeProvider tripId={id}>
       <Stack.Screen options={{ title: headerTitle }} />
-      <View className="flex-1 bg-background">
+      <Boundary variant="inside" tripName={trip?.title}>
         {tripLoading || loading ? (
           <ListSkeleton />
         ) : notAuthorized ? (
@@ -204,7 +205,7 @@ export default function JournalScreen() {
             )}
           </>
         )}
-      </View>
+      </Boundary>
 
       <JournalComposer
         visible={composerOpen}

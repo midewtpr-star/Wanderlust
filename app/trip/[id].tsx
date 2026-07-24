@@ -25,7 +25,7 @@ import { BringEntry } from "@/components/bring/bring-entry";
 import { JournalCard } from "@/components/journal/journal-card";
 import { TripThemeProvider } from "@/lib/trip-theme";
 import { HeroCover } from "@/components/trip/hero-cover";
-import { ScreenGround } from "@/components/ui/screen-ground";
+import { Boundary } from "@/components/ui/boundary";
 import { TripThemeSection } from "@/components/trip/trip-theme-section";
 import { formatDateRange, toISODate } from "@/lib/dates";
 import { useAuth } from "@/lib/auth-provider";
@@ -128,7 +128,7 @@ export default function TripDetailScreen() {
         </View>
       ) : trip ? (
         <TripThemeProvider tripId={id}>
-        <ScreenGround>
+        <Boundary variant="inside" tripName={trip.title}>
         <ScrollView
           className="flex-1"
           contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
@@ -310,7 +310,7 @@ export default function TripDetailScreen() {
             </View>
           ) : null}
         </ScrollView>
-        </ScreenGround>
+        </Boundary>
         </TripThemeProvider>
       ) : null}
 

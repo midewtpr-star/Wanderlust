@@ -13,7 +13,7 @@ import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { CollageView } from "@/components/trip/collage-view";
 import { StatTiles } from "@/components/trip/stat-tiles";
-import { ScreenGround } from "@/components/ui/screen-ground";
+import { Boundary } from "@/components/ui/boundary";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-provider";
 import { useTrip } from "@/hooks/use-trip";
@@ -152,7 +152,7 @@ export default function RecapScreen() {
           </Text>
         </View>
       ) : (
-        <ScreenGround>
+        <Boundary variant="inside" tripName={trip.title}>
         <ScrollView
           className="flex-1"
           contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24, gap: 16 }}
@@ -226,7 +226,7 @@ export default function RecapScreen() {
             ) : null}
           </View>
         </ScrollView>
-        </ScreenGround>
+        </Boundary>
       )}
     </TripThemeProvider>
   );

@@ -41,6 +41,11 @@ The Claude Design UI export (`Trippl.dc.html`) is the canonical design. Its `the
 - **The four signature moments.** ① *Step completion* — the check **pops** in, the row dims + strikes through, and the next step **reveals** (`step-checklist`; driven by real step state, never a fake tap). ② *Verified celebration* — `BadgeIn` + `RingPulse` + 16-piece confetti, fired **once** and dismissible (`VerifiedCelebration`/`VerifiedAnimation`). ③ *Itinerary scan* — a `ScanLine` sweeps the itinerary card while the real `verify-flight` runs, then resolves to the success badge (`FlightVerify`; the timing is the async result, not a fixed 1.9s). ④ *Countdown* — ticks live everywhere, tabular figures, seconds accent-tinted (`Countdown`).
 - Verify the interactive moments (tap steps → check off + reveal next → celebration once; scan) at **`/dev/design`**.
 
+**The private/public boundary (B1).** A hard architectural layout primitive, **`<Boundary variant="inside"|"world">`** (`components/ui/boundary.tsx`), signalling the boundary three ways at once so it never depends on reading a label:
+- **inside a trip** → a warm ground (per skin: editorial paper, collage kraft-over-grid, poster darkened field), a coloured **left rail**, and a persistent **"🔒 Inside · &lt;trip&gt;"** word. Applied to the trip dashboard, journal, bring list, recap (and every other trip surface adopts the same one-line wrap).
+- **out in the world** → a cool ground, **no rail, edge-to-edge**, and a persistent **"🌐 World"** word. For passport / profiles / connections / nearby (built in B2–B5).
+- **The hard rule:** trip-scoped content may render **only** inside a trip, never on a world surface. The pure decision lives in `lib/surface.ts` (`tripContentAllowed`); the runtime guard is **`<TripContent>`** (`components/ui/surface-context.tsx`) — content wrapped in it renders inside but is dropped on a world surface. Proven by **`__tests__/boundary.test.tsx`** (run `npm test`): `<TripContent>` renders inside but is blocked on a world surface. Demo at `/dev/design`.
+
 ## Identity
 
 - **Name:** Trippl. `name`/`slug`/`scheme` = `trippl`, ids `com.trippl.app`. The old `AppName`/`appname` placeholders are fully replaced.

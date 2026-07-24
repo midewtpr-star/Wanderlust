@@ -4,6 +4,7 @@ import { Stack, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenGround } from "@/components/ui/screen-ground";
 import { HardShadow } from "@/components/ui/hard-shadow";
+import { Boundary, TripContent } from "@/components/ui/boundary";
 import { Pop, FadeUp, ScanLine } from "@/components/ui/motion";
 import { VerifiedAnimation } from "@/components/trip/verified-animation";
 import { useTheme } from "@/lib/theme-provider";
@@ -114,6 +115,10 @@ export default function DesignHarness() {
         <View style={{ height: 1, backgroundColor: t.cardBorder?.color ?? t.border, marginVertical: 4 }} />
         <MotionShowcase t={t} caps={caps} />
         <ScanDemo t={t} caps={caps} />
+
+        {/* private / public boundary */}
+        <View style={{ height: 1, backgroundColor: t.cardBorder?.color ?? t.border, marginVertical: 4 }} />
+        <BoundaryDemo t={t} caps={caps} />
 
         {/* machine-readable token dump (for headless verification) */}
         <RNText testID="token-dump" style={{ fontFamily: t.fontBody, color: t.dim, fontSize: 11, lineHeight: 16 }}>
@@ -236,6 +241,47 @@ function ScanDemo({ t, caps }: { t: ThemeTokens; caps: boolean }) {
       >
         <RNText style={{ color: t.accentInk, fontWeight: "700", fontFamily: t.fontBody, textTransform: caps ? "uppercase" : "none" }}>{label}</RNText>
       </Pressable>
+    </View>
+  );
+}
+
+// The private/public boundary: inside a trip (rail + 🔒 word + warm ground) vs out
+// in the world (🌐, no rail). The <TripContent> guard proves trip content renders
+// inside but is BLOCKED on a world surface.
+function BoundaryDemo({ t, caps }: { t: ThemeTokens; caps: boolean }) {
+  return (
+    <View style={{ gap: 10 }}>
+      <RNText style={{ fontFamily: t.displayFont, color: t.text, fontSize: 16, textTransform: caps ? "uppercase" : "none" }}>
+        Private / public boundary
+      </RNText>
+      <View style={{ flexDirection: "row", gap: 10 }}>
+        <View style={{ flex: 1, height: 150, borderRadius: 12, overflow: "hidden", borderWidth: 1, borderColor: t.cardBorder?.color ?? t.border }}>
+          <Boundary variant="inside" tripName="LA Summer '26">
+            <View style={{ padding: 12 }}>
+              <TripContent fallback={<RNText style={{ color: t.dim }}>hidden</RNText>}>
+                <RNText testID="inside-content" style={{ color: t.text, fontFamily: t.fontBody, fontSize: 12 }}>
+                  Chat · money · journal
+                </RNText>
+              </TripContent>
+            </View>
+          </Boundary>
+        </View>
+        <View style={{ flex: 1, height: 150, borderRadius: 12, overflow: "hidden", borderWidth: 1, borderColor: t.cardBorder?.color ?? t.border }}>
+          <Boundary variant="world">
+            <View style={{ padding: 12 }}>
+              <TripContent
+                fallback={
+                  <RNText testID="world-blocked" style={{ color: t.dim, fontFamily: t.fontBody, fontSize: 12 }}>
+                    Trip content never renders here
+                  </RNText>
+                }
+              >
+                <RNText style={{ color: t.text }}>should-not-appear-on-world</RNText>
+              </TripContent>
+            </View>
+          </Boundary>
+        </View>
+      </View>
     </View>
   );
 }
