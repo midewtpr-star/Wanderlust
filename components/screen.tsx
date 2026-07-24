@@ -2,10 +2,12 @@ import type { ReactNode } from "react";
 import { View, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
+import { ScreenGround } from "@/components/ui/screen-ground";
 import { cn } from "@/lib/utils";
 
-// Shared placeholder screen shell. NativeWind-styled so we can confirm Tailwind
-// classes apply across web / iOS / Android. Real screens replace these in later phases.
+// Centered title shell (auth + simple full-screen states). Sits on the per-skin
+// ScreenGround (collage grid / poster field / editorial solid); the title uses
+// the skin's display font.
 export function Screen({
   title,
   subtitle,
@@ -19,10 +21,10 @@ export function Screen({
 }) {
   const insets = useSafeAreaInsets();
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+    <ScreenGround style={{ paddingTop: insets.top }}>
       <ScrollView contentContainerClassName="grow p-6">
         <View className={cn("flex-1 items-center justify-center gap-4", className)}>
-          <Text variant="title" className="text-center">
+          <Text variant="display-lg" className="text-center">
             {title}
           </Text>
           {subtitle ? (
@@ -33,6 +35,6 @@ export function Screen({
           {children}
         </View>
       </ScrollView>
-    </View>
+    </ScreenGround>
   );
 }

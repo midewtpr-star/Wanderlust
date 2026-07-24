@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { View, ScrollView, ActivityIndicator } from "react-native";
-import { Image } from "expo-image";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
@@ -9,6 +8,8 @@ import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { RsvpControl } from "@/components/trip/rsvp-control";
 import { Countdown } from "@/components/trip/countdown";
+import { HeroCover } from "@/components/trip/hero-cover";
+import { ScreenGround } from "@/components/ui/screen-ground";
 import { LogoSlot } from "@/components/logo-slot";
 import { formatDateRange } from "@/lib/dates";
 import { useAuth } from "@/lib/auth-provider";
@@ -47,8 +48,9 @@ export default function JoinScreen() {
   return (
     <>
       <Stack.Screen options={{ title: "Trip invite", headerShown: true }} />
+      <ScreenGround>
       <ScrollView
-        className="flex-1 bg-background"
+        className="flex-1"
         contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
       >
         {loading ? (
@@ -69,25 +71,16 @@ export default function JoinScreen() {
           </View>
         ) : (
           <>
-            {preview.cover_url ? (
-              <Image
-                source={{ uri: preview.cover_url }}
-                style={{ width: "100%", height: 200 }}
-                contentFit="cover"
-              />
-            ) : (
-              <View className="h-[200px] w-full items-center justify-center bg-muted">
-                <Text variant="muted">No cover</Text>
-              </View>
-            )}
+            <HeroCover
+              coverUrl={preview.cover_url}
+              title={preview.title}
+              subtitle={`${preview.location_city ?? "Destination TBD"} · ${formatDateRange(preview.start_date, preview.end_date)}`}
+            />
             <View className="gap-3 p-6">
-              <LogoSlot />
-              <Text variant="muted">You&apos;re invited to</Text>
-              <Text variant="title">{preview.title}</Text>
-              <Text variant="muted">{preview.location_city ?? "Destination TBD"}</Text>
-              <Text variant="muted">
-                {formatDateRange(preview.start_date, preview.end_date)}
-              </Text>
+              <View className="flex-row items-center gap-2">
+                <LogoSlot />
+                <Text variant="muted">You&apos;re invited</Text>
+              </View>
               <Card className="items-center gap-2">
                 <Text variant="muted" className="text-xs uppercase tracking-widest">
                   Countdown
@@ -149,6 +142,7 @@ export default function JoinScreen() {
           </>
         )}
       </ScrollView>
+      </ScreenGround>
     </>
   );
 }

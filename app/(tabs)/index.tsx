@@ -6,6 +6,7 @@ import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TripCard } from "@/components/trip/trip-card";
+import { ScreenGround } from "@/components/ui/screen-ground";
 import { useTrips } from "@/hooks/use-trips";
 import { useUnreadCounts } from "@/hooks/use-unread";
 
@@ -24,9 +25,9 @@ export default function TripsScreen() {
   );
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+    <ScreenGround style={{ paddingTop: insets.top }}>
       <View className="px-6 pb-2 pt-4">
-        <Text variant="title">Trips</Text>
+        <Text variant="display-lg">Trips</Text>
       </View>
 
       {loading ? (
@@ -70,6 +71,6 @@ export default function TripsScreen() {
           }
         />
       )}
-    </View>
+    </ScreenGround>
   );
 }

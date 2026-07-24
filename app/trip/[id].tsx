@@ -1,6 +1,5 @@
 import { useCallback, useState } from "react";
 import { View, ScrollView, ActivityIndicator } from "react-native";
-import { Image } from "expo-image";
 import { Stack, useLocalSearchParams, useRouter, useFocusEffect } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
@@ -25,7 +24,8 @@ import { OutfitEntry } from "@/components/outfits/outfit-entry";
 import { BringEntry } from "@/components/bring/bring-entry";
 import { JournalCard } from "@/components/journal/journal-card";
 import { TripThemeProvider } from "@/lib/trip-theme";
-import { SkinTripHeader } from "@/components/trip/skin-trip-header";
+import { HeroCover } from "@/components/trip/hero-cover";
+import { ScreenGround } from "@/components/ui/screen-ground";
 import { TripThemeSection } from "@/components/trip/trip-theme-section";
 import { formatDateRange, toISODate } from "@/lib/dates";
 import { useAuth } from "@/lib/auth-provider";
@@ -128,40 +128,25 @@ export default function TripDetailScreen() {
         </View>
       ) : trip ? (
         <TripThemeProvider tripId={id}>
+        <ScreenGround>
         <ScrollView
-          className="flex-1 bg-background"
+          className="flex-1"
           contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}
         >
-          <View className="relative">
-            {trip.cover_url ? (
-              <Image
-                source={{ uri: trip.cover_url }}
-                style={{ width: "100%", height: 200 }}
-                contentFit="cover"
-              />
-            ) : (
-              <View className="h-[200px] w-full items-center justify-center bg-muted">
-                <Text variant="muted">No cover</Text>
-              </View>
-            )}
-            <SkinTripHeader />
-          </View>
+          <HeroCover
+            coverUrl={trip.cover_url}
+            title={trip.title}
+            subtitle={`${trip.location_city ?? "Destination TBD"} · ${formatDateRange(trip.start_date, trip.end_date)}`}
+          />
 
-          <View className="gap-2 p-6">
-            <Text variant="title">{trip.title}</Text>
-            <Text variant="muted">{trip.location_city ?? "Destination TBD"}</Text>
-            <Text variant="muted">
-              {formatDateRange(trip.start_date, trip.end_date)}
-            </Text>
-            <View className="mt-2">
-              <ProgressPanel
-                trip={trip}
-                goingCount={members.counts.going}
-                verifiedCount={verification.verifiedCount}
-                memberCount={members.members.length}
-                version={moneyVersion}
-              />
-            </View>
+          <View className="gap-2 px-6 pb-4 pt-5">
+            <ProgressPanel
+              trip={trip}
+              goingCount={members.counts.going}
+              verifiedCount={verification.verifiedCount}
+              memberCount={members.members.length}
+              version={moneyVersion}
+            />
           </View>
 
           <View className="gap-3 px-6 pb-4">
@@ -325,6 +310,7 @@ export default function TripDetailScreen() {
             </View>
           ) : null}
         </ScrollView>
+        </ScreenGround>
         </TripThemeProvider>
       ) : null}
 

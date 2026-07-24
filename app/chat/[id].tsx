@@ -256,7 +256,7 @@ export default function ChatScreen() {
         {/* Composer — pinned to the bottom, above the keyboard. */}
         {!notAuthorized ? (
           <View
-            className="border-t border-border bg-background px-3 pt-2"
+            className="border-t border-border bg-card px-3 pt-2"
             style={{ paddingBottom: insets.bottom + 8 }}
           >
             <View className="flex-row items-end gap-2">

@@ -32,7 +32,10 @@ The Claude Design UI export (`Trippl.dc.html`) is the canonical design. Its `the
 
 **Semantic colours** (informational, never decorative — pair with icon/text): success `#34C759` · warning `#FF9500` · error `#FF3B30` · info `#007AFF`. **Spacing** = 4pt scale (`SPACING`); **min touch target 44pt** (`TOUCH_MIN`). Fonts bundled via `expo-font` in `app/_layout.tsx`; **SF Pro never bundled**.
 
-*Screens migrate from the CSS-var classes onto `useTheme().tokens` + `<ScreenGround>`/`<HardShadow>` in Phase A2; A1 established the token layer + primitives.*
+**Screen adoption (Phase A2) + the density rule.** Every screen renders on the per-skin ground and pulls colour/type/shape from tokens. The **density rule** decides how loud a surface is:
+- **Loud / hero surfaces** wrap in **`<ScreenGround>`** (so collage shows its grid, poster its field) and use **`<HeroCover>`** for the cover header (editorial Playfair roman+italic over a scrim · collage a hard-framed, taped photo + pink title sticker · poster a duotone under a cobalt wash + Anton caps): **trip dashboard, Trips list, auth, the invite/join preview, recap** (passport/profile join them in Phase B).
+- **Calm / dense surfaces** (chat, money, forms, settings, bring, outfits, journal, activity) stay on the **flat skin base** (no grid — the bridge already themes `bg-background` per skin) with token cards; loud ornament is deliberately omitted.
+- Shared primitives are token-driven: `Text` (per-skin display/body fonts), `Button`/`Card` (surface, border, radius, accent, collage hard shadow via `<HardShadow>`), `Input` (sits on the card surface, never the field), `TripCard` (hero card + hard shadow). Editorial hero titles mix roman + italic; collage/poster reserve caps for headers/labels (long body stays legible).
 
 ## Identity
 

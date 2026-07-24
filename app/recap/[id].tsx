@@ -13,6 +13,7 @@ import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { CollageView } from "@/components/trip/collage-view";
 import { StatTiles } from "@/components/trip/stat-tiles";
+import { ScreenGround } from "@/components/ui/screen-ground";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-provider";
 import { useTrip } from "@/hooks/use-trip";
@@ -151,8 +152,9 @@ export default function RecapScreen() {
           </Text>
         </View>
       ) : (
+        <ScreenGround>
         <ScrollView
-          className="flex-1 bg-background"
+          className="flex-1"
           contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24, gap: 16 }}
         >
           {/* The shareable "trip story" card. */}
@@ -224,6 +226,7 @@ export default function RecapScreen() {
             ) : null}
           </View>
         </ScrollView>
+        </ScreenGround>
       )}
     </TripThemeProvider>
   );
