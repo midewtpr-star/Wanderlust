@@ -596,6 +596,21 @@ export type NearbyTraveler = {
   window_end: string | null;
 };
 
+// --- Music on Shares (Release 2 · B6) ---
+
+// The cleared track + trim a trip chose for its share (row of share_audio). The
+// catalogue is a swappable operator-configured provider; this is only the choice.
+export type ShareAudio = {
+  trip_id: ID;
+  provider_id: string;
+  track_id: string;
+  title: string;
+  artist: string | null;
+  license: string | null;
+  trim_start_ms: number;
+  trim_end_ms: number;
+};
+
 // A row from list_open_reports() (moderator queue).
 export type ModerationReport = {
   id: ID;

@@ -8,6 +8,8 @@ import { Boundary, TripContent } from "@/components/ui/boundary";
 import { WorldMap } from "@/components/passport/world-map";
 import { PersonRow } from "@/components/profile/person-row";
 import { ReportAction } from "@/components/safety/report-sheet";
+import { MusicPicker } from "@/components/share/music-picker";
+import { EXAMPLE_PROVIDER } from "@/lib/music";
 import { provenanceLine } from "@/lib/social";
 import { Pop, FadeUp, ScanLine } from "@/components/ui/motion";
 import { VerifiedAnimation } from "@/components/trip/verified-animation";
@@ -174,6 +176,9 @@ export default function DesignHarness() {
           <RNText style={{ fontFamily: t.fontBody, color: t.text, fontSize: 13 }}>Safety:</RNText>
           <ReportAction subjectKind="profile" subjectUserId="demo" />
         </View>
+
+        {/* B6 · music picker (example catalogue → shows the list + trim bar) */}
+        <MusicDemo t={t} />
 
         {/* machine-readable token dump (for headless verification) */}
         <RNText testID="token-dump" style={{ fontFamily: t.fontBody, color: t.dim, fontSize: 11, lineHeight: 16 }}>
@@ -373,5 +378,26 @@ function Chip({
     >
       <RNText style={{ color: active ? ink : text, fontWeight: "700", fontSize: 12 }}>{label}</RNText>
     </Pressable>
+  );
+}
+
+// B6 · music-on-shares picker demo (example catalogue → list + draggable trim).
+function MusicDemo({ t }: { t: ThemeTokens }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <View testID="music-demo" style={{ flexDirection: "row", gap: 16, alignItems: "center" }}>
+      <RNText style={{ fontFamily: t.fontBody, color: t.text, fontSize: 13 }}>Music:</RNText>
+      <Pressable onPress={() => setOpen(true)} accessibilityRole="button">
+        <RNText style={{ color: t.accent, textDecorationLine: "underline", fontSize: 13 }}>Add music</RNText>
+      </Pressable>
+      <MusicPicker
+        visible={open}
+        onClose={() => setOpen(false)}
+        provider={EXAMPLE_PROVIDER}
+        current={null}
+        onPick={async () => false}
+        onRemove={async () => false}
+      />
+    </View>
   );
 }

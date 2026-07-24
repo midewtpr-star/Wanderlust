@@ -90,6 +90,22 @@ Per-trip, opt-in discovery of other travelers heading to the same coarse area du
 
 > **RLS + rules (B5).** `discovery_optins` is **self-manage only** (`user_id = auth.uid()`); seeing others is only ever through `find_nearby_travelers`. **Mutual visibility** (opted-in-only), **mutual-consent contact** (a B3 connection request — Nearby never exposes a direct message path), **coarse area from the public destination** (no device location), and **immediate opt-out** (disable = delete). No trip content is exposed — only opted-in travelers' minimal public identity.
 
+## share_audio  — Music on Shares (Release 2 · B6)
+The cleared track a trip chose for its share, with trim + retained rights. Migration `20260722280001_share_music.sql`. **One music choice per trip; any member may set it.**
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid PK | |
+| `trip_id` | uuid FK → trips(id) UNIQUE | One row per trip. |
+| `chosen_by` | uuid FK → profiles(id) | Set to `auth.uid()` on insert. |
+| `provider_id` / `track_id` | text | Which cleared catalogue provider + track. |
+| `title` / `artist` | text | |
+| `license` | text | **Retained rights metadata**, kept with the export. |
+| `trim_start_ms` / `trim_end_ms` | int | The chosen ≤15s window (CHECK `end > start ≥ 0`). |
+| `created_at` / `updated_at` | timestamptz | |
+
+> **As built (B6).** RLS: any **trip member** reads; any **member** sets/changes/removes the trip's share music. The **catalogue is a swappable, operator-configured `MusicCatalogProvider`** (`lib/music.ts`; **cleared-only, no uploads**) that **ships not configured** (picker shows a clear not-configured state); this table only stores the *choice* + rights. **Baking audio into the exported file is deferred** to the Phase-2 **video** recap (D9) — the current image export is silent and the "export without music" path is equally prominent. `expo-audio` powers preview.
+
 ## trips
 Central object + tenancy unit (foundation §5).
 
@@ -488,6 +504,8 @@ Nearby events + things-to-do are **fetched on demand from an external places/eve
 - **reports:** **insert-your-own**; SELECT/UPDATE **moderator-only** (`is_moderator()`); submit via the rate-limited `submit_report` RPC (B4).
 - **moderation_actions:** SELECT **moderator-only**; written only by the `moderate_resolve_report` RPC (B4).
 - **messages (B4 update):** read gains `and not has_block_with(sender_id)` — a blocked pair never see each other's messages; a BEFORE-INSERT trigger rate-limits + blocks suspended senders.
+- **discovery_optins (B5):** self-manage only; matches only via `find_nearby_travelers` (opted-in, adult, unblocked, unexpired). Area = geohash of the trip's public destination, never device location.
+- **share_audio (B6):** trip members read; any member sets/changes/removes the trip's cleared-catalogue music choice (+ retained rights).
 - **trips / trip_members / rsvps / invites / airbnb_options / votes / money_pools / contributions / activities / activity_media / member_steps / trip_recap / recap_stats:** membership-gated; admin-elevated where noted.
 - **trip_admins:** readable by members; writes admin-only **and** capped at 3 by trigger (D8).
 - **invites (accept):** token-holders may read the invite and insert their **own** membership — a narrow exception.

@@ -19,6 +19,8 @@ import { useAuth } from "@/lib/auth-provider";
 import { useTrip } from "@/hooks/use-trip";
 import { useTripStats } from "@/hooks/use-trip-stats";
 import { useTripRecap } from "@/hooks/use-trip-recap";
+import { useShareMusic } from "@/hooks/use-share-music";
+import { MusicPicker } from "@/components/share/music-picker";
 import { uploadTripMedia, signedTripMediaUrl } from "@/lib/storage";
 import { shareImage } from "@/lib/share";
 import { formatDateRange, toISODate } from "@/lib/dates";
@@ -36,10 +38,12 @@ export default function RecapScreen() {
   const { trip, loading: tripLoading, notAuthorized } = useTrip(id);
   const stats = useTripStats(id, trip);
   const recap = useTripRecap(id);
+  const music = useShareMusic(id);
 
   const [photos, setPhotos] = useState<string[]>([]);
   const [busy, setBusy] = useState<"gen" | "share" | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [showMusic, setShowMusic] = useState(false);
 
   const cardRef = useRef<View>(null);
   const collageRef = useRef<View>(null);
@@ -206,10 +210,31 @@ export default function RecapScreen() {
               onPress={generate}
             />
             <Button
+              label={
+                music.current ? `♪ Music · ${music.current.title}` : "Add music (optional)"
+              }
+              variant="outline"
+              disabled={busy !== null}
+              onPress={() => setShowMusic(true)}
+            />
+            <Button
               label={busy === "share" ? "Exporting…" : "Share / download recap"}
               variant="secondary"
               disabled={busy !== null}
               onPress={share}
+            />
+            {music.current ? (
+              <Text variant="muted" className="text-center text-xs">
+                Music is saved for video recaps. The image export shares without audio.
+              </Text>
+            ) : null}
+            <MusicPicker
+              visible={showMusic}
+              onClose={() => setShowMusic(false)}
+              provider={music.provider}
+              current={music.current}
+              onPick={music.setMusic}
+              onRemove={music.clearMusic}
             />
             {recap.recap?.generated_at ? (
               <Text variant="muted" className="text-center text-xs">
