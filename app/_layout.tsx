@@ -73,6 +73,9 @@ function RootNavigator() {
       <Stack.Screen name="recap/[id]" options={{ headerShown: true, title: "Trip recap" }} />
       <Stack.Screen name="join/[code]" options={{ headerShown: true, title: "Trip invite" }} />
       <Stack.Screen name="passport" options={{ headerShown: true, title: "Passport" }} />
+      <Stack.Screen name="profile/[id]" options={{ headerShown: true, title: "Profile" }} />
+      <Stack.Screen name="connections" options={{ headerShown: true, title: "Connections" }} />
+      <Stack.Screen name="profile-edit" options={{ headerShown: true, title: "Edit profile" }} />
       <Stack.Screen name="dev/design" options={{ headerShown: true, title: "Design tokens" }} />
     </Stack>
   );

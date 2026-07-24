@@ -42,6 +42,33 @@ export default function ProfileScreen() {
           </Card>
         </Pressable>
 
+        <Pressable onPress={() => router.push("/connections")} accessibilityRole="button" accessibilityLabel="Open your connections">
+          <Card className="flex-row items-center justify-between active:opacity-90">
+            <View className="flex-1 pr-3">
+              <Text variant="heading">🤝 Connections</Text>
+              <Text variant="muted">Find travelers and manage requests</Text>
+            </View>
+            <Text variant="muted" className="text-xl">
+              ›
+            </Text>
+          </Card>
+        </Pressable>
+
+        <View className="flex-row gap-3">
+          <Button
+            label="Public profile"
+            variant="outline"
+            className="flex-1"
+            onPress={() => user && router.push(`/profile/${user.id}`)}
+          />
+          <Button
+            label="Edit profile"
+            variant="outline"
+            className="flex-1"
+            onPress={() => router.push("/profile-edit")}
+          />
+        </View>
+
         <SkinPicker />
 
         <AppearanceSettings />

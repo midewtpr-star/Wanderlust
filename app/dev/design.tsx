@@ -6,6 +6,8 @@ import { ScreenGround } from "@/components/ui/screen-ground";
 import { HardShadow } from "@/components/ui/hard-shadow";
 import { Boundary, TripContent } from "@/components/ui/boundary";
 import { WorldMap } from "@/components/passport/world-map";
+import { PersonRow } from "@/components/profile/person-row";
+import { provenanceLine } from "@/lib/social";
 import { Pop, FadeUp, ScanLine } from "@/components/ui/motion";
 import { VerifiedAnimation } from "@/components/trip/verified-animation";
 import { useTheme } from "@/lib/theme-provider";
@@ -148,6 +150,22 @@ export default function DesignHarness() {
             ]}
             height={170}
           />
+        </View>
+
+        {/* B3 · people rows (connections / search / requests share this row) */}
+        <View style={{ height: 1, backgroundColor: t.cardBorder?.color ?? t.border, marginVertical: 4 }} />
+        <RNText style={{ fontFamily: t.displayFont, color: t.text, fontSize: 16, textTransform: caps ? "uppercase" : "none" }}>
+          People
+        </RNText>
+        <View testID="people-demo" style={{ gap: 4 }}>
+          <PersonRow name="Maya Okafor" handle="mayao" subtitle="Los Angeles" onPress={() => {}} />
+          <PersonRow
+            name="Devin Park"
+            handle="dpark"
+            subtitle={provenanceLine(2, 4) ?? undefined}
+            onPress={() => {}}
+          />
+          <PersonRow name="Sam Rivera" handle={null} subtitle="Request sent" />
         </View>
 
         {/* machine-readable token dump (for headless verification) */}

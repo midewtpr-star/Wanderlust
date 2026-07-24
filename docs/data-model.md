@@ -30,6 +30,25 @@ One row per user; mirror of `auth.users`. Holds the **stored name used to match 
 | `avatar_url` | text null | Storage path or URL. |
 | `created_at` / `updated_at` | timestamptz | |
 
+> **As built (Release 2 · B3 — Profiles & Connections).** `profiles` gained world-facing identity columns: **`handle`** (`citext`, case-insensitively unique, format `^[a-z0-9_]{3,20}$`, nullable), **`bio`**, **`home_city`**, and **`visibility`** (`text`, `public`|`private`, **default `private`** — existing rows backfilled private). The **`profiles_select`** policy was rewritten from "self or co-member" to also allow — when **not blocked** either way — a **public** profile or an **accepted connection**; co-member read stays (trip function). The **`connections`** table (below) is the friend graph. The **`passport_stats`** read (B2) is widened to the same visibility rule so a viewable profile can show its owner's lifetime counters; writes stay self-only.
+
+## connections  — friend graph (Release 2 · B3)
+Request / accept / block between two users. **One row per unordered pair** (a functional unique index on `least/greatest(requester,addressee)` prevents both directions existing). All state transitions run through **SECURITY DEFINER RPCs**; the table itself is read-only to its two parties.
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid PK | |
+| `requester_id` | uuid FK → profiles(id) | Who initiated the current row. |
+| `addressee_id` | uuid FK → profiles(id) | CHECK `requester_id <> addressee_id`. |
+| `status` | text | CHECK in (`pending`, `accepted`, `blocked`). |
+| `blocked_by` | uuid null FK → profiles(id) | Set **iff** `status='blocked'` (CHECK-enforced) — who blocked. |
+| `created_at` / `updated_at` | timestamptz | `updated_at` via the shared trigger. |
+| — | UNIQUE `least(requester,addressee), greatest(...)` | One edge per pair. |
+
+*RPCs: `send_connection_request` (accept-on-cross-request), `respond_connection_request(accept)`, `remove_connection`, `set_connection_block(blocked)`; readers `is_connected_with` / `has_block_with` / `connection_state_with` (back RLS + UI), `search_profiles` (public only), `get_profile_provenance` (**only trips the viewer also belongs to**), `mutual_connection_count` (count only), `list_connections`, `list_connection_requests`.*
+
+> **THE HARD RULE (B3).** A connection widens **profile** visibility only; it **never** grants trip access. Trip content (chat/money/media/journal/member list) stays gated on `trip_members`, unchanged. A **block** hides both users on world surfaces, both directions; the stronger *block-inside-a-shared-trip* guarantee + reports + age-gate are **Phase 21 (Safety)**. Proven by `__tests__/social.test.tsx`.
+
 ## trips
 Central object + tenancy unit (foundation §5).
 
@@ -423,7 +442,8 @@ Nearby events + things-to-do are **fetched on demand from an external places/eve
 
 **RLS pattern:** a caller may read/write a trip-scoped row iff they have a `trip_members` row for that `trip_id`; writes are further limited (author-only edits; **admins** via `trip_admins` may edit the trip, lock `airbnb_pick`, and override a flight name-mismatch).
 
-- **profiles:** readable by co-members of a shared trip; writable only by self.
+- **profiles:** writable only by self. Readable by: self, a co-trip-member (trip function), or — when not blocked either way — a **public** profile or an **accepted connection** (B3 visibility rule).
+- **connections:** read-only to the two parties; **all writes via SECURITY DEFINER RPCs** (no direct write policy). A block hides both users on world surfaces, both directions (B3). Connections never grant trip access.
 - **trips / trip_members / rsvps / invites / airbnb_options / votes / money_pools / contributions / activities / activity_media / member_steps / trip_recap / recap_stats:** membership-gated; admin-elevated where noted.
 - **trip_admins:** readable by members; writes admin-only **and** capped at 3 by trigger (D8).
 - **invites (accept):** token-holders may read the invite and insert their **own** membership — a narrow exception.

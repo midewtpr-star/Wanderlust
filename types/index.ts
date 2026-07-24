@@ -450,3 +450,94 @@ export type JournalEntryView = JournalEntry & {
   author_avatar: string | null;
   media: JournalMediaWithUrl[];
 };
+
+// --- Profiles & Connections (Release 2 · B3) ---
+
+// Who may read a profile row. Private is the default; trip co-members always
+// can (trip function); a connection can; a public profile is visible to all.
+export type ProfileVisibility = "public" | "private";
+
+// The world-facing identity fields of a profile (never trip content).
+export type PublicProfile = {
+  id: ID;
+  display_name: string | null;
+  handle: string | null; // 3–20 chars [a-z0-9_], case-insensitively unique
+  avatar_url: string | null;
+  bio: string | null;
+  home_city: string | null;
+  visibility: ProfileVisibility;
+};
+
+// My relationship to another user, from connection_state_with(). Drives the
+// action button on their profile. "blocked" = I blocked them; "blocked_by_them"
+// should not normally be reachable (their profile is hidden from me by RLS).
+export type ConnectionState =
+  | "self"
+  | "connected"
+  | "outgoing"
+  | "incoming"
+  | "blocked"
+  | "blocked_by_them"
+  | "none";
+
+// A row from list_connections() — an accepted connection + basic identity.
+export type ConnectionSummary = {
+  id: ID;
+  display_name: string | null;
+  handle: string | null;
+  avatar_url: string | null;
+  home_city: string | null;
+  visibility: ProfileVisibility;
+  since: string;
+};
+
+// A row from list_connection_requests() — a pending request either direction.
+export type ConnectionRequest = {
+  id: ID;
+  display_name: string | null;
+  handle: string | null;
+  avatar_url: string | null;
+  direction: "incoming" | "outgoing";
+  requested_at: string;
+};
+
+// A row from search_profiles() — a discoverable (public) profile.
+export type ProfileSearchResult = {
+  id: ID;
+  display_name: string | null;
+  handle: string | null;
+  avatar_url: string | null;
+  home_city: string | null;
+};
+
+// A shared trip from get_profile_provenance() — only ever a trip the VIEWER is
+// also a member of, so it can never leak a trip's existence.
+export type ProvenanceTrip = {
+  trip_id: ID;
+  title: string;
+  start_date: string | null;
+  end_date: string | null;
+};
+
+// Lifetime passport counters shared outward (the B2 snapshot, no trip identifies).
+export type PassportSummary = {
+  trips: number;
+  places: number;
+  countries: number;
+  continents: number;
+  airports: number;
+  landmarks: number;
+  miles: number;
+  days: number;
+  started_on: string | null;
+};
+
+// Everything the profile screen needs, composed: identity + how-we're-connected
+// (provenance + mutuals) + the outward passport summary. NO trip content.
+export type ProfileOverview = {
+  profile: PublicProfile;
+  state: ConnectionState;
+  provenance: ProvenanceTrip[];
+  mutualCount: number;
+  passport: PassportSummary | null;
+};

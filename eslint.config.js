@@ -6,9 +6,10 @@ const expoConfig = require("eslint-config-expo/flat");
 module.exports = defineConfig([
   expoConfig,
   {
-    // Deno edge functions run in a different runtime (Deno globals, jsr: imports)
-    // and are linted/deployed by Supabase, not the app bundle.
-    ignores: ["dist/*", "dist-native/*", ".expo/*", "supabase/functions/**"],
+    // Build outputs (any dist* export dir, web bundle) + the .expo cache are
+    // generated, never hand-edited. Deno edge functions run in a different
+    // runtime (Deno globals, jsr: imports), linted/deployed by Supabase.
+    ignores: ["dist/**", "dist-*/**", "web-build/**", ".expo/**", "supabase/functions/**"],
   },
   {
     rules: {
