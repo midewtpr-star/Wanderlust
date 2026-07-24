@@ -1,7 +1,9 @@
-import { View, ScrollView } from "react-native";
+import { View, ScrollView, Pressable } from "react-native";
+import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { AppearanceSettings } from "@/components/settings/appearance";
 import { SkinPicker } from "@/components/settings/skin-picker";
 import { Logo } from "@/components/logo-slot";
@@ -10,6 +12,7 @@ import { useAuth } from "@/lib/auth-provider";
 // Profile + Settings (Phase 1 identity/sign-out; Phase 10 appearance controls).
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const { user, signOut } = useAuth();
   const label = user?.email ?? user?.phone ?? "Signed in";
 
@@ -26,6 +29,18 @@ export default function ProfileScreen() {
           <Text variant="display-lg">Settings</Text>
           <Text variant="muted">{label}</Text>
         </View>
+
+        <Pressable onPress={() => router.push("/passport")} accessibilityRole="button" accessibilityLabel="Open your travel passport">
+          <Card className="flex-row items-center justify-between active:opacity-90">
+            <View className="flex-1 pr-3">
+              <Text variant="heading">🌐 Your passport</Text>
+              <Text variant="muted">Lifetime places, countries, airports, miles</Text>
+            </View>
+            <Text variant="muted" className="text-xl">
+              ›
+            </Text>
+          </Card>
+        </Pressable>
 
         <SkinPicker />
 

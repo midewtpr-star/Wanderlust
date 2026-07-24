@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { View, ScrollView, Pressable, Modal, Text as RNText, useWindowDimensions } from "react-native";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenGround } from "@/components/ui/screen-ground";
 import { HardShadow } from "@/components/ui/hard-shadow";
 import { Boundary, TripContent } from "@/components/ui/boundary";
+import { WorldMap } from "@/components/passport/world-map";
 import { Pop, FadeUp, ScanLine } from "@/components/ui/motion";
 import { VerifiedAnimation } from "@/components/trip/verified-animation";
 import { useTheme } from "@/lib/theme-provider";
@@ -26,6 +27,16 @@ export default function DesignHarness() {
   const mode: Scheme =
     params.mode === "dark" ? "dark" : params.mode === "light" ? "light" : ctxScheme;
   const t = resolveTheme(skin, mode);
+
+  // When a query param forces a combo, push it into the live provider too, so
+  // nested components that read useTheme() (e.g. the WorldMap) follow the forced
+  // skin × mode — not just the local preview cards. No param → live theme wins.
+  useEffect(() => {
+    if (isSkin(params.skin) && params.skin !== ctxSkin) setSkin(params.skin);
+    if ((params.mode === "dark" || params.mode === "light") && params.mode !== ctxScheme) {
+      setMode(params.mode);
+    }
+  }, [params.skin, params.mode, ctxSkin, ctxScheme, setSkin, setMode]);
 
   const caps = skin !== "editorial";
   const swatches: [string, string][] = [
@@ -119,6 +130,25 @@ export default function DesignHarness() {
         {/* private / public boundary */}
         <View style={{ height: 1, backgroundColor: t.cardBorder?.color ?? t.border, marginVertical: 4 }} />
         <BoundaryDemo t={t} caps={caps} />
+
+        {/* passport world map */}
+        <View style={{ height: 1, backgroundColor: t.cardBorder?.color ?? t.border, marginVertical: 4 }} />
+        <RNText style={{ fontFamily: t.displayFont, color: t.text, fontSize: 16, textTransform: caps ? "uppercase" : "none" }}>
+          Passport map
+        </RNText>
+        <View testID="world-map">
+          <WorldMap
+            pins={[
+              { lat: 34.05, lng: -118.24, label: "Los Angeles", kind: "place" },
+              { lat: 34.13, lng: -118.32, label: "Hollywood Sign", kind: "landmark" },
+              { lat: 40.71, lng: -74, label: "New York", kind: "place" },
+              { lat: 51.5, lng: -0.12, label: "London", kind: "place" },
+              { lat: 35.68, lng: 139.65, label: "Tokyo", kind: "place" },
+              { lat: -33.87, lng: 151.2, label: "Sydney", kind: "place" },
+            ]}
+            height={170}
+          />
+        </View>
 
         {/* machine-readable token dump (for headless verification) */}
         <RNText testID="token-dump" style={{ fontFamily: t.fontBody, color: t.dim, fontSize: 11, lineHeight: 16 }}>
