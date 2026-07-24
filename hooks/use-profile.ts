@@ -1,11 +1,20 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/lib/auth-provider";
-import type { PublicProfile, ProfileVisibility } from "@/types";
+import type { AgeBand, PublicProfile, ProfileVisibility } from "@/types";
 
-// The world-facing profile columns we read/write here. (Theme columns live in
-// the theme provider; trip/PII columns are never edited on a world surface.)
-const PROFILE_SELECT = "id, display_name, handle, avatar_url, bio, home_city, visibility";
+// The world-facing profile columns we read/write here, plus the safety flags
+// (age band + moderator) needed to gate the public toggle and the mod tools.
+// (Theme columns live in the theme provider; trip/PII columns are never edited
+// on a world surface.)
+const PROFILE_SELECT =
+  "id, display_name, handle, avatar_url, bio, home_city, visibility, age_band, is_moderator, suspended_at";
+
+type ProfileRow = PublicProfile & {
+  age_band: AgeBand | null;
+  is_moderator: boolean;
+  suspended_at: string | null;
+};
 
 export type ProfileEdit = {
   display_name?: string | null;
@@ -33,6 +42,9 @@ export function useMyProfile() {
   const { user } = useAuth();
   const userId = user?.id;
   const [profile, setProfile] = useState<PublicProfile | null>(null);
+  const [ageBand, setAgeBand] = useState<AgeBand | null>(null);
+  const [isModerator, setIsModerator] = useState(false);
+  const [suspended, setSuspended] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +61,11 @@ export function useMyProfile() {
       .eq("id", userId)
       .maybeSingle();
     if (error) setError(error.message);
-    setProfile((data as PublicProfile) ?? null);
+    const row = (data as ProfileRow) ?? null;
+    setProfile(row);
+    setAgeBand(row?.age_band ?? null);
+    setIsModerator(row?.is_moderator ?? false);
+    setSuspended(!!row?.suspended_at);
     setLoading(false);
   }, [userId]);
 
@@ -96,5 +112,22 @@ export function useMyProfile() {
     [userId, load],
   );
 
-  return { profile, loading, saving, error, save, refresh: load };
+  // Set the age band from a birthdate (server derives + stores the band only).
+  // Returns the band, or null on failure. A minor is auto-forced private by the DB.
+  const setAge = useCallback(
+    async (iso: string): Promise<AgeBand | null> => {
+      if (!userId) return null;
+      setError(null);
+      const { data, error } = await supabase.rpc("set_age_band", { _birthdate: iso });
+      if (error) {
+        setError(error.message);
+        return null;
+      }
+      await load();
+      return (data as AgeBand) ?? null;
+    },
+    [userId, load],
+  );
+
+  return { profile, ageBand, isModerator, suspended, loading, saving, error, save, setAge, refresh: load };
 }

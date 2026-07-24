@@ -541,3 +541,56 @@ export type ProfileOverview = {
   mutualCount: number;
   passport: PassportSummary | null;
 };
+
+// --- Safety & Moderation (Release 2 · B4) ---
+
+// Age band, derived once from a birthdate (the raw date is never stored). A minor
+// is forced private + excluded from discovery.
+export type AgeBand = "adult" | "minor";
+
+// What a report targets, and why. Both are CHECK-constrained in the DB.
+export type ReportSubjectKind =
+  | "profile"
+  | "message"
+  | "trip"
+  | "activity"
+  | "journal_entry"
+  | "outfit"
+  | "other";
+
+export type ReportReason =
+  | "spam"
+  | "harassment"
+  | "inappropriate"
+  | "impersonation"
+  | "underage"
+  | "scam"
+  | "safety"
+  | "other";
+
+export type ReportStatus = "open" | "reviewing" | "actioned" | "dismissed";
+
+// What the client passes to submit_report().
+export type ReportInput = {
+  subjectKind: ReportSubjectKind;
+  subjectId?: ID | null;
+  subjectUserId?: ID | null;
+  reason: ReportReason;
+  detail?: string | null;
+};
+
+export type ModerationActionKind = "dismiss" | "remove_content" | "suspend_user" | "unsuspend_user";
+
+// A row from list_open_reports() (moderator queue).
+export type ModerationReport = {
+  id: ID;
+  subject_kind: ReportSubjectKind;
+  subject_id: ID | null;
+  subject_user_id: ID | null;
+  reason: ReportReason;
+  detail: string | null;
+  status: ReportStatus;
+  created_at: string;
+  reporter_name: string | null;
+  subject_user_name: string | null;
+};

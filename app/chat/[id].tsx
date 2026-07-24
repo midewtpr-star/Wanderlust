@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SendButton } from "@/components/chat/send-button";
 import { MessageRow, type ChatRow } from "@/components/chat/message-row";
+import { ReportSheet } from "@/components/safety/report-sheet";
 import { useAuth } from "@/lib/auth-provider";
 import { useTheme } from "@/lib/theme-provider";
 import { TripThemeProvider } from "@/lib/trip-theme";
@@ -78,6 +79,7 @@ export default function ChatScreen() {
   const { send, sending } = useSendMessage(id, userId, sendCallbacks);
 
   const [text, setText] = useState("");
+  const [reportMsg, setReportMsg] = useState<ChatMessage | null>(null);
 
   // Register for push once the user opens a chat (no-ops until EAS is set up).
   useEffect(() => {
@@ -184,6 +186,7 @@ export default function ChatScreen() {
         row={item}
         sender={senderFor(item.message.sender_id)}
         onDeleteOwn={confirmDelete}
+        onReport={setReportMsg}
       />
     ),
     [senderFor, confirmDelete],
@@ -195,6 +198,14 @@ export default function ChatScreen() {
   return (
     <TripThemeProvider tripId={id}>
       <Stack.Screen options={{ title: headerTitle }} />
+      <ReportSheet
+        visible={!!reportMsg}
+        onClose={() => setReportMsg(null)}
+        subjectKind="message"
+        subjectId={reportMsg?.id}
+        subjectUserId={reportMsg?.sender_id}
+      />
+      {/* long-press another member's message to report it (B4) */}
       <KeyboardAvoidingView
         className="flex-1 bg-background"
         behavior={Platform.OS === "ios" ? "padding" : undefined}

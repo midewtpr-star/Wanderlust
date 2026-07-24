@@ -8,12 +8,14 @@ import { AppearanceSettings } from "@/components/settings/appearance";
 import { SkinPicker } from "@/components/settings/skin-picker";
 import { Logo } from "@/components/logo-slot";
 import { useAuth } from "@/lib/auth-provider";
+import { useMyProfile } from "@/hooks/use-profile";
 
 // Profile + Settings (Phase 1 identity/sign-out; Phase 10 appearance controls).
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const { isModerator } = useMyProfile();
   const label = user?.email ?? user?.phone ?? "Signed in";
 
   return (
@@ -68,6 +70,20 @@ export default function ProfileScreen() {
             onPress={() => router.push("/profile-edit")}
           />
         </View>
+
+        {isModerator ? (
+          <Pressable onPress={() => router.push("/moderation")} accessibilityRole="button" accessibilityLabel="Open moderation queue">
+            <Card className="flex-row items-center justify-between active:opacity-90">
+              <View className="flex-1 pr-3">
+                <Text variant="heading">🛡️ Moderation</Text>
+                <Text variant="muted">Review reported content and users</Text>
+              </View>
+              <Text variant="muted" className="text-xl">
+                ›
+              </Text>
+            </Card>
+          </Pressable>
+        ) : null}
 
         <SkinPicker />
 

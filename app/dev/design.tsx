@@ -7,6 +7,7 @@ import { HardShadow } from "@/components/ui/hard-shadow";
 import { Boundary, TripContent } from "@/components/ui/boundary";
 import { WorldMap } from "@/components/passport/world-map";
 import { PersonRow } from "@/components/profile/person-row";
+import { ReportAction } from "@/components/safety/report-sheet";
 import { provenanceLine } from "@/lib/social";
 import { Pop, FadeUp, ScanLine } from "@/components/ui/motion";
 import { VerifiedAnimation } from "@/components/trip/verified-animation";
@@ -166,6 +167,12 @@ export default function DesignHarness() {
             onPress={() => {}}
           />
           <PersonRow name="Sam Rivera" handle={null} subtitle="Request sent" />
+        </View>
+
+        {/* B4 · report affordance (opens the reason sheet) */}
+        <View testID="safety-demo" style={{ flexDirection: "row", gap: 16, alignItems: "center" }}>
+          <RNText style={{ fontFamily: t.fontBody, color: t.text, fontSize: 13 }}>Safety:</RNText>
+          <ReportAction subjectKind="profile" subjectUserId="demo" />
         </View>
 
         {/* machine-readable token dump (for headless verification) */}

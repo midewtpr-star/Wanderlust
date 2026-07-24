@@ -177,7 +177,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const effectiveInk = skin === "editorial" ? ink : tokens.accent;
 
   // One vars() call: the skin's neutral + radius tokens, plus the accent.
-  const rootVars = vars({ ...tokenNeutralVars(tokens), ...accentVars });
+  const cssVarMap = { ...tokenNeutralVars(tokens), ...accentVars };
+  const rootVars = vars(cssVarMap);
+
+  // WEB: also mirror the theme vars onto :root. React Native <Modal> renders in a
+  // portal at the document root — OUTSIDE the themed <View> below — so class-based
+  // vars (e.g. bg-accent-fill on a Button in a sheet) would otherwise fall back to
+  // the global.css defaults. Writing them to documentElement keeps portaled UI on
+  // the live skin × accent. (Native has no CSS vars; this is a no-op there.)
+  useEffect(() => {
+    if (Platform.OS !== "web" || typeof document === "undefined") return;
+    const root = document.documentElement;
+    for (const [k, v] of Object.entries(cssVarMap)) root.style.setProperty(k, String(v));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [skin, scheme, accent, forceOwnAccent]);
 
   return (
     <ThemeContext.Provider

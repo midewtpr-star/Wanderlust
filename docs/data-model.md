@@ -49,6 +49,29 @@ Request / accept / block between two users. **One row per unordered pair** (a fu
 
 > **THE HARD RULE (B3).** A connection widens **profile** visibility only; it **never** grants trip access. Trip content (chat/money/media/journal/member list) stays gated on `trip_members`, unchanged. A **block** hides both users on world surfaces, both directions; the stronger *block-inside-a-shared-trip* guarantee + reports + age-gate are **Phase 21 (Safety)**. Proven by `__tests__/social.test.tsx`.
 
+## reports  +  moderation_actions  — safety & moderation (Release 2 · B4)
+Report any user-generated surface; moderators review + act. Migration `20260722260001_safety.sql`.
+
+**reports** (insert-your-own; **moderator-read** only)
+
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid PK | |
+| `reporter_id` | uuid FK → profiles(id) | = `auth.uid()` on insert. |
+| `subject_kind` | text | CHECK in (`profile`,`message`,`trip`,`activity`,`journal_entry`,`outfit`,`other`). |
+| `subject_id` | uuid null | The reported row (null for a whole-profile/other report). |
+| `subject_user_id` | uuid null FK → profiles(id) | The user responsible (drives suspend). |
+| `reason` | text | CHECK in (`spam`,`harassment`,`inappropriate`,`impersonation`,`underage`,`scam`,`safety`,`other`). |
+| `detail` | text null | |
+| `status` | text | CHECK in (`open`,`reviewing`,`actioned`,`dismissed`), default `open`. |
+| `created_at` / `resolved_at` / `resolved_by` | | |
+
+**moderation_actions** (moderator-read audit trail): `moderator_id`, `report_id`, `target_user_id`, `action` CHECK in (`dismiss`,`remove_content`,`suspend_user`,`unsuspend_user`), `note`, `created_at`.
+
+*RPCs: `submit_report(...)` (rate-limited 20/hr), `set_age_band(dob)` (stores `adult|minor` only — **DOB never persisted**), `moderate_resolve_report(action)` + `list_open_reports()` (moderator-only via `is_moderator()`), helpers `is_moderator` / `is_suspended`.*
+
+> **As built (B4).** `profiles` gained **`age_band`** (`adult|minor`), **`age_set_at`**, **`is_moderator`** (bool, flipped by an operator), **`suspended_at`**. A **trigger forces a minor private**; `profiles_select`'s public branch + `search_profiles` **exclude minors, suspended, and no-age** users (so under-18 is never public/discoverable — enforced in trigger + policy + client `lib/safety.ts`, pinned by `__tests__/safety.test.tsx`). **Block invisibility extended to chat** (`messages_select` adds `and not has_block_with(sender_id)`). **Rate limits:** `send_connection_request` (30/hr + suspension gate) and a `messages` BEFORE-INSERT trigger (20/60s + suspension gate). Safety governs world surfaces + the age/block/report machinery only — **trip content stays gated on membership**.
+
 ## trips
 Central object + tenancy unit (foundation §5).
 
@@ -444,6 +467,9 @@ Nearby events + things-to-do are **fetched on demand from an external places/eve
 
 - **profiles:** writable only by self. Readable by: self, a co-trip-member (trip function), or — when not blocked either way — a **public** profile or an **accepted connection** (B3 visibility rule).
 - **connections:** read-only to the two parties; **all writes via SECURITY DEFINER RPCs** (no direct write policy). A block hides both users on world surfaces, both directions (B3). Connections never grant trip access.
+- **reports:** **insert-your-own**; SELECT/UPDATE **moderator-only** (`is_moderator()`); submit via the rate-limited `submit_report` RPC (B4).
+- **moderation_actions:** SELECT **moderator-only**; written only by the `moderate_resolve_report` RPC (B4).
+- **messages (B4 update):** read gains `and not has_block_with(sender_id)` — a blocked pair never see each other's messages; a BEFORE-INSERT trigger rate-limits + blocks suspended senders.
 - **trips / trip_members / rsvps / invites / airbnb_options / votes / money_pools / contributions / activities / activity_media / member_steps / trip_recap / recap_stats:** membership-gated; admin-elevated where noted.
 - **trip_admins:** readable by members; writes admin-only **and** capped at 3 by trigger (D8).
 - **invites (accept):** token-holders may read the invite and insert their **own** membership — a narrow exception.

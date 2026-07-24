@@ -9,6 +9,7 @@ import { Boundary } from "@/components/ui/boundary";
 import { useTheme } from "@/lib/theme-provider";
 import { useProfileView } from "@/hooks/use-profile-view";
 import { provenanceLine } from "@/lib/social";
+import { ReportAction } from "@/components/safety/report-sheet";
 import type { PassportSummary } from "@/types";
 
 // A compact outward passport summary (the B2 snapshot — aggregates only, no trip
@@ -128,13 +129,16 @@ export default function ProfileScreen() {
                 {state === "blocked" ? (
                   <Button label="Unblock" variant="outline" onPress={unblock} />
                 ) : null}
-                {state !== "blocked" ? (
-                  <Pressable onPress={block} accessibilityRole="button" className="active:opacity-70 self-center">
-                    <Text variant="caption" style={{ textDecorationLine: "underline" }}>
-                      Block this person
-                    </Text>
-                  </Pressable>
-                ) : null}
+                <View className="flex-row justify-center gap-6 pt-1">
+                  {state !== "blocked" ? (
+                    <Pressable onPress={block} accessibilityRole="button" className="active:opacity-70">
+                      <Text variant="caption" style={{ textDecorationLine: "underline" }}>
+                        Block
+                      </Text>
+                    </Pressable>
+                  ) : null}
+                  <ReportAction subjectKind="profile" subjectUserId={id} />
+                </View>
               </View>
             ) : (
               <Button label="Edit your profile" variant="outline" onPress={() => router.push("/profile-edit")} />

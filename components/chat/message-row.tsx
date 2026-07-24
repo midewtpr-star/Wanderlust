@@ -27,10 +27,12 @@ function MessageRowBase({
   row,
   sender,
   onDeleteOwn,
+  onReport,
 }: {
   row: ChatRow;
   sender: Sender;
   onDeleteOwn: (m: ChatMessage) => void;
+  onReport?: (m: ChatMessage) => void;
 }) {
   const {
     message,
@@ -70,10 +72,13 @@ function MessageRowBase({
           ) : null}
 
           <Pressable
-            onLongPress={mine ? () => onDeleteOwn(message) : undefined}
+            onLongPress={
+              mine ? () => onDeleteOwn(message) : onReport ? () => onReport(message) : undefined
+            }
             delayLongPress={350}
-            disabled={!mine}
-            accessibilityRole={mine ? "button" : "text"}
+            disabled={mine ? false : !onReport}
+            accessibilityRole={mine || onReport ? "button" : "text"}
+            accessibilityHint={mine ? "Long-press to remove" : onReport ? "Long-press to report" : undefined}
             className={cn(
               "rounded-2xl px-3.5 py-2",
               // Mine = accent fill (never invisible via border-primary); others =
