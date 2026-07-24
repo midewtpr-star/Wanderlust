@@ -163,6 +163,15 @@
 **Depends on:** Phases 10 (+ optional 11).
 **Done when:** web is live on Vercel; iOS/Android builds produced via EAS and submitted; production Supabase verified. **(Repo is ready for all three; execution is yours.)**
 
+### Release 2 deploy hardening ✅ (in the repo, 2026-07-24)
+Re-ran the deploy pipeline with the **social layer present** (stricter store path). Fixed + verified:
+- **RLS on all 36 tables** (incl. every Release-2 table); **6 Edge Functions** (added `delete-account`); **22 migrations**; secrets still absent from client/repo/**history**.
+- **Silent blocks** (no distinguishable error/notification), **in-app account deletion** (Apple req; anonymises shared contributions, hands off hosted trips), **under-18 off discovery**.
+- **WCAG AA re-verified** across 3 skins × 2 modes × 10 accents × destination themes (all pass — accent-as-text clamped, near-white/pale-yellow clamp confirmed).
+- **expo-audio ships with no microphone permission**; honest photo/camera/location strings (**Nearby ≠ device GPS**); **music ships OFF** until a cleared catalogue is configured; **UGC surfacing** (report/block/moderation/contact/community + privacy links) + **OFL acknowledgements** in Settings.
+
+**Still pending you (new for Release 2, in `docs/deploy.md` STEP 0b + 4):** host the **community policy** (`docs/safety-policy.md` → `/community`) + **privacy policy** (`PRIVACY.md` → `/privacy`) at real URLs; set `EXPO_PUBLIC_SUPPORT_EMAIL`; answer the **UGC age-rating** + **Data Safety** forms (paste-ready table in `deploy.md`); deploy the `delete-account` edge function (in the STEP 1 list).
+
 ---
 
 # Release 2 — Travel identity + social layer

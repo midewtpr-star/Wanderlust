@@ -15,8 +15,9 @@
 
 Audited and fixed before shipping:
 
-- **RLS:** every one of the **27 tables** has Row-Level Security **enabled** (verified: the list
-  of created tables equals the list of RLS-enabled tables). Policies are membership-gated via
+- **RLS:** every one of the **36 tables** (incl. the Release-2 set: journal_entries, journal_media,
+  passport_stats, connections, reports, moderation_actions, discovery_optins, share_audio, landmarks)
+  has Row-Level Security **enabled** (verified: created-tables list == RLS-enabled list). Policies are membership-gated via
   `is_trip_member` / `is_trip_admin`; private data (personal safes, flight itineraries) is
   self/admin-only. Nothing is directly world-readable — the only `anon` grants are the four
   invite-preview helper functions (`trip_preview`, `is_trip_member`, `is_trip_admin`,
@@ -36,6 +37,47 @@ Audited and fixed before shipping:
 
 Fixes made this phase: added ESLint config + `lint`/`build:web` scripts; removed 3 unused
 imports + 2 stale lint directives; broadened `.gitignore` (`.env.*`, `secrets/`, `dist-native/`).
+
+---
+
+## STEP 0b — Release 2 hardening (social layer present → stricter store path) ✅ (done)
+
+Re-audited with the Release-2 social layer live. Fixed in-repo (commit "Deploy hardening"):
+
+- **Silent blocks.** `send_connection_request` no longer raises a distinguishable `'blocked'`
+  error (it returns silently); `connection_state_with` returns `'none'` instead of
+  `'blocked_by_them'`. A block is now indistinguishable from a private profile — no notification,
+  presence signal, or error reveals it. Bidirectional via `has_block_with`, and extended into chat
+  (`messages_select`).
+- **In-app account deletion (Apple requirement).** Settings → **Delete account** → confirm screen →
+  `delete-account` edge function: hands off hosted trips to another member, purges private storage,
+  `admin.deleteUser` (cascades profile, connections, journal, passport, nearby, reports). Shared-pool
+  **contributions are anonymised, not deleted** (`ON DELETE SET NULL`), so the group's money-in total
+  stays correct.
+- **Under-18** excluded from discovery + public visibility (trigger + policy + client), enforced.
+- **WCAG AA** re-verified across **3 skins × 2 modes × 10 accent presets × destination themes** —
+  all pass. Accent-as-text is clamped to AA (`readableInk`); destination clamp handles pale-yellow +
+  near-white. Collage keeps text-labelled equivalents; 44pt targets; reduce-motion honoured.
+- **Permissions:** `expo-audio` ships with **no microphone** permission (preview playback only);
+  photo/camera strings cover trip media; **location is opt-in mileage only and never shared** —
+  **Nearby uses the trip's public destination (a coarse geohash), not device GPS.**
+- **Music** ships **OFF** — the picker is hidden until an operator configures a **cleared** catalogue
+  (`EXPO_PUBLIC_MUSIC_PROVIDER`). Do not enable it without a licence covering social redistribution.
+- **UGC surfacing (Apple):** in-app **report** (every profile + chat message), **block**, a
+  **moderation** queue, an **age gate**, and a **contact address** + **community guidelines** +
+  **privacy** links in Settings → *Legal & safety*. Bundled-font **OFL notices** ship in
+  *Acknowledgements*.
+
+### 🛑 STOP (you): host the two policy pages + set the contact address
+
+The store review needs a **community policy** and a **privacy policy** live at real URLs, and the app
+links to them:
+
+- Host **`docs/safety-policy.md`** at `‹your-web-origin›/community` and **`PRIVACY.md`** at
+  `‹your-web-origin›/privacy` (e.g. add `/community` + `/privacy` routes, or static pages).
+- Set **`EXPO_PUBLIC_SUPPORT_EMAIL`** (the reports contact) and **`EXPO_PUBLIC_WEB_URL`** in Vercel
+  (web) + EAS env (native). Until set, the app defaults the links to the current origin and
+  `support@trippl.app`.
 
 ---
 
@@ -69,12 +111,13 @@ supabase link --project-ref <PROD_PROJECT_REF>
 #    Release-2 set: passport, profiles/connections, safety, nearby, share_music)
 supabase db push
 
-# 3) Deploy the 5 Edge Functions to prod
+# 3) Deploy the 6 Edge Functions to prod
 supabase functions deploy verify-flight
 supabase functions deploy nearby-ideas
 supabase functions deploy notify-message
 supabase functions deploy link-preview
 supabase functions deploy generate-destination-theme
+supabase functions deploy delete-account          # Release 2 — in-app account deletion
 
 # 4) Set the Edge Function secrets in PROD (server-only; never in the app)
 supabase secrets set ANTHROPIC_API_KEY=sk-ant-...    # verify-flight + generate-destination-theme
@@ -235,6 +278,33 @@ verify on real devices, then promote to production review.
 | App icon | Already generated (`assets/images/icon.png`). |
 | Data-safety / privacy questionnaire | Both stores require it — fill from the **Data disclosure** table below. |
 
+### 🛑 Release 2 — the stricter User-Generated-Content path (social layer present)
+
+Because Trippl now has profiles, connections, chat, journal, and discovery, both stores apply
+their **UGC rules**. Everything they require **already exists in the build** — here's where, so you
+can point to it in review:
+
+| Store requirement | Where it lives in Trippl |
+|---|---|
+| **A way to report content/users** | `<ReportSheet>` on every profile + long-press any chat message (rate-limited). |
+| **A way to block abusive users** | Block on any profile; bidirectional + **silent**; hides them on world surfaces + in chat. |
+| **A content-filtering / moderation method** | `reports` + `moderation_actions` + the moderator queue (`app/moderation`, suspend/remove/dismiss). |
+| **Published contact for reports** | Settings → *Legal & safety* → "Report a problem or abuse" (`EXPO_PUBLIC_SUPPORT_EMAIL`). |
+| **Community policy live at a URL** | `docs/safety-policy.md` → host at `/community` (linked from Settings). |
+| **Age gate / no under-18 in discovery** | Age band (birthdate never stored); minors forced private + off discovery, enforced in DB + client. |
+
+- **Apple age rating questionnaire:** answer **Yes** to *user-generated content* and *unrestricted
+  web access* only if you keep any outbound links (invite links are first-party). With UGC + social,
+  expect a **12+ / 17+** rating — answer honestly; the moderation + block + report features are your
+  justification for approval.
+- **Google Play:** complete the **UGC declaration** and the **Data Safety** form (use the table
+  above). Declare the in-app reporting + moderation.
+- **Location disclosure (both):** state that location is **opt-in, in-use only, for trip mileage**,
+  and that **Nearby never uses or shares precise location** (it matches on the trip's public
+  destination). Mark Location **optional**.
+- **Music:** submit with the picker **off** (default). Do **not** enable a catalogue without a
+  licence covering **social redistribution** of exports; rights metadata is retained per track.
+
 ### 🚨 Privacy policy is REQUIRED
 
 Trippl collects sensitive data, so both stores require a published privacy policy **and** the
@@ -267,7 +337,13 @@ launch). Answer the forms as:
 | **Purchases / payment info** | **No** | — | — | **Ledger only — Trippl never processes real payments or collects card data.** |
 | **Financial info (amounts logged)** | Yes | Yes | App functionality | User-entered contribution/savings **numbers** in the ledger — not payment instruments. |
 | **Contacts** | **No** | — | — | Invites are link-based; no address-book access. |
+| **Profile info (handle, bio, home city, avatar)** | Yes | Yes | App functionality | Release 2 social profile; **private by default**, public is an explicit adult-only choice. |
+| **Connections / social graph** | Yes | Yes | App functionality | Who you connect with; mutual-consent; never grants trip access. |
+| **User content — journal, passport** | Yes | Yes | App functionality | Journal entries + media (member-only); passport stats derived from your own trips. |
+| **Age band** | Yes | Yes | App functionality, safety | Adult / minor only — **the birthdate itself is never stored**; used to keep under-18 off discovery. |
 | **Usage data / diagnostics** | Minimal | Yes | App functionality, security | Standard host/server logs (Supabase/Vercel); no analytics SDK. |
+
+**Release 2 notes for both forms:** **Nearby Travelers collects NO device/precise location** — it matches on the trip's *public destination* (a coarse ~150 km geohash), so precise location is never shared with other users. Music-on-shares ships **off** (no catalogue). **In-app account deletion** exists (Settings → Delete account), so answer **"users can delete their account/data" = Yes**. Still **no analytics/ad SDKs → no tracking, nothing "sold" or "shared"** in the store sense.
 
 **Apple specifics:** "Data used to track you" → **None**. Data linked to you → the rows above.
 Third-party partners → service providers only (Supabase, Anthropic, Google Places, Twilio, Expo,
@@ -314,6 +390,34 @@ Safety rules: never edit a migration that has already run (add a new one); avoid
 without a backfill/rollback plan; RLS changes should be reviewed against `docs/data-model.md`;
 every migration in this repo is idempotent and safe to re-run.
 
+**Rotate a leaked key:**
+```sh
+# Server secrets live ONLY in Supabase Edge Function secrets + Vercel/EAS env — never in the app
+# bundle or git (verified). To rotate one:
+# 1. Revoke + reissue the key at its source (Anthropic / Google Cloud / Supabase).
+# 2. Update it everywhere it's set:
+supabase secrets set ANTHROPIC_API_KEY=<new>        # (or GOOGLE_PLACES_API_KEY)
+#    Vercel: Project → Settings → Environment Variables → edit → redeploy.
+#    EAS:    eas env:update --environment production --name <NAME> --value <new>
+# 3. The Supabase anon key is public-by-design (RLS protects data); rotate it only if the
+#    service_role key leaked — reissue in Supabase → API, then update EXPO_PUBLIC_SUPABASE_ANON_KEY
+#    in Vercel + EAS. The service_role key must NEVER appear in the app or repo.
+```
+
+**Roll back a bad release:**
+```sh
+# Web (Vercel): Deployments → pick the previous good deploy → "Promote to Production" (instant).
+# Native OTA:  re-point the channel at the last good update (or publish a revert):
+eas update --branch production --message "Roll back to <good>"   # or use the EAS dashboard to
+#            set the channel to a prior update group. Reaches installs on next launch.
+# Native binary (a bad *store* build): submit the previous build, or expedite a fix build. The
+#   already-shipped binary can't be pulled, but an OTA update can neutralise a JS-level regression.
+# Backend (a bad migration): roll FORWARD with a new corrective migration (migrations are
+#   append-only). If data was damaged, restore from PITR/backup (Step: apply a migration safely).
+```
+
 **Rule of thumb:** JS/UI fix → `eas update` + Vercel redeploy. Native/permission/version change →
 new `eas build` + `eas submit`. Schema/function change → new migration → `supabase db push` /
-`functions deploy` (test on dev first).
+`functions deploy` (test on dev first). **EAS Update channels** (`production` / `preview`) are wired
+via `eas update:configure` + `runtimeVersion` — JS + asset changes ship OTA; **native changes (new
+deps, permissions, icon, app version, the `expo-audio` addition) require a new build + store review**.
