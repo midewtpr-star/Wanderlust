@@ -78,6 +78,8 @@ function RootNavigator() {
       <Stack.Screen name="profile-edit" options={{ headerShown: true, title: "Edit profile" }} />
       <Stack.Screen name="moderation" options={{ headerShown: true, title: "Moderation" }} />
       <Stack.Screen name="nearby/[id]" options={{ headerShown: true, title: "Nearby travelers" }} />
+      <Stack.Screen name="delete-account" options={{ headerShown: true, title: "Delete account" }} />
+      <Stack.Screen name="acknowledgements" options={{ headerShown: true, title: "Acknowledgements" }} />
       <Stack.Screen name="dev/design" options={{ headerShown: true, title: "Design tokens" }} />
     </Stack>
   );

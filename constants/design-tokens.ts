@@ -1,4 +1,4 @@
-import { contrastOn, fontFamily } from "@/constants/theme";
+import { contrastOn, fontFamily, readableInk } from "@/constants/theme";
 import { hexToHslTriplet } from "@/lib/theme-color";
 import type { Skin } from "@/constants/skins";
 
@@ -148,8 +148,9 @@ export function resolveTheme(
   if (skin === "editorial") {
     return {
       ...base,
-      accent: cobalt,
-      accentInk: contrastOn(cobalt), // AA-safe (script hardcodes #fff; we contrast-check)
+      // accent-as-ink (text/stroke) clamped to AA on the ground; the fill stays raw.
+      accent: readableInk(cobalt, n.bg, 4.5),
+      accentInk: contrastOn(cobalt), // label on the raw fill (contrast-checked)
       accentBg: cobalt,
       ground: { kind: "solid", color: n.bg },
       screenBase: n.bg,
@@ -183,7 +184,7 @@ export function resolveTheme(
         };
     return {
       ...base,
-      accent,
+      accent: readableInk(accent, n.bg, 4.5), // AA as ink; fill stays raw
       accentInk: "#FFFFFF",
       accentBg: accent,
       ground: { kind: "grid", base: gridBase, line, cell: 22, wash },
@@ -208,7 +209,7 @@ export function resolveTheme(
     ...base,
     text: "#EFE7DB",
     dim: "rgba(239,231,219,0.72)",
-    accent,
+    accent: readableInk(accent, field, 4.5), // AA on the cobalt field
     accentInk: field,
     accentBg: "#EFE7DB",
     ground: { kind: "field", color: field },

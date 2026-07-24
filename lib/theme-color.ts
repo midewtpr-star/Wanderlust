@@ -113,7 +113,9 @@ export function adjustLightnessForContrast(
 ): string {
   const [h, s, l0] = rgbToHsl(...hexToRgb(hex));
   const darken = relLuminance(...hexToRgb(bg)) > 0.5;
-  let l = l0;
+  // Start extremes (near-white / near-black inputs) inside the adjustable range
+  // so even a #FEFEFE-ish primary can be pulled to a readable value.
+  let l = Math.max(0.05, Math.min(0.95, l0));
   const at = (ll: number) => rgbToHex(...hslToRgb(h, s, ll));
   let guard = 0;
   while (contrastRatio(at(l), bg) < target && guard < 120) {

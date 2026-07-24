@@ -77,34 +77,39 @@ const config: ExpoConfig = {
         ],
       },
     ],
-    // Flight itineraries + trip media (D6).
+    // Flight itineraries + trip media (D6, Phase 8, journal).
     [
       "expo-image-picker",
       {
         photosPermission:
-          "Trippl accesses your photos so you can add a trip cover or upload a flight itinerary.",
+          "Trippl accesses your photos so you can add trip photos and videos, a cover image, or a flight itinerary.",
         cameraPermission:
-          "Trippl uses the camera so you can photograph your flight itinerary.",
+          "Trippl uses the camera so you can photograph your flight itinerary or capture trip photos and videos.",
       },
     ],
     [
       "expo-camera",
       {
         cameraPermission:
-          "Trippl uses the camera so you can photograph your flight itinerary.",
+          "Trippl uses the camera so you can photograph your flight itinerary or capture trip photos and videos.",
         recordAudioAndroid: false,
       },
     ],
-    // Miles / places for the post-trip recap (D9).
+    // Opt-in trip-mileage for the post-trip recap (D9). NOTE: Nearby Travelers
+    // does NOT use device location — it matches on the trip's public destination
+    // (a coarse geohash), so location is requested ONLY for recap mileage.
     [
       "expo-location",
       {
         locationWhenInUsePermission:
-          "Trippl uses your location to tally trip miles for your recap.",
+          "Trippl can use your location, only if you opt in, to tally the miles you travelled for your trip recap. It is never shared with other travelers.",
       },
     ],
-    // Video playback for activity media (Phase 8).
+    // Video playback for activity/journal media (Phase 8).
     "expo-video",
+    // Audio PREVIEW playback for the (optional, operator-configured) music picker
+    // (B6). Playback only — Trippl never records audio, so no microphone permission.
+    ["expo-audio", { microphonePermission: false }],
     // Push notifications (D10).
     "expo-notifications",
   ],

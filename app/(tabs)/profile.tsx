@@ -1,4 +1,4 @@
-import { View, ScrollView, Pressable } from "react-native";
+import { View, ScrollView, Pressable, Linking, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Text } from "@/components/ui/text";
@@ -9,6 +9,47 @@ import { SkinPicker } from "@/components/settings/skin-picker";
 import { Logo } from "@/components/logo-slot";
 import { useAuth } from "@/lib/auth-provider";
 import { useMyProfile } from "@/hooks/use-profile";
+
+// Contact address for content reports (Apple UGC requirement). Operator-set at
+// build time; a sensible default until then.
+const SUPPORT_EMAIL = process.env.EXPO_PUBLIC_SUPPORT_EMAIL ?? "support@trippl.app";
+
+// Open a hosted policy page. On web, resolve against the current origin; on
+// native, use the configured web origin (EXPO_PUBLIC_WEB_URL).
+function openPolicy(path: "community" | "privacy") {
+  const base =
+    Platform.OS === "web" && typeof window !== "undefined"
+      ? window.location.origin
+      : process.env.EXPO_PUBLIC_WEB_URL ?? "";
+  if (base) Linking.openURL(`${base}/${path}`);
+}
+
+// A tappable settings row with a divider (44pt target).
+function SettingsLink({
+  label,
+  onPress,
+  destructive,
+  last,
+}: {
+  label: string;
+  onPress: () => void;
+  destructive?: boolean;
+  last?: boolean;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      className={`flex-row items-center justify-between py-3 active:opacity-70 ${last ? "" : "border-b border-border"}`}
+      style={{ minHeight: 44 }}
+    >
+      <Text style={destructive ? { color: "#DC2626", fontWeight: "600" } : undefined}>{label}</Text>
+      <Text variant="muted" className="text-lg">
+        ›
+      </Text>
+    </Pressable>
+  );
+}
 
 // Profile + Settings (Phase 1 identity/sign-out; Phase 10 appearance controls).
 export default function ProfileScreen() {
@@ -88,6 +129,22 @@ export default function ProfileScreen() {
         <SkinPicker />
 
         <AppearanceSettings />
+
+        {/* Legal & safety — reporting + block live on every profile/message; these
+            are the published policy links + contact + account controls (UGC). */}
+        <View className="gap-2">
+          <Text variant="heading">Legal &amp; safety</Text>
+          <Card className="gap-0">
+            <SettingsLink label="Community guidelines" onPress={() => openPolicy("community")} />
+            <SettingsLink label="Privacy policy" onPress={() => openPolicy("privacy")} />
+            <SettingsLink
+              label="Report a problem or abuse"
+              onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}?subject=Trippl%20report`)}
+            />
+            <SettingsLink label="Acknowledgements" onPress={() => router.push("/acknowledgements")} />
+            <SettingsLink label="Delete account" destructive onPress={() => router.push("/delete-account")} last />
+          </Card>
+        </View>
 
         <Button label="Sign out" variant="outline" onPress={signOut} />
 

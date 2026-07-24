@@ -209,33 +209,40 @@ export default function RecapScreen() {
               disabled={busy !== null || stats.loading}
               onPress={generate}
             />
-            <Button
-              label={
-                music.current ? `♪ Music · ${music.current.title}` : "Add music (optional)"
-              }
-              variant="outline"
-              disabled={busy !== null}
-              onPress={() => setShowMusic(true)}
-            />
+            {/* Music is optional and ships OFF until the operator configures a
+                cleared catalogue (B6 / R2-6). With no provider, nothing
+                music-related shows and the recap simply exports without audio. */}
+            {music.configured ? (
+              <>
+                <Button
+                  label={music.current ? `♪ Music · ${music.current.title}` : "Add music (optional)"}
+                  variant="outline"
+                  disabled={busy !== null}
+                  onPress={() => setShowMusic(true)}
+                />
+                {music.current ? (
+                  <Text variant="muted" className="text-center text-xs">
+                    Music is saved for video recaps. The image export shares without audio.
+                  </Text>
+                ) : null}
+              </>
+            ) : null}
             <Button
               label={busy === "share" ? "Exporting…" : "Share / download recap"}
               variant="secondary"
               disabled={busy !== null}
               onPress={share}
             />
-            {music.current ? (
-              <Text variant="muted" className="text-center text-xs">
-                Music is saved for video recaps. The image export shares without audio.
-              </Text>
+            {music.configured ? (
+              <MusicPicker
+                visible={showMusic}
+                onClose={() => setShowMusic(false)}
+                provider={music.provider}
+                current={music.current}
+                onPick={music.setMusic}
+                onRemove={music.clearMusic}
+              />
             ) : null}
-            <MusicPicker
-              visible={showMusic}
-              onClose={() => setShowMusic(false)}
-              provider={music.provider}
-              current={music.current}
-              onPick={music.setMusic}
-              onRemove={music.clearMusic}
-            />
             {recap.recap?.generated_at ? (
               <Text variant="muted" className="text-center text-xs">
                 Last generated {formatDateRange(

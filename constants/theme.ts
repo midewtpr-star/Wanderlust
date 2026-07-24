@@ -77,12 +77,68 @@ function rgb(hex: string): [number, number, number] {
   ];
 }
 
+// --- WCAG contrast helpers (self-contained so this leaf module needs no imports;
+// the destination-theme path has its own copy in lib/theme-color.ts). ---
+function relLum([r, g, b]: [number, number, number]): number {
+  const f = (c: number) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+}
+function ratio(a: string, b: string): number {
+  const l1 = relLum(rgb(a)),
+    l2 = relLum(rgb(b));
+  const [hi, lo] = l1 >= l2 ? [l1, l2] : [l2, l1];
+  return (hi + 0.05) / (lo + 0.05);
+}
+function rgbToHsl([r, g, b]: [number, number, number]): [number, number, number] {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+  let h = 0, s = 0; const l = (mx + mn) / 2; const d = mx - mn;
+  if (d) {
+    s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+    h = mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    h *= 60;
+  }
+  return [h, s, l];
+}
+function hslToHex(h: number, s: number, l: number): string {
+  h = ((h % 360) + 360) % 360;
+  const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = l - c / 2;
+  let r = 0, g = 0, b = 0;
+  if (h < 60) [r, g, b] = [c, x, 0]; else if (h < 120) [r, g, b] = [x, c, 0];
+  else if (h < 180) [r, g, b] = [0, c, x]; else if (h < 240) [r, g, b] = [0, x, c];
+  else if (h < 300) [r, g, b] = [x, 0, c]; else [r, g, b] = [c, 0, x];
+  const hx = (v: number) => Math.max(0, Math.min(255, Math.round((v + m) * 255))).toString(16).padStart(2, "0");
+  return `#${hx(r)}${hx(g)}${hx(b)}`.toUpperCase();
+}
+
 // Readable foreground (black/white) for text/icons sitting ON the accent fill.
+// Prefer white (the conventional look on colored buttons); fall back to black
+// only when white wouldn't meet WCAG AA for large text (≥3:1) — e.g. on green.
 export function contrastOn(hex: string): string {
   if (hex.replace("#", "").length < 6) return "#FFFFFF";
-  const [r, g, b] = rgb(hex);
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.6 ? "#000000" : "#FFFFFF";
+  return ratio("#FFFFFF", hex) >= 3.0 ? "#FFFFFF" : "#000000";
+}
+
+// Clamp an accent used as INK (text / stroke / small graphics) so it meets a
+// readable contrast on `bg`, preserving hue + saturation (light bg → darken,
+// dark bg → lighten). Vivid picker accents (yellow/green/…) that would be
+// illegible as text on white are darkened to AA; already-fine accents pass
+// through unchanged. Fills stay raw — their label uses contrastOn().
+export function readableInk(hex: string, bg: string, target = 4.5): string {
+  if (hex.replace("#", "").length < 6) return hex;
+  if (ratio(hex, bg) >= target) return hex;
+  const [h, s, l0] = rgbToHsl(rgb(hex));
+  const darken = relLum(rgb(bg)) > 0.5;
+  let l = Math.max(0.05, Math.min(0.95, l0)), guard = 0;
+  while (ratio(hslToHex(h, s, l), bg) < target && guard < 120) {
+    l += darken ? -0.02 : 0.02;
+    if (l <= 0.04 || l >= 0.96) break;
+    guard++;
+  }
+  return hslToHex(h, s, Math.max(0.05, Math.min(0.95, l)));
 }
 
 // Is the accent essentially the current background (e.g. White accent in light,
@@ -112,7 +168,10 @@ export function resolveAccentVars(
   if (isNearBackground(raw, scheme)) {
     return { fill: "transparent", ink: text, fg: text }; // outlined / inverse
   }
-  return { fill: raw, ink: raw, fg: contrastOn(raw) }; // solid
+  // Solid: the fill stays the raw accent (its label uses fg=contrastOn), but the
+  // INK (accent-as-text / stroke) is clamped to AA against the bg so a vivid light
+  // accent (yellow, green, …) stays legible as accent-colored text.
+  return { fill: raw, ink: readableInk(raw, NEUTRALS[scheme].bg, 4.5), fg: contrastOn(raw) };
 }
 
 export function isValidHex(s: string): boolean {
