@@ -280,7 +280,8 @@ export type TripStats = {
   verified_members: number; // fully-verified members
   steps_completed: number; // total completed member_steps
   confirmed_travelers: number; // members with travel_proof done
-  total_media: number;
+  total_media: number; // activity + journal photos/videos
+  journal_entries: number; // Release 2: diary entries written
   trip_days: number;
 };
 
@@ -403,4 +404,49 @@ export type BringItemInput = {
   priority?: BringPriority;
   quantity?: number | null;
   notes?: string | null;
+};
+
+// --- Release 2 · Phase 18: Trip Journal ---
+
+export type JournalMediaType = "photo" | "video";
+
+// A row of `journal_media` (url is a PRIVATE trip-media storage path).
+export type JournalMedia = {
+  id: ID;
+  entry_id: ID;
+  trip_id: ID;
+  uploaded_by: ID | null;
+  media_type: JournalMediaType;
+  url: string;
+  position: number;
+  created_at: string;
+};
+
+// A row of `journal_entries`. `body` may be "" — media-only entries are valid
+// (the app requires text OR at least one media item).
+export type JournalEntry = {
+  id: ID;
+  trip_id: ID;
+  author_id: ID;
+  body: string;
+  day: string | null; // ISO date (YYYY-MM-DD) or null (unpinned)
+  activity_id: ID | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type JournalEntryInput = {
+  body: string;
+  day?: string | null;
+  activity_id?: ID | null;
+};
+
+// Media with a resolved short-lived signed URL (private trip-media bucket).
+export type JournalMediaWithUrl = JournalMedia & { signedUrl: string | null };
+
+// A journal entry composed with its author + media, for the timeline + detail.
+export type JournalEntryView = JournalEntry & {
+  author_name: string | null;
+  author_avatar: string | null;
+  media: JournalMediaWithUrl[];
 };

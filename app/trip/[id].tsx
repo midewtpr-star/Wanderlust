@@ -23,6 +23,7 @@ import { DistanceOptIn } from "@/components/trip/distance-opt-in";
 import { ChatEntry } from "@/components/chat/chat-entry";
 import { OutfitEntry } from "@/components/outfits/outfit-entry";
 import { BringEntry } from "@/components/bring/bring-entry";
+import { JournalCard } from "@/components/journal/journal-card";
 import { TripThemeProvider } from "@/lib/trip-theme";
 import { SkinTripHeader } from "@/components/trip/skin-trip-header";
 import { TripThemeSection } from "@/components/trip/trip-theme-section";
@@ -36,6 +37,7 @@ import { useMemberVerification } from "@/hooks/use-member-verification";
 import { useUnreadCounts } from "@/hooks/use-unread";
 import { useOutfitCount } from "@/hooks/use-outfits";
 import { useBringCount } from "@/hooks/use-bring-list";
+import { useJournalCount } from "@/hooks/use-journal";
 import type { ActivityInput, RsvpStatus } from "@/types";
 
 export default function TripDetailScreen() {
@@ -50,14 +52,16 @@ export default function TripDetailScreen() {
   const { counts: unreadCounts, refresh: refreshUnread } = useUnreadCounts();
   const { count: outfitCount, refresh: refreshOutfitCount } = useOutfitCount(id);
   const { count: bringCount, refresh: refreshBringCount } = useBringCount(id);
+  const { count: journalCount, refresh: refreshJournalCount } = useJournalCount(id);
   // Refresh the entry badges whenever the screen refocuses (e.g. returning from
-  // the chat, the outfit board, or the bring list).
+  // the chat, the outfit board, the bring list, or the journal).
   useFocusEffect(
     useCallback(() => {
       refreshUnread();
       refreshOutfitCount();
       refreshBringCount();
-    }, [refreshUnread, refreshOutfitCount, refreshBringCount]),
+      refreshJournalCount();
+    }, [refreshUnread, refreshOutfitCount, refreshBringCount, refreshJournalCount]),
   );
   const [inviteOpen, setInviteOpen] = useState(false);
   // Bumped when travel proof or a money step completes, so the checklist +
@@ -172,6 +176,10 @@ export default function TripDetailScreen() {
             <BringEntry
               count={bringCount}
               onPress={() => router.push(`/bring/${trip.id}`)}
+            />
+            <JournalCard
+              count={journalCount}
+              onPress={() => router.push(`/journal/${trip.id}`)}
             />
           </View>
 

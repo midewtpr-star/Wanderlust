@@ -207,3 +207,31 @@
 **Consequences.** Policies are per-table/per-operation and must be written carefully; the admin cap needs a trigger, not just a policy (D8). Private tables (safes, itineraries) get stricter self/admin policies.
 
 **Revisit triggers.** A cross-trip feature (e.g. a user's global feed) → carefully-scoped views, never a blanket-open policy.
+
+---
+
+# Release 2 — Travel identity & social layer
+
+> New decisions introduced by the six-phase Release 2 build (Journal → Passport → Profiles/Connections → Safety/Moderation → Nearby Travelers → Music). Recorded here as they're built; **to be indexed into `foundation.md §7`** as the D-set extends (per this file's authority rule, `foundation.md` remains the owner of the decision set). Keyed `R2-n` until numbered.
+
+## R2-0 — Release 2 is sequenced AFTER Release 1 goes live ✅ [LOCKED]
+
+**Context.** Release 2 adds cross-trip identity, discovery, safety/moderation, and licensed audio on top of the trip-planning core.
+
+**Decision.** Release 2 is **built in order, one phase at a time (STOP + verify between)**, and **sequenced to follow Release 1 being deployed and holding real trips** (`docs/deploy.md`). **Phase 18 (Journal)** is trip-scoped content and is safe to build alongside the core loop; **Phases 19–23** (passport, profiles/connections, safety, nearby, music) add outward-facing identity/discovery and **must not be switched on for real users until Release 1 is live and validated** — building the code ahead of go-live is fine, exposing it to real people is not.
+
+**Rationale.** The social/discovery layer only makes sense with a real user base, and safety/moderation must land **before** discovery. Building ahead in the codebase keeps momentum without launching an unvalidated social surface.
+
+**Revisit triggers.** Release 1 live + validated → promote Phases 19–23 from "built" to "enabled."
+
+## R2-1 — Journal reuses trip-media + trip-membership RLS; authorship is personal ✅ [LOCKED]
+
+**Context.** The Trip Journal (Phase 18) is a long-form, mixed-media diary of a trip.
+
+**Decision.** Journal photos/videos **reuse the private `trip-media` bucket** + signed-URL reads and the existing **`is_trip_member` RLS** (D12) — no new bucket. Entries are **personal authorship**: any trip member **reads**, but only the **author** may edit/delete their own entries and media — **no admin override** (unlike the shared bring list, where creator-or-admin can edit). **Text-only and media-only entries are both valid.** Journal entries + media feed the **recap's source data** (D9).
+
+**Rationale.** Reusing the media bucket + membership RLS keeps storage and tenancy consistent (D12) with zero new surface area. A journal is someone's own writing, so admins shouldn't rewrite or delete it; members still see it because it's part of the shared trip story — which is exactly why it also enriches the recap (D9).
+
+**Rejected alternatives.** A new journal-media bucket (needless duplication); admin-editable entries (wrong for personal authorship); requiring text on every entry (blocks pure photo/video dumps).
+
+**Revisit triggers.** Abuse of entries in a shared trip → add report/hide (arrives with Phase 21 moderation, which will cover `journal_entry` + `media` targets).

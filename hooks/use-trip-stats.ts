@@ -27,18 +27,30 @@ export function useTripStats(tripId: string | undefined, trip: Trip | null) {
     setLoading(true);
     setError(null);
     const hasCar = !!trip.car_rental_ref;
-    const [actRes, mediaRes, stepsRes, membersRes, distRes] = await Promise.all([
-      supabase.from("activities").select("id, title, location, url").eq("trip_id", tripId),
-      supabase.from("activity_media").select("activity_id, media_type").eq("trip_id", tripId),
-      supabase.from("member_steps").select("user_id, step, completed").eq("trip_id", tripId),
-      supabase.from("trip_members").select("user_id").eq("trip_id", tripId),
-      supabase.rpc("get_trip_distance_summary", { _trip_id: tripId }),
-    ]);
+    const [actRes, mediaRes, stepsRes, membersRes, distRes, journalRes, jMediaRes] =
+      await Promise.all([
+        supabase.from("activities").select("id, title, location, url").eq("trip_id", tripId),
+        supabase.from("activity_media").select("activity_id, media_type").eq("trip_id", tripId),
+        supabase.from("member_steps").select("user_id, step, completed").eq("trip_id", tripId),
+        supabase.from("trip_members").select("user_id").eq("trip_id", tripId),
+        supabase.rpc("get_trip_distance_summary", { _trip_id: tripId }),
+        // Release 2: the journal feeds the recap's source data.
+        supabase
+          .from("journal_entries")
+          .select("id", { count: "exact", head: true })
+          .eq("trip_id", tripId),
+        supabase
+          .from("journal_media")
+          .select("id", { count: "exact", head: true })
+          .eq("trip_id", tripId),
+      ]);
     if (actRes.error || mediaRes.error || stepsRes.error || membersRes.error) {
       setError("Couldn't compute recap stats.");
       setLoading(false);
       return;
     }
+    const journalEntries = journalRes.count ?? 0;
+    const journalMedia = jMediaRes.count ?? 0;
 
     const activities = (actRes.data ?? []) as {
       id: string;
@@ -93,7 +105,8 @@ export function useTripStats(tripId: string | undefined, trip: Trip | null) {
       verified_members: verified,
       steps_completed,
       confirmed_travelers: confirmed,
-      total_media: media.length,
+      total_media: media.length + journalMedia,
+      journal_entries: journalEntries,
       trip_days: tripDays(trip.start_date, trip.end_date),
     });
     setLoading(false);

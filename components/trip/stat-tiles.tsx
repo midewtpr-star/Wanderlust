@@ -53,6 +53,9 @@ export function StatTiles({ stats }: { stats: TripStats }) {
       <Tile label="Days" value={stats.trip_days} />
       <Tile label="Photos & video" value={stats.total_media} />
       <Tile label="Confirmed" value={stats.confirmed_travelers} />
+      {stats.journal_entries > 0 ? (
+        <Tile label="Journal" value={stats.journal_entries} sub="entries" />
+      ) : null}
     </View>
   );
 }

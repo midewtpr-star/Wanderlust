@@ -47,17 +47,31 @@ export default function RecapScreen() {
     let active = true;
     (async () => {
       if (!id) return;
-      const { data } = await supabase
-        .from("activity_media")
-        .select("url")
-        .eq("trip_id", id)
-        .eq("media_type", "photo")
-        .order("created_at", { ascending: false })
-        .limit(12);
+      // Collage sources photos from BOTH activity media and the trip journal.
+      const [actRes, journalRes] = await Promise.all([
+        supabase
+          .from("activity_media")
+          .select("url, created_at")
+          .eq("trip_id", id)
+          .eq("media_type", "photo")
+          .order("created_at", { ascending: false })
+          .limit(12),
+        supabase
+          .from("journal_media")
+          .select("url, created_at")
+          .eq("trip_id", id)
+          .eq("media_type", "photo")
+          .order("created_at", { ascending: false })
+          .limit(12),
+      ]);
+      const merged = [
+        ...((actRes.data ?? []) as { url: string | null; created_at: string }[]),
+        ...((journalRes.data ?? []) as { url: string | null; created_at: string }[]),
+      ]
+        .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+        .slice(0, 12);
       const urls = await Promise.all(
-        ((data ?? []) as { url: string | null }[]).map((m) =>
-          m.url ? signedTripMediaUrl(m.url) : Promise.resolve(null),
-        ),
+        merged.map((m) => (m.url ? signedTripMediaUrl(m.url) : Promise.resolve(null))),
       );
       if (active) setPhotos(urls.filter((u): u is string => !!u));
     })();

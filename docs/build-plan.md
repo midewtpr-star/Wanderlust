@@ -9,6 +9,8 @@
 
 **App skins ✅ (built 2026-07-23):** three selectable visual versions — **Editorial** (default) / **Collage** / **Poster** — picked per user in Settings, applied app-wide, look-only (IA/nav/behavior unchanged). Token + type + component + hero-ornament layer over the existing system; coexists with light/dark + destination color; AA-safe. Deep per-skin flourishes (object-nav physics, duotone pipeline, full 18-screen matrix) are the documented next iteration. See `docs/design.md → App skins`.
 
+**Release 2 — Travel identity + social layer (in progress):** a **six-phase** build — Journal → Passport → Profiles/Connections → Safety/Moderation → Nearby Travelers → Music-on-shares — built **in order**, each phase gated behind the prior, and **sequenced to follow Release 1 going live** (`docs/deploy.md`). **Phase 18 (Trip Journal) ✅ (built 2026-07-24).** Phases 19–23 ⬜ planned. See the **Release 2** section below.
+
 **Phases 0–10 are ✅ done. Phase 12 (Deploy) is ✅ deploy-ready** — the pre-launch audit, all build/deploy config (`vercel.json`, `eas.json`, `app.config.ts`, env wiring), and the `docs/deploy.md` runbook are complete; **go-live is gated on your accounts** (Supabase prod, Vercel, EAS, Apple, Google — see `docs/deploy.md`). **Phase 11 (Polish) is ⬜ not-started** (states/lint were covered incidentally by the deploy audit). Three added features beyond the core phases — **Trip group chat**, the **Outfit planner**, and the **Shared bring list** — were **explicitly requested and built (2026-07-22)**; see the backlog table below. Update each phase's marker (+ a short note) as work completes.
 
 **How to read this:** MVP phases are in intended build order (per brief). The **keystone unlock** is Phases 1–2 (auth + schema + RLS + trip-create); after that, most feature phases are trip-scoped slices. **Keep MVP tight — the Phase 2 backlog below is a parking lot, not a queue; nothing there is built until explicitly promoted (foundation §4-7, §8).**
@@ -158,6 +160,37 @@
 **Live vs pending:** *code + config = **done***; *web live + iOS/Android in store review = after you complete the gated steps (⏳ store review + SMS-provider lead time).*
 **Depends on:** Phases 10 (+ optional 11).
 **Done when:** web is live on Vercel; iOS/Android builds produced via EAS and submitted; production Supabase verified. **(Repo is ready for all three; execution is yours.)**
+
+---
+
+# Release 2 — Travel identity + social layer
+
+> Built on explicit request as a **six-phase** release, **in order, each phase gated behind the prior**, and **sequenced to follow Release 1 going live** (the gated deploy steps in `docs/deploy.md`). Phase 18 is trip-scoped content (safe to build alongside the core loop, like chat/outfits/bring); **Phases 19–23 add cross-trip identity, discovery, safety, and licensed audio — those especially must not be switched on for real users until Release 1 is deployed and validated.** Build one phase, STOP, verify, then continue.
+
+## Phase 18 — Trip Journal ✅ (2026-07-24)
+**Goal:** a long-form, mixed-media trip diary that also enriches the recap.
+**Deliverables (built):**
+- **Migration** `20260722230001_trip_journal.sql`: `journal_entries` (trip_id, author_id, `body`, `day` nullable, `activity_id` nullable, timestamps) + `journal_media` (entry_id, trip_id, uploaded_by, `media_type` photo|video, `url`, `position`) + indexes + a `set_updated_at` trigger. **RLS:** any trip **member reads**; the **author** inserts/updates/deletes their **own** entries + media (**no admin override** — a journal is personal authorship, unlike the bring list). **Reuses the private `trip-media` bucket** + signed-URL reads (no new bucket).
+- **Types + hooks:** `JournalEntry` / `JournalMedia` / `JournalEntryView` (entry + author + signed media); `useJournal` (timeline + create), `useJournalEntry` (detail + author edit / add / remove media / delete), `useJournalCount` (badge).
+- **UI:** a **composer** (`JournalComposer`) — long-form text **plus multiple photos and videos in one composition**, optional day + activity link; a **timeline** (`app/journal/[id]`) **filterable by day and by activity** (content-driven chips); an **entry detail** (`app/journal-entry/[entryId]`) with inline photos + video players and author-only edit/remove/delete. **Text-only and media-only entries are both valid** (`body` may be empty). Trip-detail **Journal** card + entry count.
+- **Recap:** the journal feeds the recap's **source data** (→ D9) — `total_media` includes journal photos/videos, a **Journal** stat tile shows the entry count, and the **collage sources photos from the journal too**.
+**Depends on:** Phase 8 (trip-media bucket), Phase 2 (trip / day / activity).
+**Done when (verified):** ✅ `tsc` passes · ✅ eslint clean (warnings only) · ✅ web + iOS + Android bundles compile · ✅ headless client boots clean. Live: write a long entry with three photos + a video pinned to Aug 20, and another member sees it on the timeline — verified by the operator against their Supabase project after `db push`.
+
+## Phase 19 — Travel Passport ⬜
+Lifetime, **derived-only** stats (places, countries/regions, airports from **verified flight** proofs, curated landmarks, opt-in miles with coverage, trips/days) → a `passport_stats` table refreshed on trip completion + a live view; a world-map passport screen (reads well with one trip, non-embarrassing with zero); shareable image (recap view-capture approach). Deleting a trip removes its contribution to every counter.
+
+## Phase 20 — Profiles & Connections ⬜
+Handles (unique), bio, `visibility` (private default); `connections` (request / accept / block) with **visibility-enforcing RLS**. **CRITICAL:** trip content (chat, money, media, journal, member list) stays scoped to **trip membership regardless of profile visibility** — only recap + passport are outward-shareable, by deliberate action. Test proving a non-member connection sees nothing of a trip.
+
+## Phase 21 — Safety & Moderation ⬜ (before discovery, not after)
+`reports` + `blocks` reachable within one interaction on **every** user-generated surface; **bidirectional block invisibility enforced in RLS**; rate limits on requests + DMs; age gate → stored **age band** (under-18 flagged, excluded from discovery + public visibility); a minimal internal moderation view (list/inspect/remove/suspend); published policy text written to `docs/`.
+
+## Phase 22 — Nearby Travelers ⬜ (strict rules)
+`discovery_optins` — **per-trip, OFF by default, coarse area only** (never precise location; never store/show another user's exact location), auto-expiring when the trip ends; matching = "who's in this area this window"; **mutual-consent** contact; under-18 + blocked excluded **both directions**; disabling removes you from others' results immediately.
+
+## Phase 23 — Music on Shares ⬜
+A swappable **`MusicCatalogProvider`** interface (**cleared-catalogue only** — no Spotify/Apple/commercial-audio uploads; provider chosen by the operator) + `share_audio` (track/provider/license/trim); an Instagram-style pick / preview / trim baked into the exported file with retained rights metadata, **and an equally-prominent "export without music"** path; a clear not-configured state.
 
 ---
 
