@@ -65,7 +65,8 @@ Then run the following **against prod** (the CLI needs your access token — `su
 # 1) Link the repo to the PROD project (run from the repo root)
 supabase link --project-ref <PROD_PROJECT_REF>
 
-# 2) Apply ALL 15 migrations to prod
+# 2) Apply ALL migrations to prod (everything in supabase/migrations, incl. the
+#    Release-2 set: passport, profiles/connections, safety, nearby, share_music)
 supabase db push
 
 # 3) Deploy the 5 Edge Functions to prod
@@ -85,6 +86,22 @@ SUPABASE_URL=https://<PROD_PROJECT_REF>.supabase.co \
 SUPABASE_SERVICE_ROLE_KEY=<PROD_service_role_key> \
 node scripts/seed-airports.mjs
 ```
+
+**Demo seed (optional, DEV/DEMO projects only — never prod).** To see the app
+populated instead of empty (five demo travelers, a completed Tokyo trip that
+fills a passport, a journal, connections, and a Nearby match for an upcoming
+Lisbon trip), run the demo seeder against a **dev/demo** project. It creates fake
+`@demo.trippl.invalid` auth users and is idempotent (re-runnable):
+
+```sh
+SUPABASE_URL=https://<DEV_PROJECT_REF>.supabase.co \
+SUPABASE_SERVICE_ROLE_KEY=<DEV_service_role_key> \
+SEED_CONFIRM=1 npm run seed
+```
+
+It refuses to run without `SEED_CONFIRM=1`, and prints the demo logins (password
+`Trippl-Demo-2026!`) plus what each account shows. **Do not point it at
+production** — it inserts demo users and data.
 
 ### 🛑 STOP (you): configure Auth in the prod dashboard
 
