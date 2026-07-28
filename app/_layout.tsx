@@ -33,6 +33,11 @@ import { fontFamily } from "@/constants/theme";
 // flash of the wrong route / unstyled text.
 SplashScreen.preventAutoHideAsync();
 
+// Preview mode: set EXPO_PUBLIC_PREVIEW_NO_AUTH=1 to browse the app (dashboard +
+// tabs) WITHOUT signing in — for previewing the UI before a backend is wired.
+// Default OFF. NEVER enable this for a real deployment: it disables the auth gate.
+const PREVIEW_NO_AUTH = process.env.EXPO_PUBLIC_PREVIEW_NO_AUTH === "1";
+
 // Route protection: signed-out users are sent to (auth), except on PUBLIC routes.
 function RootNavigator() {
   const { session, loading } = useAuth();
@@ -45,7 +50,9 @@ function RootNavigator() {
     SplashScreen.hideAsync();
     const inPublic =
       segments[0] === "(auth)" || segments[0] === "join" || segments[0] === "dev";
-    if (!session && !inPublic) {
+    // In preview mode the auth gate is skipped, so a signed-out user lands on the
+    // dashboard/tabs instead of being redirected to sign-in.
+    if (!session && !inPublic && !PREVIEW_NO_AUTH) {
       router.replace("/sign-in");
     }
   }, [session, loading, segments, router]);
