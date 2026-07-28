@@ -28,10 +28,22 @@ import { GreatVibes_400Regular } from "@expo-google-fonts/great-vibes";
 import { AuthProvider, useAuth } from "@/lib/auth-provider";
 import { ThemeProvider, useTheme } from "@/lib/theme-provider";
 import { fontFamily } from "@/constants/theme";
+import { hasSupabaseCredentials } from "@/lib/supabase";
 
 // Keep the splash screen up until we know the session (and fonts), to avoid a
 // flash of the wrong route / unstyled text.
 SplashScreen.preventAutoHideAsync();
+
+// Preview mode: browse the app (dashboard + tabs) WITHOUT signing in — for previewing
+// the UI before a backend is wired. Active when EITHER:
+//   (a) EXPO_PUBLIC_PREVIEW_NO_AUTH=1 is set explicitly (preview even with a backend), or
+//   (b) no Supabase backend is configured at all — auth literally can't work, so the
+//       gate would only strand the user on a sign-in screen that always fails.
+// The moment real credentials are wired (EXPO_PUBLIC_SUPABASE_URL set), the auth gate
+// re-activates automatically. This never protects data on its own — RLS does that; with
+// no backend there is no data to reach. Resolved at build time (env is inlined then).
+const PREVIEW_NO_AUTH =
+  process.env.EXPO_PUBLIC_PREVIEW_NO_AUTH === "1" || !hasSupabaseCredentials;
 
 // Route protection: signed-out users are sent to (auth), except on PUBLIC routes.
 function RootNavigator() {
@@ -45,7 +57,9 @@ function RootNavigator() {
     SplashScreen.hideAsync();
     const inPublic =
       segments[0] === "(auth)" || segments[0] === "join" || segments[0] === "dev";
-    if (!session && !inPublic) {
+    // In preview mode the auth gate is skipped, so a signed-out user lands on the
+    // dashboard/tabs instead of being redirected to sign-in.
+    if (!session && !inPublic && !PREVIEW_NO_AUTH) {
       router.replace("/sign-in");
     }
   }, [session, loading, segments, router]);

@@ -15,6 +15,12 @@ const supabaseUrl = extra.supabaseUrl ?? process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey =
   extra.supabaseAnonKey ?? process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
+// True only when REAL credentials are present (not the placeholder fallback below).
+// When false the app has no backend at all: auth can't work, so the sign-in gate
+// would just trap the user on a screen that always fails. The route guard reads this
+// to fall back to preview mode. Resolved at build time (env is inlined then).
+export const hasSupabaseCredentials = Boolean(supabaseUrl && supabaseAnonKey);
+
 if (!supabaseUrl || !supabaseAnonKey) {
   // The app still boots without real credentials, but auth/network calls will fail
   // until you copy .env.example to .env and fill these in.
